@@ -1,0 +1,79 @@
+---
+import { getCollection } from "astro:content";
+import Media from "./Media.astro";
+
+const projects = (await getCollection("projects")).sort(
+	(a, b) => a.data.order - b.data.order
+);
+---
+
+<section id="work" class="frame work" data-reveal-group>
+	{projects.map((project, i) => (
+		<a
+			href={`/proyectos/${project.id}`}
+			class="split work__item"
+			data-reveal
+			style={i !== projects.length - 1 ? "border-bottom: var(--border)" : ""}
+		>
+			<div class="col-narrow work__item-text">
+				<h3>{project.data.title}</h3>
+				<p>{project.data.excerpt}</p>
+				<span class="eyebrow">{project.data.category}</span>
+			</div>
+
+			<div class="col-wide work__item-media">
+				<Media kind={project.data.media.kind} ratio={project.data.media.ratio} />
+			</div>
+		</a>
+	))}
+</section>
+
+<style>
+	.work__item {
+		align-items: center;
+	}
+
+	.work__item-text {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 12px;
+	}
+
+	.work__item-text h3 {
+		font-family: var(--font-display);
+		font-weight: 500;
+		font-size: 20px;
+		margin: 0;
+	}
+
+	.work__item-text p {
+		color: var(--muted);
+		font-size: 14px;
+		margin: 0;
+		max-width: 32ch;
+	}
+
+	.work__item-media {
+		overflow: hidden;
+	}
+
+	.work__item-media :global(.placeholder-media) {
+		border-radius: 0;
+		transition: transform 0.5s ease;
+	}
+
+	.work__item:hover .work__item-media :global(.placeholder-media) {
+		transform: scale(1.04);
+	}
+
+	@media (max-width: 767.98px) {
+		.work__item {
+			align-items: stretch;
+		}
+
+		.work__item-media {
+			order: -1;
+		}
+	}
+</style>

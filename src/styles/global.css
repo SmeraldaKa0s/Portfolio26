@@ -1,0 +1,285 @@
+:root {
+	--bg: #0a0a0a;
+	--bg-raised: #141414;
+	--fg: #f5f5f3;
+	--fg-rgb: 245, 245, 243;
+	--muted: #8a8a8a;
+	--border-color: #222222;
+	--border: 1px dashed var(--border-color);
+	--accent: #0099ff;
+
+	--font-display: "Space Grotesk", ui-sans-serif, sans-serif;
+	--font-mono: "Martian Mono", ui-monospace, monospace;
+	--font-mono-read: "Fragment Mono", ui-monospace, monospace;
+
+	--container: 1600px;
+	--gutter: 20px;
+	--section-gap: 0px;
+	--col-narrow: 0.7;
+}
+
+@media (max-width: 1199.98px) {
+	:root {
+		--gutter: 20px;
+	}
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: var(--bg);
+	color: var(--fg);
+}
+
+body {
+	font-family: var(--font-display);
+	font-size: 16px;
+	font-weight: 400;
+	line-height: 1.2;
+	letter-spacing: 0;
+	-webkit-font-smoothing: antialiased;
+}
+
+img {
+	max-width: 100%;
+	display: block;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.container {
+	max-width: var(--container);
+	margin-inline: auto;
+	padding-inline: var(--gutter);
+}
+
+/* Outer gutter: pure background between the viewport edge and the dashed frame */
+.page-shell {
+	padding: var(--gutter);
+}
+
+/* The dashed frame itself: runs the full height of the page, nav sits inside it */
+.page-frame {
+	max-width: var(--container);
+	margin-inline: auto;
+	border-left: var(--border);
+	border-right: var(--border);
+}
+
+/* Wraps Nav + Hero only, so the hero can flex-grow to fill exactly one
+   screen (minus the outer gutter) without the rest of the page's content
+   feeding into that min-height. */
+.hero-screen {
+	display: flex;
+	flex-direction: column;
+	min-height: calc(100vh - var(--gutter));
+}
+
+.frame {
+	border-top: var(--border);
+	border-bottom: var(--border);
+}
+
+.frame + .frame {
+	border-top: none;
+}
+
+.split {
+	display: flex;
+}
+
+.split > .col-narrow {
+	flex: var(--col-narrow) 0 0;
+	max-width: 400px;
+	border-right: var(--border);
+	padding: 20px;
+}
+
+.split > .col-wide {
+	flex: 1 0 0;
+	padding: 20px;
+}
+
+@media (max-width: 767.98px) {
+	.split {
+		flex-direction: column;
+	}
+
+	.split > .col-narrow,
+	.split > .col-wide {
+		flex: none;
+	}
+
+	.split > .col-narrow {
+		max-width: none;
+		border-right: none;
+		border-bottom: var(--border);
+	}
+}
+
+.eyebrow {
+	font-family: var(--font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-size: 11px;
+	font-weight: 400;
+	color: var(--muted);
+}
+
+.section {
+	padding-block: 48px;
+}
+
+.placeholder-media {
+	position: relative;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: repeating-linear-gradient(
+		135deg,
+		var(--bg-raised),
+		var(--bg-raised) 10px,
+		#1a1a1a 10px,
+		#1a1a1a 20px
+	);
+	border: var(--border);
+	border-radius: 10px;
+	overflow: hidden;
+	color: var(--muted);
+	font-family: var(--font-mono);
+	font-size: 11px;
+	text-transform: uppercase;
+	text-align: center;
+}
+
+.placeholder-media span {
+	background: var(--bg);
+	padding: 6px 12px;
+	border: var(--border);
+	border-radius: 100px;
+}
+
+.pill-button {
+	font-family: var(--font-mono);
+	text-transform: uppercase;
+	font-size: 11px;
+	background: var(--fg);
+	color: var(--bg);
+	padding: 10px 18px;
+	border-radius: 100px;
+	white-space: nowrap;
+	display: inline-flex;
+	align-items: center;
+}
+
+.icon-button {
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	background: var(--fg);
+	color: var(--bg);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	transition: transform 0.3s ease;
+}
+
+.icon-button:hover {
+	transform: rotate(45deg);
+}
+
+/* Scroll-reveal: toggled by the IntersectionObserver in Layout.astro */
+[data-reveal] {
+	opacity: 0;
+	transform: translateY(24px);
+	transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+[data-reveal].is-in {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+[data-reveal-group] [data-reveal] {
+	transition-delay: calc(var(--reveal-index, 0) * 80ms);
+}
+
+/* Stacked hover-swap text: markup is <span class="swap"><span>Label</span><span aria-hidden="true">Label</span></span> */
+.swap {
+	position: relative;
+	display: inline-block;
+	overflow: hidden;
+	vertical-align: top;
+}
+
+.swap span {
+	display: block;
+	transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.swap span:first-child {
+	position: relative;
+}
+
+.swap span:last-child {
+	position: absolute;
+	left: 0;
+	top: 100%;
+}
+
+a:hover .swap span,
+button:hover .swap span {
+	transform: translateY(-100%);
+}
+
+/* Dotted halftone texture used behind the hero headline */
+.dot-texture {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+	background-size: 8px 8px;
+	-webkit-mask-image: radial-gradient(ellipse 60% 70% at 50% 50%, #000 0%, transparent 75%);
+	mask-image: radial-gradient(ellipse 60% 70% at 50% 50%, #000 0%, transparent 75%);
+	opacity: 0.8;
+}
+
+/* Slow-moving glow that drifts over the dot texture, like ashcamp's hero background */
+.dot-glow {
+	position: absolute;
+	inset: -20%;
+	pointer-events: none;
+	background: radial-gradient(circle, rgba(245, 245, 243, 0.5) 0%, transparent 60%);
+	filter: blur(60px);
+	opacity: 0.3;
+	animation: dot-glow-drift 18s ease-in-out infinite alternate;
+	will-change: transform;
+}
+
+@keyframes dot-glow-drift {
+	0% {
+		transform: translate(-12%, -10%) scale(1);
+	}
+	50% {
+		transform: translate(10%, 8%) scale(1.2);
+	}
+	100% {
+		transform: translate(-6%, 12%) scale(0.9);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dot-glow {
+		animation: none;
+	}
+}

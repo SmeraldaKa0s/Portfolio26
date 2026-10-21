@@ -1,0 +1,76 @@
+---
+import Media from "./Media.astro";
+
+const items = [
+	{ letter: "a", outlet: "Lorem Ipsum Magazine", title: "Dolor sit amet consectetur" },
+	{ letter: "b", outlet: "Dolor Sit Radio", title: "Adipiscing elit sed do" },
+	{ letter: "c", outlet: "Consectetur Podcast", title: "Eiusmod tempor incididunt" },
+	{ letter: "d", outlet: "Adipiscing Weekly", title: "Ut labore et dolore magna" },
+];
+---
+
+<section class="frame">
+	<div class="split">
+		<div class="col-narrow">
+			<p class="eyebrow">Prensa &amp; entrevistas</p>
+		</div>
+
+		<div class="col-wide press__grid" data-reveal-group>
+			{items.map((item, i) => {
+				const borders = [
+					i % 2 === 0 ? "border-right: var(--border)" : "",
+					i < items.length - 2 ? "border-bottom: var(--border)" : "",
+				].join(";");
+				return (
+					<a href="#" class="press__item" data-reveal style={borders}>
+						<Media kind="image" ratio="3 / 4" />
+						<span class="eyebrow">({item.letter}) {item.outlet}</span>
+						<p>{item.title}</p>
+					</a>
+				);
+			})}
+		</div>
+	</div>
+</section>
+
+<style>
+	.press__grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		padding: 0;
+	}
+
+	.press__item {
+		padding: 24px;
+	}
+
+	.press__item :global(.placeholder-media) {
+		transition: transform 0.5s ease;
+	}
+
+	.press__item:hover :global(.placeholder-media) {
+		transform: scale(1.03);
+	}
+
+	.press__item p {
+		margin: 12px 0 0;
+		font-family: var(--font-display);
+		font-weight: 500;
+		font-size: 16px;
+	}
+
+	.press__item span {
+		display: block;
+		margin-top: 16px;
+	}
+
+	@media (max-width: 767.98px) {
+		.press__grid {
+			grid-template-columns: 1fr;
+		}
+
+		.press__item {
+			border-right: none !important;
+		}
+	}
+</style>

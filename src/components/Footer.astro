@@ -1,0 +1,81 @@
+---
+const year = new Date().getFullYear();
+const email = "alek.xandra.lerner@gmail.com";
+---
+
+<footer class="footer frame">
+	<button class="footer__email" data-copy-email data-email={email} type="button">
+		<span class="swap">
+			<span data-copy-label>{email}</span>
+			<span aria-hidden="true">Copiado!</span>
+		</span>
+	</button>
+
+	<div class="footer__links">
+		<a href="#" target="_blank" rel="noreferrer">LinkedIn</a>
+		<a href="#" target="_blank" rel="noreferrer">GitHub</a>
+	</div>
+
+	<p class="footer__copy eyebrow">© {year} Alexandra Lerner</p>
+</footer>
+
+<script>
+	document.querySelectorAll<HTMLButtonElement>("[data-copy-email]").forEach((button) => {
+		button.addEventListener("click", async () => {
+			const email = button.dataset.email ?? "";
+			try {
+				await navigator.clipboard.writeText(email);
+			} catch {
+				// Clipboard API unavailable; the label swap below is cosmetic only.
+			}
+			button.classList.add("is-copied");
+			setTimeout(() => button.classList.remove("is-copied"), 1500);
+		});
+	});
+</script>
+
+<style>
+	.footer {
+		padding: 24px 20px;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		font-family: var(--font-mono);
+		text-transform: uppercase;
+		font-size: 11px;
+	}
+
+	.footer__email {
+		font: inherit;
+		text-transform: inherit;
+		letter-spacing: inherit;
+		color: var(--fg);
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+	}
+
+	.footer__email.is-copied .swap span {
+		transform: translateY(-100%);
+	}
+
+	.footer__links {
+		display: flex;
+		gap: 16px;
+		color: var(--muted);
+	}
+
+	.footer__links a:hover {
+		color: var(--fg);
+	}
+
+	@media (max-width: 767.98px) {
+		.footer {
+			flex-direction: column;
+			text-align: center;
+		}
+	}
+</style>
