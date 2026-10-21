@@ -1,0 +1,129 @@
+---
+const roles = [
+	{ company: "Empresa actual", role: "Product Designer", dates: "2025 — Presente" },
+	{ company: "Empresa anterior 1", role: "UX/UI Designer", dates: "2024 — 2025" },
+	{ company: "Empresa anterior 2", role: "UX/UI Designer", dates: "2023 — 2024" },
+	{ company: "Empresa anterior 3", role: "Frontend & UX Engineer", dates: "2022 — 2023" },
+	{ company: "Empresa anterior 4", role: "UX Researcher", dates: "2022 — 2023" },
+];
+---
+
+<section class="frame">
+	<div class="split">
+		<div class="col-narrow">
+			<p class="eyebrow">Experiencia</p>
+		</div>
+
+		<div class="col-wide">
+			<div class="experience__intro" data-reveal>
+				<h2>Lorem Ipsum Dolor Sit Amet</h2>
+				<p>
+					Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+					eiusmod tempor incididunt ut labore et dolore magna aliqua.
+				</p>
+			</div>
+
+			<ul class="experience__list" data-reveal-group>
+				{roles.map((item, i) => (
+					<li
+						class="experience__row"
+						data-reveal
+						style={i !== roles.length - 1 ? "border-bottom: var(--border)" : ""}
+					>
+						<span class="eyebrow">{item.dates}</span>
+						<div class="experience__logo">
+							<span>Logo</span>
+						</div>
+						<div class="experience__details">
+							<h3>{item.company}</h3>
+							<p>{item.role}</p>
+						</div>
+					</li>
+				))}
+			</ul>
+		</div>
+	</div>
+</section>
+
+<style>
+	.experience__intro {
+		padding-top: 48px;
+		max-width: 48ch;
+	}
+
+	.experience__intro h2 {
+		font-family: var(--font-display);
+		font-weight: 500;
+		font-size: 28px;
+		margin: 0 0 16px;
+	}
+
+	.experience__intro p {
+		color: var(--muted);
+		margin: 0;
+	}
+
+	.experience__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.experience__row {
+		display: grid;
+		grid-template-columns: 140px 64px 1fr;
+		align-items: center;
+		gap: 24px;
+		padding-block: 24px;
+	}
+
+	.experience__logo {
+		width: 64px;
+		height: 64px;
+		border: var(--border);
+		border-radius: 10px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	.experience__details h3 {
+		font-family: var(--font-display);
+		font-weight: 500;
+		font-size: 16px;
+		margin: 0 0 4px;
+	}
+
+	.experience__details p {
+		color: var(--muted);
+		margin: 0;
+	}
+
+	@media (max-width: 767.98px) {
+		.experience__row {
+			grid-template-columns: 48px 1fr;
+			grid-template-areas:
+				"logo details"
+				"dates details";
+			row-gap: 4px;
+		}
+
+		.experience__logo {
+			grid-area: logo;
+			width: 48px;
+			height: 48px;
+		}
+
+		.experience__row > .eyebrow {
+			grid-area: dates;
+		}
+
+		.experience__details {
+			grid-area: details;
+		}
+	}
+</style>

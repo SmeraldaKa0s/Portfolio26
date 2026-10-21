@@ -1,0 +1,46 @@
+---
+const logos = [
+	"Lorem Co.",
+	"Ipsum Inc.",
+	"Dolor Labs",
+	"Sit Studio",
+	"Amet Group",
+	"Consectetur",
+];
+---
+
+<section class="frame trusted">
+	<div class="split">
+		<div class="col-narrow">
+			<p class="eyebrow">Confían en mí</p>
+		</div>
+
+		<div class="col-wide trusted__row" data-reveal-group>
+			{logos.map((name) => (
+				<span class="trusted__logo" data-reveal>{name}</span>
+			))}
+		</div>
+	</div>
+</section>
+
+<style>
+	.trusted__row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 32px 48px;
+	}
+
+	.trusted__logo {
+		font-family: var(--font-mono);
+		font-size: 13px;
+		text-transform: uppercase;
+		letter-spacing: 0.02em;
+		color: var(--muted);
+		transition: color 0.25s ease;
+	}
+
+	.trusted__logo:hover {
+		color: var(--fg);
+	}
+</style>

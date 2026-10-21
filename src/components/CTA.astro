@@ -1,0 +1,31 @@
+---
+import Media from "./Media.astro";
+---
+
+<section id="contact" class="frame cta">
+	<Media kind="image" ratio="3 / 2" label="Foto" />
+
+	<div class="cta__content" data-reveal>
+		<h2 class="cta__heading">Lorem ipsum dolor sit amet consectetur?</h2>
+		<a href="mailto:alek.xandra.lerner@gmail.com" class="pill-button">Decime hola</a>
+	</div>
+</section>
+
+<style>
+	.cta {
+		text-align: center;
+		padding: 48px 20px;
+	}
+
+	.cta__content {
+		margin-top: 48px;
+	}
+
+	.cta__heading {
+		font-family: var(--font-display);
+		font-weight: 500;
+		font-size: 28px;
+		max-width: 18ch;
+		margin: 0 auto 32px;
+	}
+</style>

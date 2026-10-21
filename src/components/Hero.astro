@@ -1,0 +1,110 @@
+---
+---
+
+<section id="index" class="hero frame">
+	<div class="split hero__main">
+		<div class="dot-texture" aria-hidden="true"></div>
+		<div class="dot-glow" aria-hidden="true"></div>
+
+		<div class="col-narrow hero__spacer" aria-hidden="true"></div>
+		<div class="col-wide hero__headline-cell">
+			<h1 class="hero__headline hero__intro">
+				<strong>Lorem</strong> ipsum dolor sit amet,<br />
+				consectetur adipiscing elit,<br />
+				sed do eiusmod,<br />
+				tempor incididunt ut labore et dolore.
+			</h1>
+		</div>
+	</div>
+
+	<div class="hero__footer">
+		<span class="eyebrow hero__intro" style="--intro-delay: 0.3s">( Lorem Ipsum )</span>
+		<span class="eyebrow hero__intro" style="--intro-delay: 0.38s">* Dolor Sit Amet *</span>
+		<span class="eyebrow hero__intro" style="--intro-delay: 0.46s">( Consectetur )</span>
+	</div>
+</section>
+
+<style>
+	.hero {
+		display: flex;
+		flex-direction: column;
+		flex: 1 0 auto;
+	}
+
+	.hero__main {
+		position: relative;
+		flex: 1;
+		overflow: hidden;
+	}
+
+	.hero__headline-cell {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		padding: 80px 48px;
+	}
+
+	.hero__headline {
+		font-family: var(--font-mono-read);
+		font-weight: 400;
+		font-size: 14px;
+		line-height: 1.2;
+		color: #666666;
+		margin: 0;
+	}
+
+	.hero__headline strong {
+		font-weight: 400;
+		color: var(--fg);
+	}
+
+	/* Hero content is always on-screen on load, so it fades in on a timer
+	   instead of the scroll-triggered [data-reveal] used elsewhere. */
+	.hero__intro {
+		opacity: 0;
+		transform: translateY(16px);
+		animation: hero-intro 0.8s ease forwards;
+		animation-delay: var(--intro-delay, 0.1s);
+	}
+
+	@keyframes hero-intro {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hero__intro {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	.hero__footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 16px 20px;
+		border-top: var(--border);
+	}
+
+	@media (max-width: 767.98px) {
+		.hero__spacer {
+			display: none;
+		}
+
+		.hero__headline-cell {
+			padding: 48px 20px;
+		}
+
+		.hero__footer {
+			flex-direction: column;
+			gap: 8px;
+			align-items: flex-start;
+			padding: 16px 20px 24px;
+		}
+	}
+</style>

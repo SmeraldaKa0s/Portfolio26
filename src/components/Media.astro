@@ -1,0 +1,13 @@
+---
+interface Props {
+	kind?: "image" | "video";
+	ratio?: string;
+	label?: string;
+}
+
+const { kind = "image", ratio = "8 / 5", label } = Astro.props;
+---
+
+<div class="placeholder-media" style={`aspect-ratio: ${ratio}`}>
+	<span>{label ?? (kind === "video" ? "Video" : "Imagen")}</span>
+</div>

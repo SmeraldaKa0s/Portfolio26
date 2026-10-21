@@ -1,0 +1,193 @@
+---
+const links = [
+	{ href: "/#index", label: "Index" },
+	{ href: "/#work", label: "Work" },
+	{ href: "/#info", label: "Info" },
+];
+---
+
+<header class="nav frame">
+	<div class="split">
+		<div class="col-narrow nav__links-cell">
+			<nav class="nav__links">
+				{links.map((link) => (
+					<a href={link.href}>
+						<span class="swap">
+							<span>{link.label}</span>
+							<span aria-hidden="true">{link.label}</span>
+						</span>
+					</a>
+				))}
+			</nav>
+
+			<button class="nav__toggle" aria-label="Abrir menú" aria-expanded="false" data-nav-toggle>
+				<span></span>
+				<span></span>
+			</button>
+		</div>
+
+		<div class="col-wide nav__meta-cell">
+			<span class="nav__clock eyebrow" data-clock>
+				<span class="nav__dot"></span>
+				<span data-clock-time>--:--:-- --</span>
+			</span>
+
+			<a href="#contact" class="pill-button">Hablemos</a>
+			<a href="#contact" class="icon-button" aria-label="Ir a contacto">→</a>
+		</div>
+	</div>
+
+	<nav class="nav__mobile" data-nav-mobile>
+		{links.map((link) => <a href={link.href}>{link.label}</a>)}
+	</nav>
+</header>
+
+<script>
+	const toggle = document.querySelector<HTMLButtonElement>("[data-nav-toggle]");
+	const mobile = document.querySelector<HTMLElement>("[data-nav-mobile]");
+
+	toggle?.addEventListener("click", () => {
+		const isOpen = mobile?.classList.toggle("is-open");
+		toggle.setAttribute("aria-expanded", String(Boolean(isOpen)));
+	});
+
+	mobile?.querySelectorAll("a").forEach((a) =>
+		a.addEventListener("click", () => {
+			mobile.classList.remove("is-open");
+			toggle?.setAttribute("aria-expanded", "false");
+		})
+	);
+
+	const timeEl = document.querySelector<HTMLElement>("[data-clock-time]");
+	const formatter = new Intl.DateTimeFormat("en-US", {
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+		hour12: true,
+	});
+
+	function tick() {
+		if (timeEl) timeEl.textContent = formatter.format(new Date());
+	}
+
+	tick();
+	setInterval(tick, 1000);
+</script>
+
+<style>
+	.nav {
+		position: sticky;
+		top: 0;
+		z-index: 50;
+		background: var(--bg);
+	}
+
+	.nav__links-cell,
+	.nav__meta-cell {
+		display: flex;
+		align-items: center;
+	}
+
+	.nav__links {
+		display: flex;
+		gap: 20px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		text-transform: uppercase;
+	}
+
+	.nav__links a {
+		position: relative;
+	}
+
+	.nav__meta-cell {
+		margin-inline-start: auto;
+		gap: 16px;
+		justify-content: flex-end;
+	}
+
+	.nav__clock {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.nav__dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: #3ddc84;
+	}
+
+	.nav__toggle {
+		display: none;
+		flex-direction: column;
+		gap: 5px;
+		background: none;
+		border: none;
+		padding: 10px;
+		margin-inline-start: auto;
+		cursor: pointer;
+	}
+
+	.nav__toggle span {
+		width: 18px;
+		height: 1px;
+		background: var(--fg);
+	}
+
+	.nav__mobile {
+		display: none;
+	}
+
+	@media (max-width: 767.98px) {
+		.nav .split {
+			flex-direction: row;
+		}
+
+		.nav .col-narrow {
+			max-width: none;
+			flex: 0 0 auto;
+			border-right: var(--border);
+			border-bottom: none;
+		}
+
+		.nav__links {
+			display: none;
+		}
+
+		.nav__toggle {
+			display: flex;
+		}
+
+		.nav__meta-cell {
+			gap: 10px;
+		}
+
+		.nav__clock {
+			display: none;
+		}
+
+		.nav__mobile {
+			flex-direction: column;
+			font-family: var(--font-mono);
+			text-transform: uppercase;
+			font-size: 11px;
+			max-height: 0;
+			overflow: hidden;
+			border-top: none;
+			transition: max-height 0.2s ease;
+		}
+
+		.nav__mobile.is-open {
+			display: flex;
+			max-height: 200px;
+			border-top: var(--border);
+		}
+
+		.nav__mobile a {
+			padding: 14px 20px;
+			border-bottom: var(--border);
+		}
+	}
+</style>

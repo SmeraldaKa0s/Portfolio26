@@ -1,0 +1,80 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import Media from "../../components/Media.astro";
+
+export async function getStaticPaths() {
+	const projects = await getCollection("projects");
+	return projects.map((project) => ({
+		params: { slug: project.id },
+		props: { project },
+	}));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+---
+
+<Layout title={`${project.data.title} – Alexandra Lerner`}>
+	<Nav />
+
+	<article class="frame project">
+		<div class="container">
+			<a href="/#work" class="project__back eyebrow">← Volver a proyectos</a>
+
+			<p class="eyebrow project__category">{project.data.category}</p>
+			<h1 class="project__title">{project.data.title}</h1>
+			<p class="project__excerpt">{project.data.excerpt}</p>
+
+			<Media kind={project.data.media.kind} ratio="16 / 9" />
+
+			<div class="project__body">
+				<Content />
+			</div>
+		</div>
+	</article>
+
+	<Footer />
+</Layout>
+
+<style>
+	.project {
+		padding-block: 48px;
+	}
+
+	.project__back {
+		display: inline-block;
+		color: var(--muted);
+		margin-bottom: 40px;
+	}
+
+	.project__back:hover {
+		color: var(--fg);
+	}
+
+	.project__category {
+		margin-bottom: 16px;
+	}
+
+	.project__title {
+		font-family: var(--font-display);
+		font-weight: 500;
+		font-size: clamp(28px, 5vw, 40px);
+		margin: 0 0 24px;
+		max-width: 20ch;
+	}
+
+	.project__excerpt {
+		color: var(--muted);
+		max-width: 60ch;
+		margin: 0 0 48px;
+	}
+
+	.project__body {
+		max-width: 65ch;
+		margin-top: 48px;
+		color: var(--muted);
+	}
+</style>
