@@ -1,6 +1,7 @@
 ---
-// Mariposa ASCII "Brasa y humo": ala de ceniza con borde de brasa y humo.
-// Vuelo: embestida -> pausa -> disolución en humo -> recomposición.
+// Mariposa ASCII blanca. Ciclo: surge de la trama de caracteres (derecha del viewport) ->
+// vuela hasta el extremo derecho del texto del hero -> se posa encima y mueve las alas ->
+// se desvanece desprendiéndose en caracteres -> vuelve a surgir.
 // Se posiciona sobre el contenedor padre (que debe ser position: relative).
 ---
 
@@ -129,7 +130,7 @@
 		// ============ estilo ============
 		const T = (I: any, a: number) => 0.5 * (Math.abs(Math.sin(a)) * I.cw + Math.abs(Math.cos(a)) * I.ch);
 		const ST = {
-			pal: ['#e4ddd6', '#8f8780', '#ffb070', '#ff6a3d'],
+			pal: ['#ffffff', '#a8a8a8', '#ffffff', '#ffffff'],
 			lines: ['-', '\\', '|', '/'],
 			trail: ' .~',
 			body: { h: '•', t: '#', a: '|', c: '·', col: 2 },
@@ -239,7 +240,7 @@
 		const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 		const FONT_PX = 7,
 			CH = 7.6;
-		const FONT = `${FONT_PX}px ui-monospace, Menlo, Consolas, monospace`;
+		const FONT = `bold ${FONT_PX}px ui-monospace, Menlo, Consolas, monospace`;
 		ctx.font = FONT;
 		const CW = ctx.measureText('M').width || 4.2;
 		const S = window.innerWidth < 768 ? 44 : 56; // envergadura (px)
@@ -285,7 +286,7 @@
 			top = Math.min(H * 0.42, S * 0.95);
 			bot = Math.max(H * 0.58, H - S * 1.05);
 			if (!s.init) {
-				s.x = s.px = W * 0.35;
+				s.x = s.px = W * 0.8;
 				s.y = s.py = H / 2;
 				s.init = true;
 			}
@@ -299,50 +300,61 @@
 			return g.dn + (g.up - g.dn) * smooth((ph - g.down) / (1 - g.down));
 		}
 
-		// embestida -> pausa -> disolución -> recomposición
+		// punto de posada: centro de la mariposa justo encima del extremo derecho del texto del hero
+		function perchPoint(): number[] {
+			const h1 = document.querySelector('.hero__headline');
+			const cb = canvas.getBoundingClientRect();
+			if (h1) {
+				const r = document.createRange();
+				r.selectNodeContents(h1);
+				const b = r.getBoundingClientRect();
+				if (b.width) return [b.right - cb.left - S * 0.3, Math.max(S * 0.7, b.top - cb.top - S * 0.55)];
+			}
+			return [W * 0.5, H * 0.4];
+		}
+		function pickEmerge() {
+			s.e0 = [clamp(W * (0.76 + 0.1 * rng()), S * 1.4, W - S * 1.4), lerp(top + S * 0.2, H * 0.42, rng())];
+		}
+
+		// surge -> vuela al texto -> se posa -> se disuelve -> (pausa) -> surge de nuevo
+		const PH: Record<string, number> = { emerge: 1.9, fly: 2.8, perch: 2.8, diss: 2, gone: 0.9 };
+		const NEXT: Record<string, string> = { emerge: 'fly', fly: 'perch', perch: 'diss', diss: 'gone', gone: 'emerge' };
 		function fly(dt: number) {
 			if (!s.phase) {
-				s.phase = 'form';
+				s.phase = 'emerge';
 				s.pt = 0;
-				s.p0 = [s.x, s.y];
-				s.p1 = [s.x, s.y];
-				s.dis = 1;
+				pickEmerge();
 			}
 			s.pt += dt;
-			const D = ({ lunge: 0.55, hover: 0.9, diss: 1.4, gone: 0.45, form: 1 } as any)[s.phase];
-			const e = Math.min(1, s.pt / D);
+			const e = Math.min(1, s.pt / PH[s.phase]);
 			s.vis = 1;
-			if (s.phase === 'lunge') {
-				const k = 1 - (1 - e) ** 3;
-				s.x = lerp(s.p0[0], s.p1[0], k);
-				s.y = lerp(s.p0[1], s.p1[1], k) - 14 * Math.sin(Math.PI * e);
-				s.flap = 1; s.fq = 7.5; s.dis = 0;
-			} else if (s.phase === 'hover') {
-				s.x = s.p1[0] + 3 * Math.sin(s.t * 2);
-				s.y = s.p1[1] + 2 * Math.sin(s.t * 3);
-				s.flap = 1; s.fq = 2.6; s.dis = 0;
+			const [px, py] = s.perch || [W * 0.5, H * 0.4];
+			if (s.phase === 'emerge') {
+				s.x = s.e0[0] + 6 * Math.sin(s.t * 1.7);
+				s.y = s.e0[1] + 4 * Math.sin(s.t * 2.3);
+				s.flap = 1; s.fq = 2.4; s.dis = 1 - smooth(e);
+			} else if (s.phase === 'fly') {
+				const k = smooth(e);
+				s.x = lerp(s.e0[0], px, k) + 10 * Math.sin(e * 9) * Math.sin(Math.PI * e);
+				s.y = lerp(s.e0[1], py, k) - 26 * Math.sin(Math.PI * e) + 4 * Math.sin(e * 22) * (1 - e);
+				s.flap = 1; s.fq = 5.5; s.dis = 0;
+			} else if (s.phase === 'perch') {
+				s.x = px;
+				s.y = py + 1.2 * Math.sin(s.t * 1.3);
+				s.flap = 1; s.fq = 1.7; s.dis = 0;
 			} else if (s.phase === 'diss') {
-				s.flap = 0; s.dis = smooth(e); s.y -= 6 * dt;
-			} else if (s.phase === 'gone') {
-				s.dis = 1;
+				s.x = px;
+				s.y = py - 5 * smooth(e);
+				s.flap = 1; s.fq = 1.3; s.dis = smooth(e);
 			} else {
-				s.flap = 0; s.dis = 1 - smooth(e);
+				s.dis = 1;
 			}
 			if (e >= 1) {
-				const nx = ({ lunge: 'hover', hover: 'diss', diss: 'gone', gone: 'form', form: 'lunge' } as any)[s.phase];
+				const nx = NEXT[s.phase];
 				s.phase = nx;
 				s.pt = 0;
-				if (nx === 'lunge') {
-					s.p0 = [s.x, s.y];
-					let k = 0, tx: number, ty: number;
-					do {
-						const a = rng() * 2 * Math.PI, d = 90 + 90 * rng();
-						tx = s.x + Math.cos(a) * d;
-						ty = s.y + Math.sin(a) * d * 0.6;
-					} while ((tx < S * 1.3 || tx > W - S * 1.3 || ty < top || ty > bot) && ++k < 30);
-					s.p1 = [clamp(tx!, S * 1.3, W - S * 1.3), clamp(ty!, top, bot)];
-				}
-				if (nx === 'form') s.ph = 0;
+				if (nx === 'fly') s.perch = perchPoint();
+				if (nx === 'emerge') { pickEmerge(); s.ph = 0; }
 			}
 		}
 
@@ -382,10 +394,10 @@
 			stepParts(dt);
 		}
 
-		// ============ humo ============
-		function spawn(x: number, y: number) {
-			if (parts.length > 400) return;
-			parts.push({ x, y, vx: (rng() - 0.5) * 8, vy: -(10 + rng() * 16), age: 0, life: 1.2 + rng() * 1.4, seed: rng() * 9 });
+		// ============ caracteres que se desprenden ============
+		function spawn(x: number, y: number, ch: string) {
+			if (parts.length > 500) return;
+			parts.push({ x, y, ch, vx: (rng() - 0.5) * 30, vy: -(6 + rng() * 16), age: 0, life: 1.1 + rng() * 1.3, seed: rng() * 9 });
 		}
 		function stepParts(dt: number) {
 			for (let i = parts.length - 1; i >= 0; i--) {
@@ -429,20 +441,26 @@
 			const c0 = Math.max(0, Math.floor((X - R) / CW)), c1 = Math.min(cols - 1, Math.ceil((X + R) / CW));
 			const r0 = Math.max(0, Math.floor((Y - R) / CH)), r1 = Math.min(rows - 1, Math.ceil((Y + R) / CH));
 			const put = (i: number, code: number, b: number, k: number) => {
+				let alpha = clamp(0.25 + b * 0.75, 0, 1);
 				if (dis > 0) {
+					// cada celda pasa por '.' ':' '+' antes de ser el glifo (o al revés al disolverse)
 					const h = hash(i % cols, (i / cols) | 0);
+					const BAND = 0.22;
+					if (h < dis - BAND) return;
 					if (h < dis) {
-						if (h > dis - 0.06 && rng() < 0.3 && !reduce) spawn((i % cols + 0.5) * CW, (((i / cols) | 0) + 0.5) * CH);
-						return;
+						const t = (h - (dis - BAND)) / BAND;
+						if (s.phase === 'diss' && t < 0.18 && rng() < 0.45 && !reduce)
+							spawn((i % cols + 0.5) * CW, (((i / cols) | 0) + 0.5) * CH, String.fromCharCode(code));
+						code = (t < 0.34 ? '.' : t < 0.67 ? ':' : '+').charCodeAt(0);
+						alpha *= 0.35 + 0.65 * t;
 					}
 				}
-				fb[i] = clamp(0.25 + b * 0.75, 0, 1);
+				fb[i] = alpha;
 				fc[i] = code;
 				fk[i] = k;
 				ff[i] = stamp;
-				const tv = b * gain * s.vis;
+				const tv = b * gain * s.vis * (dis > 0 ? 1 - dis : 1);
 				if (tv >= tb[i]) { tb[i] = tv; tc[i] = code; tk[i] = k; }
-				if (b > 0.9 && k >= 2 && rng() < 0.004 && !reduce) spawn((i % cols + 0.5) * CW, (((i / cols) | 0) + 0.5) * CH);
 			};
 			const orient = (a: number, side: number, k: number) => {
 				const bx = Math.cos(a) * side * k, by = -Math.sin(a) * ps;
@@ -493,7 +511,8 @@
 			}
 			stamp++;
 			if (reduce) {
-				s.x = W * 0.35; s.y = H / 2; s.yoff = 0; s.tilt = 0; s.roll = 0; s.ps = 1; s.kf = 1; s.kh = 1; s.dis = 0; s.vis = 1;
+				const pp = perchPoint();
+				s.x = pp[0]; s.y = pp[1]; s.yoff = 0; s.tilt = 0; s.roll = 0; s.ps = 1; s.kf = 1; s.kh = 1; s.dis = 0; s.vis = 1;
 			}
 			if (s.vis > 0.02 || reduce) raster();
 
@@ -519,20 +538,11 @@
 				ctx.globalAlpha = clamp(a, 0, 1);
 				ctx.fillText(ch, q * CW, r * CH);
 			}
-			// partículas de humo y chispas
+			// caracteres desprendidos
+			ctx.fillStyle = pal[0];
 			for (const p of parts) {
-				const e = p.age / p.life;
-				let ch: string, col: string;
-				if (p.seed < 2) {
-					ch = e < 0.4 ? '*' : e < 0.7 ? '+' : '.';
-					col = e < 0.25 ? pal[3] : pal[2];
-				} else {
-					ch = e < 0.15 ? '.' : e < 0.75 ? '~' : '.';
-					col = e < 0.4 ? pal[0] : pal[1];
-				}
-				ctx.fillStyle = col;
-				ctx.globalAlpha = clamp((1 - e) * 0.8, 0, 1);
-				ctx.fillText(ch, Math.floor(p.x / CW) * CW, Math.floor(p.y / CH) * CH);
+				ctx.globalAlpha = clamp((1 - p.age / p.life) * 0.8, 0, 1);
+				ctx.fillText(p.ch, Math.floor(p.x / CW) * CW, Math.floor(p.y / CH) * CH);
 			}
 			ctx.globalAlpha = 1;
 		}
