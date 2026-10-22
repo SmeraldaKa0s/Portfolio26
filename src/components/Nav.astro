@@ -1,4 +1,6 @@
 ---
+import HalftoneBackground from "./HalftoneBackground.astro";
+
 const links = [
 	{ href: "/#index", label: "Index" },
 	{ href: "/#work", label: "Work" },
@@ -7,6 +9,7 @@ const links = [
 ---
 
 <header class="nav frame">
+	<HalftoneBackground mode="nav" />
 	<div class="split">
 		<div class="col-narrow nav__links-cell">
 			<nav class="nav__links">
@@ -75,6 +78,13 @@ const links = [
 </script>
 
 <style>
+	/* the halftone canvas sits behind the nav content */
+	.nav > :global(.split),
+	.nav__mobile {
+		position: relative;
+		z-index: 1;
+	}
+
 	.nav {
 		position: sticky;
 		top: 0;
