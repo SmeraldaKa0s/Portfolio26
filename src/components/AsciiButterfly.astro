@@ -334,7 +334,7 @@
 		}
 
 		// surge -> vuela al texto -> se posa -> se disuelve -> (pausa) -> surge de nuevo
-		const PH: Record<string, number> = { emerge: 1.9, fly: 2.8, land: 0.7, perch: 3.2, diss: 2.2, gone: 1.4 };
+		const PH: Record<string, number> = { emerge: 1.9, fly: 2.8, land: 0.7, perch: 1.6, diss: 1.8, gone: 1.4 };
 		const NEXT: Record<string, string> = { emerge: 'fly', fly: 'land', land: 'perch', perch: 'diss', diss: 'gone', gone: 'emerge' };
 		function fly(dt: number) {
 			if (!s.phase) {
