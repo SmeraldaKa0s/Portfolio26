@@ -151,7 +151,7 @@ const { mode = "fill" } = Astro.props;
 		const mode = cv.dataset.mode;
 		const nav = mode === 'nav';
 		const cell = mode === 'fill' ? 5 : 6;
-		const gain = mode === 'fill' ? 0.34 : 0.26; // muy sutil: similar al duotono #0a0a0a → #242424 de ashcamp
+		const gain = mode === 'fill' ? 0.2 : 0.15; // muy sutil: similar al duotono #0a0a0a → #242424 de ashcamp
 		let FH = 0; // alto del campo: el viewport en nav (recorte), el canvas en el resto
 		let W = 0,
 			H = 0,
@@ -214,6 +214,9 @@ const { mode = "fill" } = Astro.props;
 				z = 7.3 + t * 0.045,
 				drift = t * 0.035,
 				shift = t * 0.012;
+			// desvanece el campo hacia los bordes del rectángulo para que no se vea cortado por las líneas
+			const ex = Math.min(120, W * 0.1),
+				ey = mode === 'fill' ? Math.min(90, H * 0.16) : 0;
 			const cols = Math.ceil(W / cell) + 1,
 				rows = Math.ceil(H / cell) + 1,
 				gt = Math.floor(t * 2),
@@ -238,7 +241,10 @@ const { mode = "fill" } = Astro.props;
 					const sx = x - dx * 5,
 						sy = y - dy * 5;
 					const n = 0.5 + 1.6 * noise3((sx - W / 2) * sc * 0.53, (sy - FH / 2) * sc * 0.47 + drift, z);
-					let L = bands(sstep(0, 1, 1 - n) + shift) * vignette(x, y, W, FH) + Math.min(0.45, m * 0.3);
+					const yl = y - yOff; // y local al canvas
+					const edge = sstep(0, ex, x) * sstep(0, ex, W - x) * (ey ? sstep(0, ey, yl) * sstep(0, ey, H - yl) : 1);
+					if (edge <= 0.01) continue;
+					let L = (bands(sstep(0, 1, 1 - n) + shift) * vignette(x, y, W, FH) + Math.min(0.45, m * 0.3)) * edge;
 					if (L <= 0.01) continue;
 					L += (hash2(i, j, gt) - 0.5) * 0.07;
 					const k = clamp(Math.floor(L * LEVELS), 0, LEVELS - 1);
