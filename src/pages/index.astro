@@ -9,6 +9,7 @@ import Experience from "../components/Experience.astro";
 import Press from "../components/Press.astro";
 import CTA from "../components/CTA.astro";
 import Footer from "../components/Footer.astro";
+import HalftoneBackground from "../components/HalftoneBackground.astro";
 ---
 
 <Layout>
@@ -19,8 +20,11 @@ import Footer from "../components/Footer.astro";
 	<Work />
 	<About />
 	<TrustedBy />
-	<Experience />
-	<Press />
-	<CTA />
-	<Footer />
+	<div class="halftone-zone">
+		<HalftoneBackground sticky />
+		<Experience />
+		<Press />
+		<CTA />
+		<Footer />
+	</div>
 </Layout>

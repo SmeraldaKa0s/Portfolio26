@@ -91,6 +91,21 @@ a {
 	border-top: none;
 }
 
+/* Zone with the sticky halftone background (Experience -> Footer): the canvas is a
+   viewport-sized layer that stays pinned while the zone scrolls; content sits above it. */
+.halftone-zone {
+	position: relative;
+}
+
+.halftone-zone > :not(.halftone-bg) {
+	position: relative;
+	z-index: 1;
+}
+
+.halftone-zone > .halftone-bg + .frame {
+	border-top: none;
+}
+
 .split {
 	display: flex;
 }
