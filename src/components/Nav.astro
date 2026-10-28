@@ -1,5 +1,6 @@
 ---
 import HalftoneBackground from "./HalftoneBackground.astro";
+import ChatButton from "./ChatButton.astro";
 
 const links = [
 	{ href: "/#index", label: "Index" },
@@ -35,8 +36,7 @@ const links = [
 				<span data-clock-time>--:--:-- --</span>
 			</span>
 
-			<a href="#contact" class="pill-button">Hablemos</a>
-			<a href="#contact" class="icon-button" aria-label="Ir a contacto">→</a>
+			<ChatButton href="#contact" label="Hablemos" ariaLabel="Hablemos: ir a contacto" />
 		</div>
 	</div>
 
