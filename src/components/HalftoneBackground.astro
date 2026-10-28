@@ -3,11 +3,13 @@
 // animado, inspirado en el hero de ashcamp.co. El puntero arrastra y deforma el campo; sin
 // mouse, una luz invisible deambula sola.
 //
-//  - fill   (default): ocupa el contenedor padre (position: relative)
-//  - sticky: canvas del tamaño del viewport, pegado mientras se scrollea su zona
+//  Todas las capas dibujan el MISMO campo, anclado al viewport (no a su propio rectángulo), así
+//  el fondo es continuo entre la navbar, el hero y la zona de abajo, y puede salirse de las líneas
+//  punteadas del marco (los canvas son de ancho completo de pantalla).
+//  - fill   (default): ocupa su contenedor (position: relative), de borde a borde de la pantalla
+//  - sticky: canvas del alto del viewport, pegado mientras se scrollea su zona
 //            (la zona debe tener la clase .halftone-zone, ver global.css)
-//  - nav:    franja dentro de un header sticky; dibuja el recorte del campo del viewport
-//            que le corresponde, así coincide con el fondo de la zona sticky
+//  - nav:    franja dentro de un header; dibuja el recorte del campo que le corresponde
 interface Props {
 	mode?: "fill" | "sticky" | "nav";
 }
@@ -24,19 +26,32 @@ const { mode = "fill" } = Astro.props;
 		pointer-events: none;
 		display: block;
 	}
+	/* de borde a borde de la pantalla; sube hasta el borde superior de la página (gutter) */
 	.halftone-bg--fill {
 		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
+		top: calc(-1 * var(--gutter, 0px));
+		left: calc(50% - 50vw);
+		width: 100vw;
+		height: calc(100% + var(--gutter, 0px));
+		z-index: 0;
 	}
 	.halftone-bg--sticky {
 		position: sticky;
 		top: 0;
-		width: 100%;
+		margin-left: calc(50% - 50vw);
+		width: 100vw;
 		height: 100vh;
 		margin-bottom: -100vh;
 		z-index: 0;
+	}
+	/* la franja de la navbar sí queda dentro del marco */
+	.halftone-bg[data-mode="nav"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		left: 0;
+		top: 0;
 	}
 </style>
 
@@ -149,10 +164,10 @@ const { mode = "fill" } = Astro.props;
 	function setup(cv: HTMLCanvasElement) {
 		const ctx = cv.getContext('2d')!;
 		const mode = cv.dataset.mode;
-		const nav = mode === 'nav';
-		const cell = mode === 'fill' ? 5 : 6;
+		const cell = 6;
 		const gain = mode === 'fill' ? 0.2 : 0.15; // muy sutil: similar al duotono #0a0a0a → #242424 de ashcamp
-		let FH = 0; // alto del campo: el viewport en nav (recorte), el canvas en el resto
+		let FW = 0, // el campo es el viewport: FW × FH, en coordenadas de pantalla
+			FH = 0;
 		let W = 0,
 			H = 0,
 			dpr = 1;
@@ -161,19 +176,15 @@ const { mode = "fill" } = Astro.props;
 		let lastMove = -99;
 
 		const wander = (t: number): number[] => [
-			W * (0.55 + 0.3 * Math.sin(0.53 * t) + 0.08 * Math.sin(1.7 * t + 1)),
-			FH * (0.5 + 0.3 * Math.sin(0.71 * t + 1) + 0.07 * Math.sin(2.3 * t)),
+			FW * (0.55 + 0.3 * Math.sin(0.9 * t) + 0.08 * Math.sin(2.8 * t + 1)),
+			FH * (0.5 + 0.3 * Math.sin(1.2 * t + 1) + 0.07 * Math.sin(3.6 * t)),
 		];
 
 		window.addEventListener(
 			'pointermove',
 			(e) => {
-				const b = cv.getBoundingClientRect();
-				const x = e.clientX - b.left,
-					y = nav ? e.clientY : e.clientY - b.top; // en nav el campo está en coords de viewport
-				if (x < 0 || y < 0 || x > b.width || y > (nav ? FH : b.height)) return;
 				const t = now();
-				pts.push([x, y, t]);
+				pts.push([e.clientX, e.clientY, t]); // coords de viewport = coords del campo
 				lastMove = t;
 				if (pts.length > 60) pts.shift();
 			},
@@ -184,8 +195,11 @@ const { mode = "fill" } = Astro.props;
 			if (!W || !H) return;
 			ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 			ctx.clearRect(0, 0, W, H);
-			FH = nav ? window.innerHeight : H;
-			const yOff = nav ? cv.getBoundingClientRect().top : 0;
+			FW = window.innerWidth;
+			FH = window.innerHeight;
+			const rc = cv.getBoundingClientRect();
+			const xOff = rc.left,
+				yOff = rc.top; // posición del canvas dentro del campo
 
 			// estela del puntero (o luz errante si no hay mouse)
 			const LIFE = 1.4,
@@ -209,29 +223,34 @@ const { mode = "fill" } = Astro.props;
 				if (age < 1 && (vx || vy)) seg.push([b[0], b[1], vx, vy, (1 - age) * (1 - age)]);
 			}
 
+			// el campo sube (eje Y ascendente) y evoluciona rápido
 			const R2 = (FH * 0.17) ** 2,
 				sc = 2.9 / FH,
-				z = 7.3 + t * 0.045,
-				drift = t * 0.035,
-				shift = t * 0.012;
-			// desvanece el campo hacia los bordes del rectángulo para que no se vea cortado por las líneas
-			const ex = Math.min(120, W * 0.1),
-				ey = mode === 'fill' ? Math.min(90, H * 0.16) : 0;
+				z = 7.3 + t * 0.09,
+				drift = t * 0.17,
+				shift = t * 0.025;
+			// se apaga hacia los bordes de la pantalla; el hero además se apaga contra su borde inferior
+			const ex = Math.min(120, FW * 0.08),
+				eyBottom = mode === 'fill' ? Math.min(90, H * 0.16) : 0;
 			const cols = Math.ceil(W / cell) + 1,
 				rows = Math.ceil(H / cell) + 1,
-				gt = Math.floor(t * 2),
+				gt = Math.floor(t * 3),
 				off = cell / 2;
 			for (let j = 0; j < rows; j++) {
-				const y = j * cell + off + yOff; // y en coords del campo
+				const yl = j * cell + off; // y local al canvas
+				const y = yl + yOff; // y en coords del campo
 				for (let i = 0; i < cols; i++) {
-					const x = i * cell + off;
+					const x = i * cell + off + xOff;
+					let edge = sstep(0, ex, x) * sstep(0, ex, FW - x);
+					if (eyBottom) edge *= sstep(0, eyBottom, H - yl);
+					if (edge <= 0.01) continue;
 					let dx = 0,
 						dy = 0,
 						m = 0;
 					for (const s of seg) {
-						const ex = x - s[0],
-							ey = y - s[1],
-							d2 = ex * ex + ey * ey;
+						const px = x - s[0],
+							py = y - s[1],
+							d2 = px * px + py * py;
 						if (d2 > R2 * 4) continue;
 						const w = Math.exp(-d2 / R2) * s[4];
 						dx += s[2] * w;
@@ -240,21 +259,18 @@ const { mode = "fill" } = Astro.props;
 					}
 					const sx = x - dx * 5,
 						sy = y - dy * 5;
-					const n = 0.5 + 1.6 * noise3((sx - W / 2) * sc * 0.53, (sy - FH / 2) * sc * 0.47 + drift, z);
-					const yl = y - yOff; // y local al canvas
-					const edge = sstep(0, ex, x) * sstep(0, ex, W - x) * (ey ? sstep(0, ey, yl) * sstep(0, ey, H - yl) : 1);
-					if (edge <= 0.01) continue;
-					let L = (bands(sstep(0, 1, 1 - n) + shift) * vignette(x, y, W, FH) + Math.min(0.45, m * 0.3)) * edge;
+					const n = 0.5 + 1.6 * noise3((sx - FW / 2) * sc * 0.53, (sy - FH / 2) * sc * 0.47 + drift, z);
+					let L = (bands(sstep(0, 1, 1 - n) + shift) * vignette(x, y, FW, FH) + Math.min(0.45, m * 0.3)) * edge;
 					if (L <= 0.01) continue;
 					L += (hash2(i, j, gt) - 0.5) * 0.07;
 					const k = clamp(Math.floor(L * LEVELS), 0, LEVELS - 1);
 					if (k <= 0) continue;
-					ctx.drawImage(sprite.img, k * sprite.sp, 0, sprite.sp, sprite.sp, x - cell / 2, y - yOff - cell / 2, cell, cell);
+					ctx.drawImage(sprite.img, k * sprite.sp, 0, sprite.sp, sprite.sp, x - xOff - cell / 2, yl - cell / 2, cell, cell);
 				}
 			}
 		};
 
-		const layer: Layer = { cv, draw, visible: true, minDt: mode === 'fill' ? 1 / 50 : 1 / 30, last: -1 };
+		const layer: Layer = { cv, draw, visible: true, minDt: 1 / 30, last: -1 };
 		const resize = () => {
 			W = cv.clientWidth;
 			H = cv.clientHeight;

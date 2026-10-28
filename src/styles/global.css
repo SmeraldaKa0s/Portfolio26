@@ -33,6 +33,7 @@ body {
 	padding: 0;
 	background: var(--bg);
 	color: var(--fg);
+	overflow-x: clip; /* los fondos animados son de ancho completo de pantalla (100vw) */
 }
 
 body {
@@ -77,6 +78,7 @@ a {
    screen (minus the outer gutter) without the rest of the page's content
    feeding into that min-height. */
 .hero-screen {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	min-height: calc(100vh - var(--gutter));
