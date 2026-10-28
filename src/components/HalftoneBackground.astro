@@ -165,7 +165,7 @@ const { mode = "fill" } = Astro.props;
 		const ctx = cv.getContext('2d')!;
 		const mode = cv.dataset.mode;
 		const cell = 6;
-		const gain = mode === 'fill' ? 0.2 : 0.15; // muy sutil: similar al duotono #0a0a0a → #242424 de ashcamp
+		const gain = mode === 'fill' ? 0.17 : 0.13; // muy sutil: similar al duotono #0a0a0a → #242424 de ashcamp
 		let FW = 0, // el campo es el viewport: FW × FH, en coordenadas de pantalla
 			FH = 0;
 		let W = 0,
@@ -227,11 +227,12 @@ const { mode = "fill" } = Astro.props;
 			//  - deriva ascendente: uTime·0.0125·2.43 ≈ 0.69 unidades de ruido por segundo
 			//  - evolución del ruido (z): uTime·0.03 ≈ 0.68/s → el campo se transforma muy rápido
 			//  - desplazamiento de paleta: uTime·0.0055 ≈ 0.125/s → bandas que aparecen y se desvanecen
+			const BLACK = 0.2; // todo lo que esté por debajo de este nivel queda en negro
 			const R2 = (FH * 0.17) ** 2,
 				sc = 2.9 / FH,
-				z = 7.3 + t * 0.68,
-				drift = t * 0.69,
-				shift = t * 0.125;
+				z = 7.3 + t * 0.5,
+				drift = t * 0.52,
+				shift = t * 0.095;
 			// se apaga hacia los bordes de la pantalla; el hero además se apaga contra su borde inferior
 			const ex = Math.min(120, FW * 0.08),
 				eyBottom = mode === 'fill' ? Math.min(90, H * 0.16) : 0;
@@ -263,7 +264,10 @@ const { mode = "fill" } = Astro.props;
 					const sx = x - dx * 5,
 						sy = y - dy * 5;
 					const n = 0.5 + 1.6 * noise3((sx - FW / 2) * sc * 0.53, (sy - FH / 2) * sc * 0.47 + drift, z);
-					let L = (bands(sstep(0, 1, 1 - n) + shift) * vignette(x, y, FW, FH) + Math.min(0.45, m * 0.3)) * edge;
+					// el campo base, con un corte de negros (más espacio vacío); el puntero/la luz errante
+					// lo apaga alrededor de su estela en vez de iluminarlo
+					const base = Math.max(0, bands(sstep(0, 1, 1 - n) + shift) * vignette(x, y, FW, FH) - BLACK) / (1 - BLACK);
+					let L = base * (1 - Math.min(1, m * 1.1)) * edge;
 					if (L <= 0.01) continue;
 					L += (hash2(i, j, gt) - 0.5) * 0.07;
 					const k = clamp(Math.floor(L * LEVELS), 0, LEVELS - 1);
