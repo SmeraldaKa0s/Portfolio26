@@ -325,12 +325,20 @@
 				if (br) r.setEndBefore(br); // solo la primera línea: termina en "amet,"
 				const b = r.getBoundingClientRect();
 				// centrada sobre "amet"; las patas (a ~0.55·S bajo el tórax) apoyan sobre la línea
-				if (b.width) return [b.right - cb.left - S * 0.5, Math.max(S * 0.9, b.top - cb.top + 3 - S * 0.55)];
+				if (b.width) return [b.right - cb.left - S * 0.5, Math.max(S * 0.9, b.top - cb.top - 1 - S * 0.55)];
 			}
 			return [W * 0.5, H * 0.4];
 		}
+		// borde superior del texto del hero, en coords del canvas (con margen por la animación de entrada)
+		function textTop(): number {
+			const h1 = document.querySelector('.hero__headline');
+			if (!h1) return H * 0.5;
+			return h1.getBoundingClientRect().top - canvas.getBoundingClientRect().top - 16;
+		}
 		function pickEmerge() {
-			s.e0 = [clamp(W * (0.76 + 0.1 * rng()), S * 1.4, W - S * 1.4), lerp(top + S * 0.2, H * 0.42, rng())];
+			// siempre por encima del texto: el cuerpo llega a ~0.8·S bajo el centro
+			const maxY = Math.max(top + S * 0.3, Math.min(H * 0.42, textTop() - S * 1.0));
+			s.e0 = [clamp(W * (0.76 + 0.1 * rng()), S * 1.4, W - S * 1.4), lerp(top + S * 0.2, maxY, rng())];
 		}
 
 		// surge -> vuela al texto -> se posa -> se disuelve -> (pausa) -> surge de nuevo

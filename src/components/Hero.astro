@@ -29,6 +29,7 @@ import AsciiButterfly from "./AsciiButterfly.astro";
 		display: flex;
 		flex-direction: column;
 		flex: 1 0 auto;
+		border-top: none; /* no divider under the nav, like ashcamp (a <script> between them breaks .frame + .frame) */
 	}
 
 	.hero__main {
@@ -42,7 +43,8 @@ import AsciiButterfly from "./AsciiButterfly.astro";
 		z-index: 1;
 		display: flex;
 		align-items: center;
-		padding: 80px 48px;
+		/* centered in the whole frame (the nav overlaps the top of the hero), 60px from the divider like ashcamp */
+		padding: 80px 48px calc(80px + var(--nav-h) - 47px) 60px; /* 47px ≈ footer row: center in nav + hero + footer */
 	}
 
 	.hero__headline {
@@ -89,7 +91,6 @@ import AsciiButterfly from "./AsciiButterfly.astro";
 		align-items: center;
 		justify-content: space-between;
 		padding: 16px 20px;
-		border-top: var(--border);
 	}
 
 	@media (max-width: 767.98px) {

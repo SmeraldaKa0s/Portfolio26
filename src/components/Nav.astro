@@ -90,6 +90,13 @@ const links = [
 		top: 0;
 		z-index: 50;
 		background: var(--bg);
+		border-bottom: none; /* ashcamp has no divider between the nav and the hero */
+	}
+
+	@media (min-width: 768px) {
+		.nav > :global(.split) {
+			min-height: var(--nav-h);
+		}
 	}
 
 	.nav__links-cell,

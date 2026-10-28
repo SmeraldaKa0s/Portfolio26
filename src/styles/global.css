@@ -14,12 +14,19 @@
 	--container: 1600px;
 	--gutter: 20px;
 	--section-gap: 0px;
+	--nav-h: 84px; /* same nav height as ashcamp.co */
 	--col-narrow: 0.7;
 }
 
 @media (max-width: 1199.98px) {
 	:root {
 		--gutter: 20px;
+	}
+}
+
+@media (max-width: 767.98px) {
+	:root {
+		--nav-h: 0px;
 	}
 }
 
@@ -81,7 +88,7 @@ a {
 	position: relative;
 	display: flex;
 	flex-direction: column;
-	min-height: calc(100vh - var(--gutter));
+	min-height: calc(100vh - var(--gutter) - 37px); /* ashcamp's hero ends 37px above the viewport bottom */
 }
 
 .frame {
