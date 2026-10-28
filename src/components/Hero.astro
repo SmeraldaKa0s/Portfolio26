@@ -87,10 +87,22 @@ import AsciiButterfly from "./AsciiButterfly.astro";
 	}
 
 	.hero__footer {
+		position: relative;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: 16px 20px;
+	}
+
+	/* the vertical divider (the .col-narrow border) runs through the footer row down to the bottom line */
+	.hero__footer::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: calc(min(400px, calc(100% * var(--col-narrow) / (var(--col-narrow) + 1))) - 1px);
+		border-left: var(--border);
+		pointer-events: none;
 	}
 
 	@media (max-width: 767.98px) {
@@ -100,6 +112,10 @@ import AsciiButterfly from "./AsciiButterfly.astro";
 
 		.hero__headline-cell {
 			padding: 48px 20px;
+		}
+
+		.hero__footer::before {
+			display: none;
 		}
 
 		.hero__footer {

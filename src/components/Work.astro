@@ -29,8 +29,10 @@ const projects = (await getCollection("projects")).sort(
 </section>
 
 <style>
+	/* stretch (not center) so the text column's right border runs the full height of the row:
+	   the vertical dashed line stays continuous; the text is centered inside its own cell */
 	.work__item {
-		align-items: center;
+		align-items: stretch;
 	}
 
 	.work__item-text {
