@@ -165,7 +165,7 @@ const { mode = "fill" } = Astro.props;
 		const ctx = cv.getContext('2d')!;
 		const mode = cv.dataset.mode;
 		const cell = 6;
-		const gain = mode === 'fill' ? 0.17 : 0.13; // muy sutil: similar al duotono #0a0a0a → #242424 de ashcamp
+		const gain = mode === 'fill' ? 0.12 : 0.09; // muy sutil: similar al duotono #0a0a0a → #242424 de ashcamp
 		let FW = 0, // el campo es el viewport: FW × FH, en coordenadas de pantalla
 			FH = 0;
 		let W = 0,
