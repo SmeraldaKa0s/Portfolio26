@@ -325,7 +325,7 @@
 				if (br) r.setEndBefore(br); // solo la primera línea: termina en "amet,"
 				const b = r.getBoundingClientRect();
 				// centrada sobre "amet"; las patas (a ~0.55·S bajo el tórax) apoyan sobre la línea
-				if (b.width) return [b.right - cb.left - S * 0.5, Math.max(S * 0.9, b.top - cb.top - 1 - S * 0.55)];
+				if (b.width) return [b.right - cb.left - S * 0.5, Math.max(S * 0.9, b.top - cb.top + 2 - S * 0.55)];
 			}
 			return [W * 0.5, H * 0.4];
 		}

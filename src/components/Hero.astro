@@ -51,7 +51,8 @@ import AsciiButterfly from "./AsciiButterfly.astro";
 		font-family: var(--font-mono-read);
 		font-weight: 400;
 		font-size: 14px;
-		line-height: 1.2;
+		/* ashcamp: each line is its own paragraph, line-height 1.2em, 6px gap → 22.8px between lines */
+		line-height: calc(1.2em + 6px);
 		color: #666666;
 		text-transform: uppercase;
 		margin: 0;
