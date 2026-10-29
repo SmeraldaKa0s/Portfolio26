@@ -1,7 +1,7 @@
 :root {
 	--bg: #0a0a0a;
 	--bg-raised: #141414;
-	--fg: #f5f5f3;
+	--fg: #ffffff; /* ashcamp's pure white token */
 	--muted: #8a8a8a;
 	--border-color: #222222;
 	--border: 1px dashed var(--border-color);
@@ -156,7 +156,13 @@ a {
 	letter-spacing: 0;
 	font-size: 11px;
 	font-weight: 400;
+	line-height: 1.2em;
 	color: var(--muted);
+}
+
+/* ashcamp: the section labels and the hero footer labels are white Martian Mono (h6 preset) */
+.col-narrow > .eyebrow {
+	color: var(--fg);
 }
 
 .section {
