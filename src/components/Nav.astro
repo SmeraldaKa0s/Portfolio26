@@ -31,9 +31,9 @@ const links = [
 		</div>
 
 		<div class="col-wide nav__meta-cell">
-			<span class="nav__clock eyebrow" data-clock>
-				<span class="nav__dot"></span>
-				<span data-clock-time>--:--:-- --</span>
+			<span class="nav__clock" data-clock>
+				<span class="nav__dot" data-clock-dot></span>
+				<span class="nav__time" data-clock-time>--:--:-- --</span>
 			</span>
 
 			<ChatButton href="#contact" label="Hablemos" ariaLabel="Hablemos: ir a contacto" />
@@ -69,8 +69,18 @@ const links = [
 		hour12: true,
 	});
 
+	const dotEl = document.querySelector<HTMLElement>("[data-clock-dot]");
+	// like ashcamp: green while "online" (working hours), red otherwise
+	const ONLINE_FROM = 9;
+	const ONLINE_TO = 18;
+
 	function tick() {
-		if (timeEl) timeEl.textContent = formatter.format(new Date());
+		const now = new Date();
+		if (timeEl) timeEl.textContent = formatter.format(now);
+		if (dotEl) {
+			const h = now.getHours();
+			dotEl.classList.toggle("is-online", h >= ONLINE_FROM && h < ONLINE_TO);
+		}
 	}
 
 	tick();
@@ -119,21 +129,39 @@ const links = [
 
 	.nav__meta-cell {
 		margin-inline-start: auto;
-		gap: 16px;
+		gap: 24px;
 		justify-content: flex-end;
 	}
 
+	/* ashcamp's clock: 10px dot + time, 12px apart */
 	.nav__clock {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
+		gap: 12px;
+		white-space: nowrap;
 	}
 
 	.nav__dot {
-		width: 6px;
-		height: 6px;
+		width: 10px;
+		height: 10px;
 		border-radius: 50%;
-		background: #3ddc84;
+		flex-shrink: 0;
+		background: rgb(240, 0, 0);
+	}
+
+	.nav__dot.is-online {
+		background: #22cc66;
+	}
+
+	.nav__time {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 400;
+		font-style: normal;
+		letter-spacing: -0.04em;
+		line-height: 1em;
+		color: #fff;
+		user-select: none;
 	}
 
 	.nav__toggle {
