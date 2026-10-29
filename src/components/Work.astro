@@ -18,7 +18,7 @@ const projects = (await getCollection("projects")).sort(
 			<div class="col-narrow work__item-text">
 				<h3>{project.data.title}</h3>
 				<p>{project.data.excerpt}</p>
-				<span class="eyebrow">{project.data.category}</span>
+				<span class="work__tag">{project.data.category}</span>
 			</div>
 
 			<div class="col-wide work__item-media">
@@ -30,7 +30,7 @@ const projects = (await getCollection("projects")).sort(
 
 <style>
 	/* stretch (not center) so the text column's right border runs the full height of the row:
-	   the vertical dashed line stays continuous; the text is centered inside its own cell */
+	   the vertical dashed line stays continuous */
 	.work__item {
 		align-items: stretch;
 	}
@@ -39,21 +39,41 @@ const projects = (await getCollection("projects")).sort(
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		gap: 12px;
+		align-items: flex-start;
+		gap: 10px;
 	}
 
+	/* ashcamp: title 20px (16px below 1200), description 14px #666, tag as a #222 pill */
 	.work__item-text h3 {
-		font-family: var(--font-display);
-		font-weight: 500;
+		font-family: var(--font-sans);
+		font-weight: 400;
 		font-size: 20px;
+		line-height: 1.2em;
+		letter-spacing: 0;
 		margin: 0;
 	}
 
 	.work__item-text p {
-		color: var(--muted);
+		font-family: var(--font-sans);
 		font-size: 14px;
+		line-height: 1.4;
+		color: #666;
 		margin: 0;
 		max-width: 32ch;
+	}
+
+	.work__tag {
+		display: inline-flex;
+		align-items: center;
+		width: min-content;
+		white-space: nowrap;
+		padding: 4px 12px;
+		border-radius: 100px;
+		background: #222;
+		font-family: var(--font-sans);
+		font-size: 11px;
+		line-height: 1.2em;
+		color: var(--fg);
 	}
 
 	.work__item-media {
@@ -61,7 +81,7 @@ const projects = (await getCollection("projects")).sort(
 	}
 
 	.work__item-media :global(.placeholder-media) {
-		border-radius: 0;
+		border-radius: 10px;
 		transition: transform 0.5s ease;
 	}
 
@@ -69,13 +89,31 @@ const projects = (await getCollection("projects")).sort(
 		transform: scale(1.04);
 	}
 
-	@media (max-width: 809.98px) {
-		.work__item {
-			align-items: stretch;
+	@media (max-width: 1199.98px) {
+		.work__item-text h3 {
+			font-size: 16px;
+		}
+	}
+
+	/* ashcamp mobile: one column — text cell (80/20 padding, dashed bottom line) then the media
+	   cell (40/20 padding); the frame's left/right dashed lines run on both sides */
+	@media (max-width: 767.98px) {
+		.work__item > .work__item-text {
+			flex: none;
+			max-width: none;
+			justify-content: flex-start;
+			padding: 80px 20px;
+			border-right: none;
+			border-bottom: var(--border);
 		}
 
-		.work__item-media {
-			order: -1;
+		.work__item-text p {
+			max-width: none;
+		}
+
+		.work__item > .work__item-media {
+			flex: none;
+			padding: 40px 20px;
 		}
 	}
 </style>
