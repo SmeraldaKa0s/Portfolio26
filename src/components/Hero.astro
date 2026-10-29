@@ -1,5 +1,27 @@
 ---
 import AsciiButterfly from "./AsciiButterfly.astro";
+
+// Headline as lines of words; the first word of the first line is highlighted.
+// Entry effect copied from ashcamp.co: per-character "appear" (blur 10px, opacity 0, y +10px →
+// normal), 0.05s stagger between characters, lines starting at 0 / 0.25 / 0.5 / 0.75s.
+const lines = [
+	["Lorem", "ipsum", "dolor", "sit", "amet,"],
+	["consectetur", "adipiscing", "elit,"],
+	["sed", "do", "eiusmod,"],
+	["tempor", "incididunt", "ut", "labore", "et", "dolore."],
+];
+const LINE_START = [0, 0.25, 0.5, 0.75];
+const CHAR_STAGGER = 0.05;
+const ariaText = lines.map((l) => l.join(" ")).join(" ");
+
+const headline = lines.map((words, li) => {
+	let idx = 0;
+	return words.map((word, wi) => {
+		const chars = [...word].map((ch) => ({ ch, delay: LINE_START[li] + idx++ * CHAR_STAGGER }));
+		idx++; // the space after the word also counts as a character
+		return { chars, strong: li === 0 && wi === 0 };
+	});
+});
 ---
 
 <section id="index" class="hero frame">
@@ -8,11 +30,26 @@ import AsciiButterfly from "./AsciiButterfly.astro";
 
 		<div class="col-narrow hero__spacer" aria-hidden="true"></div>
 		<div class="col-wide hero__headline-cell">
-			<h1 class="hero__headline hero__intro">
-				<strong>Lorem</strong> ipsum dolor sit amet,<br />
-				consectetur adipiscing elit,<br />
-				sed do eiusmod,<br />
-				tempor incididunt ut labore et dolore.
+			<h1 class="hero__headline" aria-label={ariaText}>
+				{
+					headline.map((words, li) => (
+						<Fragment>
+							{words.map((w, wi) => (
+								<Fragment>
+									{wi > 0 && " "}
+									<span class:list={["hero__word", { "hero__word--strong": w.strong }]} aria-hidden="true">
+										{w.chars.map((c) => (
+											<span class="hero__char" style={`--d:${c.delay.toFixed(2)}s`}>
+												{c.ch}
+											</span>
+										))}
+									</span>
+								</Fragment>
+							))}
+							{li < headline.length - 1 && <br />}
+						</Fragment>
+					))
+				}
 			</h1>
 		</div>
 	</div>
@@ -58,9 +95,37 @@ import AsciiButterfly from "./AsciiButterfly.astro";
 		margin: 0;
 	}
 
-	.hero__headline strong {
+	.hero__word {
+		display: inline-block;
+		white-space: nowrap;
+	}
+
+	.hero__word--strong {
 		font-weight: 400;
 		color: var(--fg);
+	}
+
+	/* per-character entry, as on ashcamp.co (spring ~0.3s, no bounce) */
+	.hero__char {
+		display: inline-block;
+		opacity: 0;
+		filter: blur(10px);
+		transform: translateY(10px);
+		animation: hero-char 0.3s cubic-bezier(0.33, 1, 0.68, 1) both;
+		animation-delay: var(--d, 0s);
+	}
+
+	@keyframes hero-char {
+		from {
+			opacity: 0.001;
+			filter: blur(10px);
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			filter: blur(0);
+			transform: translateY(0);
+		}
 	}
 
 	/* Hero content is always on-screen on load, so it fades in on a timer
@@ -83,6 +148,13 @@ import AsciiButterfly from "./AsciiButterfly.astro";
 		.hero__intro {
 			animation: none;
 			opacity: 1;
+			transform: none;
+		}
+
+		.hero__char {
+			animation: none;
+			opacity: 1;
+			filter: none;
 			transform: none;
 		}
 	}
