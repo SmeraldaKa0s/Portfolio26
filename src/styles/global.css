@@ -17,7 +17,10 @@
 	--gutter: 20px;
 	--section-gap: 0px;
 	--nav-h: 84px; /* same nav height as ashcamp.co */
-	--col-narrow: 0.7;
+	/* Width of the left column, shared by EVERY section so the vertical dashed line is one straight
+	   line: 41.18% (= .7 / 1.7, ashcamp's tablet ratio) capped at 400px (ashcamp's desktop). A percentage
+	   basis ignores each cell's padding, which is what used to make the lines drift apart. */
+	--col-narrow-w: min(400px, 41.1765%);
 }
 
 @media (max-width: 1199.98px) {
@@ -122,8 +125,8 @@ a {
 }
 
 .split > .col-narrow {
-	flex: var(--col-narrow) 0 0;
-	max-width: 400px;
+	flex: 0 0 var(--col-narrow-w);
+	max-width: none;
 	border-right: var(--border);
 	padding: 20px;
 }
