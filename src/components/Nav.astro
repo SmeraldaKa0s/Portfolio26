@@ -9,9 +9,11 @@ const links = [
 ];
 ---
 
-<header class="nav frame">
+<header class="nav frame" data-nav>
 	<HalftoneBackground mode="nav" />
-	<div class="split">
+
+	<!-- desktop (≥ 810px) -->
+	<div class="split nav__desktop">
 		<div class="col-narrow nav__links-cell">
 			<nav class="nav__links">
 				{links.map((link) => (
@@ -23,11 +25,6 @@ const links = [
 					</a>
 				))}
 			</nav>
-
-			<button class="nav__toggle" aria-label="Abrir menú" aria-expanded="false" data-nav-toggle>
-				<span></span>
-				<span></span>
-			</button>
 		</div>
 
 		<div class="col-wide nav__meta-cell">
@@ -40,28 +37,48 @@ const links = [
 		</div>
 	</div>
 
-	<nav class="nav__mobile" data-nav-mobile>
-		{links.map((link) => <a href={link.href}>{link.label}</a>)}
+	<!-- mobile (< 810px), like ashcamp: clock on the left, "● MENU" on the right -->
+	<div class="nav__bar">
+		<span class="nav__clock" data-clock>
+			<span class="nav__dot" data-clock-dot></span>
+			<span class="nav__time" data-clock-time>--:--:-- --</span>
+		</span>
+
+		<button class="nav__menu" type="button" aria-expanded="false" aria-controls="nav-panel" data-nav-toggle>
+			<span class="nav__menu-dot" aria-hidden="true"></span>
+			<span data-menu-label>MENU</span>
+		</button>
+	</div>
+
+	<nav class="nav__panel" id="nav-panel" data-nav-panel aria-label="Menú">
+		{links.map((link) => <a class="nav__panel-link" href={link.href}>{link.label}</a>)}
+		<ChatButton href="#contact" label="Hablemos" ariaLabel="Hablemos: ir a contacto" />
 	</nav>
 </header>
 
 <script>
+	const nav = document.querySelector<HTMLElement>("[data-nav]");
 	const toggle = document.querySelector<HTMLButtonElement>("[data-nav-toggle]");
-	const mobile = document.querySelector<HTMLElement>("[data-nav-mobile]");
+	const label = document.querySelector<HTMLElement>("[data-menu-label]");
+	const panel = document.querySelector<HTMLElement>("[data-nav-panel]");
 
-	toggle?.addEventListener("click", () => {
-		const isOpen = mobile?.classList.toggle("is-open");
-		toggle.setAttribute("aria-expanded", String(Boolean(isOpen)));
+	function setOpen(open: boolean) {
+		nav?.classList.toggle("is-open", open);
+		toggle?.setAttribute("aria-expanded", String(open));
+		if (label) label.textContent = open ? "CLOSE" : "MENU";
+		document.documentElement.style.overflow = open ? "hidden" : "";
+	}
+
+	toggle?.addEventListener("click", () => setOpen(!nav?.classList.contains("is-open")));
+	panel?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setOpen(false)));
+	window.addEventListener("keydown", (e) => {
+		if (e.key === "Escape") setOpen(false);
+	});
+	// leaving the mobile layout while the menu is open: close it
+	matchMedia("(min-width: 810px)").addEventListener("change", (e) => {
+		if (e.matches) setOpen(false);
 	});
 
-	mobile?.querySelectorAll("a").forEach((a) =>
-		a.addEventListener("click", () => {
-			mobile.classList.remove("is-open");
-			toggle?.setAttribute("aria-expanded", "false");
-		})
-	);
-
-	const timeEl = document.querySelector<HTMLElement>("[data-clock-time]");
 	const formatter = new Intl.DateTimeFormat("en-US", {
 		hour: "2-digit",
 		minute: "2-digit",
@@ -69,18 +86,18 @@ const links = [
 		hour12: true,
 	});
 
-	const dotEl = document.querySelector<HTMLElement>("[data-clock-dot]");
 	// like ashcamp: green while "online" (working hours), red otherwise
 	const ONLINE_FROM = 9;
 	const ONLINE_TO = 18;
 
 	function tick() {
 		const now = new Date();
-		if (timeEl) timeEl.textContent = formatter.format(now);
-		if (dotEl) {
-			const h = now.getHours();
-			dotEl.classList.toggle("is-online", h >= ONLINE_FROM && h < ONLINE_TO);
-		}
+		const text = formatter.format(now);
+		const h = now.getHours();
+		document.querySelectorAll<HTMLElement>("[data-clock-time]").forEach((el) => (el.textContent = text));
+		document
+			.querySelectorAll<HTMLElement>("[data-clock-dot]")
+			.forEach((el) => el.classList.toggle("is-online", h >= ONLINE_FROM && h < ONLINE_TO));
 	}
 
 	tick();
@@ -90,7 +107,8 @@ const links = [
 <style>
 	/* the halftone canvas sits behind the nav content */
 	.nav > :global(.split),
-	.nav__mobile {
+	.nav__bar,
+	.nav__panel {
 		position: relative;
 		z-index: 1;
 	}
@@ -103,10 +121,8 @@ const links = [
 		border-bottom: none; /* ashcamp has no divider between the nav and the hero */
 	}
 
-	@media (min-width: 768px) {
-		.nav > :global(.split) {
-			min-height: var(--nav-h);
-		}
+	.nav__desktop {
+		min-height: var(--nav-h);
 	}
 
 	.nav__links-cell,
@@ -164,75 +180,74 @@ const links = [
 		user-select: none;
 	}
 
-	.nav__toggle {
-		display: none;
-		flex-direction: column;
-		gap: 5px;
-		background: none;
-		border: none;
-		padding: 10px;
-		margin-inline-start: auto;
-		cursor: pointer;
-	}
-
-	.nav__toggle span {
-		width: 18px;
-		height: 1px;
-		background: var(--fg);
-	}
-
-	.nav__mobile {
+	/* mobile pieces are hidden on desktop */
+	.nav__bar,
+	.nav__panel {
 		display: none;
 	}
 
-	@media (max-width: 767.98px) {
-		.nav .split {
-			flex-direction: row;
-		}
-
-		.nav .col-narrow {
-			max-width: none;
-			flex: 0 0 auto;
-			border-right: var(--border);
-			border-bottom: none;
-		}
-
-		.nav__links {
+	@media (max-width: 809.98px) {
+		.nav__desktop {
 			display: none;
 		}
 
-		.nav__toggle {
+		/* ashcamp mobile: clock left, "● MENU" right, no divider */
+		.nav__bar {
 			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			min-height: var(--nav-h);
+			padding: 0 28px 0 20px;
 		}
 
-		.nav__meta-cell {
-			gap: 10px;
-		}
-
-		.nav__clock {
-			display: none;
-		}
-
-		.nav__mobile {
-			flex-direction: column;
+		.nav__menu {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 0;
+			background: none;
+			border: 0;
+			color: #fff;
 			font-family: var(--font-mono);
-			text-transform: uppercase;
 			font-size: 11px;
-			max-height: 0;
-			overflow: hidden;
-			border-top: none;
-			transition: max-height 0.2s ease;
+			font-weight: 400;
+			line-height: 1em;
+			text-transform: uppercase;
+			cursor: pointer;
 		}
 
-		.nav__mobile.is-open {
+		.nav__menu-dot {
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background: #fff;
+		}
+
+		/* open: the nav becomes a full-screen panel inside the same dashed frame */
+		.nav.is-open {
+			position: fixed;
+			inset: var(--gutter);
+			z-index: 100;
+			height: auto;
+			overflow-y: auto;
+			border: var(--border);
+			box-shadow: 0 0 0 var(--gutter) var(--bg);
+		}
+
+		.nav.is-open .nav__panel {
 			display: flex;
-			max-height: 200px;
-			border-top: var(--border);
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 10px; /* ashcamp: 29px rows, 10px apart */
+			padding: 40px 20px 24px;
 		}
 
-		.nav__mobile a {
-			padding: 14px 20px;
-			border-bottom: var(--border);
+		.nav__panel-link {
+			font-family: var(--font-mono);
+			font-size: 11px;
+			line-height: 29px;
+			text-transform: uppercase;
+			color: var(--fg);
 		}
 	}
 </style>

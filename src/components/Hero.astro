@@ -178,24 +178,28 @@ const headline = lines.map((words, li) => {
 		pointer-events: none;
 	}
 
-	@media (max-width: 767.98px) {
+	@media (max-width: 809.98px) {
 		.hero__spacer {
 			display: none;
 		}
 
-		.hero__headline-cell {
-			padding: 48px 20px;
+		/* ashcamp mobile: text left-aligned at 20px, centered in the frame, no vertical divider */
+		.hero__main > .hero__headline-cell {
+			flex: 1 1 auto;
+			padding: 80px 20px calc(80px + var(--nav-h) - 47px) 20px;
 		}
 
 		.hero__footer::before {
 			display: none;
 		}
 
+		/* only the two outer labels remain: ( BASED IN … ) left, ( EST … ) right */
+		.hero__footer > :nth-child(2) {
+			display: none;
+		}
+
 		.hero__footer {
-			flex-direction: column;
-			gap: 8px;
-			align-items: flex-start;
-			padding: 16px 20px 24px;
+			padding: 16px 20px;
 		}
 	}
 </style>

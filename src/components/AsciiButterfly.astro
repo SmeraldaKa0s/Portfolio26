@@ -246,11 +246,14 @@
 		const FONT = `bold ${FONT_PX}px ui-monospace, Menlo, Consolas, monospace`;
 		ctx.font = FONT;
 		const CW = ctx.measureText('M').width || 4.2;
-		const S = window.innerWidth < 768 ? 52 : 68; // envergadura (px)
+		// envergadura (px) según el ancho de pantalla; se recalcula al redimensionar
+		const pickS = () => (window.innerWidth < 480 ? 44 : window.innerWidth < 810 ? 54 : 68);
+		let S = pickS();
 		const FADE = Math.pow(0.8, ST.fadePow);
 
 		const geo = { f: prepWing('f'), h: prepWing('h'), p: prepWing('p') };
-		const tex = { f: bake(geo.f, 'f', CW / S, CH / S), h: bake(geo.h, 'h', CW / S, CH / S), p: bake(geo.p, 'p', CW / S, CH / S) };
+		const bakeTex = () => ({ f: bake(geo.f, 'f', CW / S, CH / S), h: bake(geo.h, 'h', CW / S, CH / S), p: bake(geo.p, 'p', CW / S, CH / S) });
+		let tex = bakeTex();
 
 		function lineChar(a: number) {
 			let d = ((a * 180) / Math.PI) % 180;
@@ -285,6 +288,12 @@
 		};
 
 		function resize() {
+			const ns = pickS();
+			const sizeChanged = ns !== S;
+			if (sizeChanged) {
+				S = ns;
+				tex = bakeTex();
+			}
 			const dpr = window.devicePixelRatio || 1;
 			W = canvas.clientWidth;
 			H = canvas.clientHeight;
@@ -303,6 +312,11 @@
 				s.x = s.px = W * 0.8;
 				s.y = s.py = H / 2;
 				s.init = true;
+			}
+			// the layout changed: re-aim at the text (and re-pick the emergence point)
+			if (s.phase && s.phase !== 'gone') {
+				if (s.phase === 'emerge') pickEmerge();
+				else s.perch = perchPoint();
 			}
 			if (reduce) render();
 		}

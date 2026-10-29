@@ -24,9 +24,9 @@
 	}
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 809.98px) {
 	:root {
-		--nav-h: 0px;
+		--nav-h: 68px; /* ashcamp's mobile nav row */
 	}
 }
 
@@ -131,7 +131,7 @@ a {
 	padding: 20px;
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 809.98px) {
 	.split {
 		flex-direction: column;
 	}
