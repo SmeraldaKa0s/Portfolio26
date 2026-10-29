@@ -1,0 +1,312 @@
+---
+// Fondo "Estela": trama de puntos (halftone) cuyo tamaño sigue un campo de ruido Perlin 3D
+// animado, inspirado en el hero de ashcamp.co. El puntero arrastra y deforma el campo; sin
+// mouse, una luz invisible deambula sola.
+//
+//  Todas las capas dibujan el MISMO campo, anclado al viewport (no a su propio rectángulo), así
+//  el fondo es continuo entre la navbar, el hero y la zona de abajo, y puede salirse de las líneas
+//  punteadas del marco (los canvas son de ancho completo de pantalla).
+//  - fill   (default): ocupa su contenedor (position: relative), de borde a borde de la pantalla
+//  - sticky: canvas del alto del viewport, pegado mientras se scrollea su zona
+//            (la zona debe tener la clase .halftone-zone, ver global.css)
+//  - nav:    franja dentro de un header; dibuja el recorte del campo que le corresponde
+interface Props {
+	mode?: "fill" | "sticky" | "nav";
+}
+const { mode = "fill" } = Astro.props;
+---
+
+<canvas
+	class:list={["halftone-bg", mode === "sticky" ? "halftone-bg--sticky" : "halftone-bg--fill"]}
+	data-mode={mode}
+	aria-hidden="true"></canvas>
+
+<style>
+	.halftone-bg {
+		pointer-events: none;
+		display: block;
+	}
+	/* de borde a borde de la pantalla; sube hasta el borde superior de la página (gutter) */
+	.halftone-bg--fill {
+		position: absolute;
+		top: calc(-1 * var(--gutter, 0px));
+		left: calc(50% - 50vw);
+		width: 100vw;
+		height: calc(100% + var(--gutter, 0px));
+		z-index: 0;
+	}
+	.halftone-bg--sticky {
+		position: sticky;
+		top: 0;
+		margin-left: calc(50% - 50vw);
+		width: 100vw;
+		height: 100vh;
+		margin-bottom: -100vh;
+		z-index: 0;
+	}
+	/* la franja de la navbar sí queda dentro del marco */
+	.halftone-bg[data-mode="nav"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		left: 0;
+		top: 0;
+	}
+</style>
+
+<script>
+	const TAU = Math.PI * 2;
+	const clamp = (x: number, a: number, b: number) => (x < a ? a : x > b ? b : x);
+	const sstep = (a: number, b: number, x: number) => {
+		const t = clamp((x - a) / (b - a), 0, 1);
+		return t * t * (3 - 2 * t);
+	};
+	const hash2 = (i: number, j: number, k: number) => {
+		let h = (i * 374761393 + j * 668265263 + k * 2147483647) | 0;
+		h = Math.imul(h ^ (h >>> 13), 1274126177);
+		return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+	};
+
+	// ---------- Perlin 3D (improved noise) ----------
+	const PERM = new Uint8Array(512);
+	{
+		const p = [...Array(256).keys()];
+		let s = 1337;
+		for (let i = 255; i > 0; i--) {
+			s = (s * 1103515245 + 12345) & 0x7fffffff;
+			const j = s % (i + 1);
+			[p[i], p[j]] = [p[j], p[i]];
+		}
+		for (let i = 0; i < 512; i++) PERM[i] = p[i & 255];
+	}
+	const fade = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
+	function grad(h: number, x: number, y: number, z: number) {
+		h &= 15;
+		const u = h < 8 ? x : y,
+			v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+		return (h & 1 ? -u : u) + (h & 2 ? -v : v);
+	}
+	const lerp = (a: number, b: number, t: number) => a + t * (b - a);
+	function noise3(x: number, y: number, z: number) {
+		const X = Math.floor(x),
+			Y = Math.floor(y),
+			Z = Math.floor(z);
+		x -= X;
+		y -= Y;
+		z -= Z;
+		const xi = X & 255,
+			yi = Y & 255,
+			zi = Z & 255;
+		const u = fade(x),
+			v = fade(y),
+			w = fade(z);
+		const A = PERM[xi] + yi,
+			AA = PERM[A] + zi,
+			AB = PERM[A + 1] + zi,
+			B = PERM[xi + 1] + yi,
+			BA = PERM[B] + zi,
+			BB = PERM[B + 1] + zi;
+		return lerp(
+			lerp(
+				lerp(grad(PERM[AA], x, y, z), grad(PERM[BA], x - 1, y, z), u),
+				lerp(grad(PERM[AB], x, y - 1, z), grad(PERM[BB], x - 1, y - 1, z), u),
+				v,
+			),
+			lerp(
+				lerp(grad(PERM[AA + 1], x, y, z - 1), grad(PERM[BA + 1], x - 1, y, z - 1), u),
+				lerp(grad(PERM[AB + 1], x, y - 1, z - 1), grad(PERM[BB + 1], x - 1, y - 1, z - 1), u),
+				v,
+			),
+			w,
+		);
+	}
+	// paleta de ashcamp: bandas coseno entre negro y blanco + curva sigmoide de contraste
+	const SIG0 = 1 / (1 + 7.5 * Math.exp(0.25)),
+		SIG1 = 1 / (1 + 7.5 * Math.exp(-3.75));
+	const bands = (v: number) => {
+		const c = 0.5 - 0.5 * Math.cos(TAU * v);
+		return (1 / (1 + 7.5 * Math.exp(-4 * c + 0.25)) - SIG0) / (SIG1 - SIG0);
+	};
+	// viñeta elíptica suave: la "máscara" del hero
+	const vignette = (x: number, y: number, W: number, H: number, cx = 0.55, rx = 0.75, ry = 0.9) => {
+		const dx = (x / W - cx) / rx,
+			dy = (y / H - 0.5) / ry;
+		return 1 - sstep(0.55, 1.05, Math.sqrt(dx * dx + dy * dy));
+	};
+
+	// ---------- sprites de círculos (12 niveles de brillo) ----------
+	const LEVELS = 12;
+	function buildSprite(cell: number, dpr: number, gain: number) {
+		const sp = Math.ceil(cell * dpr),
+			c = document.createElement('canvas');
+		c.width = sp * LEVELS;
+		c.height = sp;
+		const g = c.getContext('2d')!;
+		for (let k = 1; k < LEVELS; k++) {
+			const f = k / (LEVELS - 1);
+			const lum = Math.round(clamp(14 + (20 + 40 * f) * gain, 0, 235));
+			g.fillStyle = `rgb(${lum},${lum},${lum})`;
+			g.beginPath();
+			g.arc(k * sp + sp / 2, sp / 2, Math.max(0.45 * dpr, sp * 0.5 * Math.sqrt(f) * 0.92), 0, TAU);
+			g.fill();
+		}
+		return { img: c, sp };
+	}
+
+	const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const T0 = performance.now();
+	const now = () => (reduce ? 8 : (performance.now() - T0) / 1000 + 2);
+
+	type Layer = { cv: HTMLCanvasElement; draw: (t: number) => void; visible: boolean; minDt: number; last: number };
+	const layers: Layer[] = [];
+
+	function setup(cv: HTMLCanvasElement) {
+		const ctx = cv.getContext('2d')!;
+		const mode = cv.dataset.mode;
+		const cell = 6;
+		const gain = mode === 'fill' ? 0.12 : 0.09; // muy sutil: similar al duotono #0a0a0a → #242424 de ashcamp
+		let FW = 0, // el campo es el viewport: FW × FH, en coordenadas de pantalla
+			FH = 0;
+		let W = 0,
+			H = 0,
+			dpr = 1;
+		let sprite = buildSprite(cell, 1, gain);
+		const pts: number[][] = [];
+		let lastMove = -99;
+
+		const wander = (t: number): number[] => [
+			FW * (0.55 + 0.3 * Math.sin(0.9 * t) + 0.08 * Math.sin(2.8 * t + 1)),
+			FH * (0.5 + 0.3 * Math.sin(1.2 * t + 1) + 0.07 * Math.sin(3.6 * t)),
+		];
+
+		window.addEventListener(
+			'pointermove',
+			(e) => {
+				const t = now();
+				pts.push([e.clientX, e.clientY, t]); // coords de viewport = coords del campo
+				lastMove = t;
+				if (pts.length > 60) pts.shift();
+			},
+			{ passive: true },
+		);
+
+		const draw = (t: number) => {
+			if (!W || !H) return;
+			ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+			ctx.clearRect(0, 0, W, H);
+			FW = window.innerWidth;
+			FH = window.innerHeight;
+			const rc = cv.getBoundingClientRect();
+			const xOff = rc.left,
+				yOff = rc.top; // posición del canvas dentro del campo
+
+			// estela del puntero (o luz errante si no hay mouse)
+			const LIFE = 1.4,
+				trail: number[][] = [];
+			if (t - lastMove < 2.5 && !reduce) {
+				for (const p of pts) if (t - p[2] < LIFE) trail.push(p);
+			} else {
+				for (let k = 28; k >= 0; k--) {
+					const tt = t - k * 0.05,
+						p = wander(tt);
+					trail.push([p[0], p[1], tt]);
+				}
+			}
+			const seg: number[][] = [];
+			for (let i = 1; i < trail.length; i++) {
+				const a = trail[i - 1],
+					b = trail[i],
+					age = (t - b[2]) / LIFE;
+				const vx = b[0] - a[0],
+					vy = b[1] - a[1];
+				if (age < 1 && (vx || vy)) seg.push([b[0], b[1], vx, vy, (1 - age) * (1 - age)]);
+			}
+
+			// Velocidades de la escena real de ashcamp (Unicorn Studio, speed 0.38 → uTime ≈ 22.8/s):
+			//  - deriva ascendente: uTime·0.0125·2.43 ≈ 0.69 unidades de ruido por segundo
+			//  - evolución del ruido (z): uTime·0.03 ≈ 0.68/s → el campo se transforma muy rápido
+			//  - desplazamiento de paleta: uTime·0.0055 ≈ 0.125/s → bandas que aparecen y se desvanecen
+			const BLACK = 0.2; // todo lo que esté por debajo de este nivel queda en negro
+			const R2 = (FH * 0.17) ** 2,
+				sc = 2.9 / FH,
+				z = 7.3 + t * 0.5,
+				drift = t * 0.52,
+				shift = t * 0.095;
+			// se apaga hacia los bordes de la pantalla; el hero además se apaga contra su borde inferior
+			const ex = Math.min(120, FW * 0.08),
+				eyBottom = mode === 'fill' ? Math.min(90, H * 0.16) : 0;
+			const cols = Math.ceil(W / cell) + 1,
+				rows = Math.ceil(H / cell) + 1,
+				gt = Math.floor(t * 3),
+				off = cell / 2;
+			for (let j = 0; j < rows; j++) {
+				const yl = j * cell + off; // y local al canvas
+				const y = yl + yOff; // y en coords del campo
+				for (let i = 0; i < cols; i++) {
+					const x = i * cell + off + xOff;
+					let edge = sstep(0, ex, x) * sstep(0, ex, FW - x);
+					if (eyBottom) edge *= sstep(0, eyBottom, H - yl);
+					if (edge <= 0.01) continue;
+					let dx = 0,
+						dy = 0,
+						m = 0;
+					for (const s of seg) {
+						const px = x - s[0],
+							py = y - s[1],
+							d2 = px * px + py * py;
+						if (d2 > R2 * 4) continue;
+						const w = Math.exp(-d2 / R2) * s[4];
+						dx += s[2] * w;
+						dy += s[3] * w;
+						m += w;
+					}
+					const sx = x - dx * 5,
+						sy = y - dy * 5;
+					const n = 0.5 + 1.6 * noise3((sx - FW / 2) * sc * 0.53, (sy - FH / 2) * sc * 0.47 + drift, z);
+					// el campo base, con un corte de negros (más espacio vacío); el puntero/la luz errante
+					// lo apaga alrededor de su estela en vez de iluminarlo
+					const base = Math.max(0, bands(sstep(0, 1, 1 - n) + shift) * vignette(x, y, FW, FH) - BLACK) / (1 - BLACK);
+					let L = base * (1 - Math.min(1, m * 1.1)) * edge;
+					if (L <= 0.01) continue;
+					L += (hash2(i, j, gt) - 0.5) * 0.07;
+					const k = clamp(Math.floor(L * LEVELS), 0, LEVELS - 1);
+					if (k <= 0) continue;
+					ctx.drawImage(sprite.img, k * sprite.sp, 0, sprite.sp, sprite.sp, x - xOff - cell / 2, yl - cell / 2, cell, cell);
+				}
+			}
+		};
+
+		const layer: Layer = { cv, draw, visible: true, minDt: 1 / 40, last: -1 };
+		const resize = () => {
+			W = cv.clientWidth;
+			H = cv.clientHeight;
+			dpr = Math.min(2, window.devicePixelRatio || 1);
+			cv.width = Math.round(W * dpr);
+			cv.height = Math.round(H * dpr);
+			sprite = buildSprite(cell, dpr, gain);
+			draw(now()); // dibuja justo después de redimensionar: el canvas nunca queda en blanco
+		};
+		new ResizeObserver(resize).observe(cv);
+		new IntersectionObserver((es) => {
+			for (const e of es) layer.visible = e.isIntersecting;
+		}).observe(cv);
+		resize();
+		layers.push(layer);
+	}
+
+	document.querySelectorAll<HTMLCanvasElement>('.halftone-bg').forEach(setup);
+
+	if (!reduce) {
+		const frame = () => {
+			const t = now();
+			for (const l of layers) {
+				if (!l.visible || t - l.last < l.minDt) continue;
+				l.last = t;
+				l.draw(t);
+			}
+			requestAnimationFrame(frame);
+		};
+		requestAnimationFrame(frame);
+	}
+</script>

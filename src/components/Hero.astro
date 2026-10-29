@@ -1,18 +1,55 @@
 ---
+import AsciiButterfly from "./AsciiButterfly.astro";
+
+// Headline as lines of words; the first word of the first line is highlighted.
+// Entry effect copied from ashcamp.co: per-character "appear" (blur 10px, opacity 0, y +10px →
+// normal), 0.05s stagger between characters, lines starting at 0 / 0.25 / 0.5 / 0.75s.
+const lines = [
+	["Lorem", "ipsum", "dolor", "sit", "amet,"],
+	["consectetur", "adipiscing", "elit,"],
+	["sed", "do", "eiusmod,"],
+	["tempor", "incididunt", "ut", "labore", "et", "dolore."],
+];
+const LINE_START = [0, 0.25, 0.5, 0.75];
+const CHAR_STAGGER = 0.05;
+const ariaText = lines.map((l) => l.join(" ")).join(" ");
+
+const headline = lines.map((words, li) => {
+	let idx = 0;
+	return words.map((word, wi) => {
+		const chars = [...word].map((ch) => ({ ch, delay: LINE_START[li] + idx++ * CHAR_STAGGER }));
+		idx++; // the space after the word also counts as a character
+		return { chars, strong: li === 0 && wi === 0 };
+	});
+});
 ---
 
 <section id="index" class="hero frame">
 	<div class="split hero__main">
-		<div class="dot-texture" aria-hidden="true"></div>
-		<div class="dot-glow" aria-hidden="true"></div>
+		<AsciiButterfly />
 
 		<div class="col-narrow hero__spacer" aria-hidden="true"></div>
 		<div class="col-wide hero__headline-cell">
-			<h1 class="hero__headline hero__intro">
-				<strong>Lorem</strong> ipsum dolor sit amet,<br />
-				consectetur adipiscing elit,<br />
-				sed do eiusmod,<br />
-				tempor incididunt ut labore et dolore.
+			<h1 class="hero__headline" aria-label={ariaText}>
+				{
+					headline.map((words, li) => (
+						<Fragment>
+							{words.map((w, wi) => (
+								<Fragment>
+									{wi > 0 && " "}
+									<span class:list={["hero__word", { "hero__word--strong": w.strong }]} aria-hidden="true">
+										{w.chars.map((c) => (
+											<span class="hero__char" style={`--d:${c.delay.toFixed(2)}s`}>
+												{c.ch}
+											</span>
+										))}
+									</span>
+								</Fragment>
+							))}
+							{li < headline.length - 1 && <br />}
+						</Fragment>
+					))
+				}
 			</h1>
 		</div>
 	</div>
@@ -29,6 +66,7 @@
 		display: flex;
 		flex-direction: column;
 		flex: 1 0 auto;
+		border-top: none; /* no divider under the nav, like ashcamp (a <script> between them breaks .frame + .frame) */
 	}
 
 	.hero__main {
@@ -42,21 +80,52 @@
 		z-index: 1;
 		display: flex;
 		align-items: center;
-		padding: 80px 48px;
+		/* centered in the whole frame (the nav overlaps the top of the hero), 60px from the divider like ashcamp */
+		padding: 80px 48px calc(80px + var(--nav-h) - 47px) 60px; /* 47px ≈ footer row: center in nav + hero + footer */
 	}
 
 	.hero__headline {
 		font-family: var(--font-mono-read);
 		font-weight: 400;
 		font-size: 14px;
-		line-height: 1.2;
+		/* ashcamp: each line is its own paragraph, line-height 1.2em, 6px gap → 22.8px between lines */
+		line-height: calc(1.2em + 6px);
 		color: #666666;
+		text-transform: uppercase;
 		margin: 0;
 	}
 
-	.hero__headline strong {
+	.hero__word {
+		display: inline-block;
+		white-space: nowrap;
+	}
+
+	.hero__word--strong {
 		font-weight: 400;
 		color: var(--fg);
+	}
+
+	/* per-character entry, as on ashcamp.co (spring ~0.3s, no bounce) */
+	.hero__char {
+		display: inline-block;
+		opacity: 0;
+		filter: blur(10px);
+		transform: translateY(10px);
+		animation: hero-char 0.3s cubic-bezier(0.33, 1, 0.68, 1) both;
+		animation-delay: var(--d, 0s);
+	}
+
+	@keyframes hero-char {
+		from {
+			opacity: 0.001;
+			filter: blur(10px);
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			filter: blur(0);
+			transform: translateY(0);
+		}
 	}
 
 	/* Hero content is always on-screen on load, so it fades in on a timer
@@ -81,30 +150,56 @@
 			opacity: 1;
 			transform: none;
 		}
+
+		.hero__char {
+			animation: none;
+			opacity: 1;
+			filter: none;
+			transform: none;
+		}
 	}
 
 	.hero__footer {
+		position: relative;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: 16px 20px;
-		border-top: var(--border);
 	}
 
-	@media (max-width: 767.98px) {
+	/* the vertical divider (the .col-narrow border) runs through the footer row down to the bottom line */
+	.hero__footer::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: calc(min(400px, calc(100% * var(--col-narrow) / (var(--col-narrow) + 1))) - 1px);
+		border-left: var(--border);
+		pointer-events: none;
+	}
+
+	@media (max-width: 809.98px) {
 		.hero__spacer {
 			display: none;
 		}
 
-		.hero__headline-cell {
-			padding: 48px 20px;
+		/* ashcamp mobile: text left-aligned at 20px, centered in the frame, no vertical divider */
+		.hero__main > .hero__headline-cell {
+			flex: 1 1 auto;
+			padding: 80px 20px calc(80px + var(--nav-h) - 47px) 20px;
+		}
+
+		.hero__footer::before {
+			display: none;
+		}
+
+		/* only the two outer labels remain: ( BASED IN … ) left, ( EST … ) right */
+		.hero__footer > :nth-child(2) {
+			display: none;
 		}
 
 		.hero__footer {
-			flex-direction: column;
-			gap: 8px;
-			align-items: flex-start;
-			padding: 16px 20px 24px;
+			padding: 16px 20px;
 		}
 	}
 </style>

@@ -9,18 +9,23 @@ import Experience from "../components/Experience.astro";
 import Press from "../components/Press.astro";
 import CTA from "../components/CTA.astro";
 import Footer from "../components/Footer.astro";
+import HalftoneBackground from "../components/HalftoneBackground.astro";
 ---
 
 <Layout>
 	<div class="hero-screen">
+		<HalftoneBackground />
 		<Nav />
 		<Hero />
 	</div>
 	<Work />
 	<About />
 	<TrustedBy />
-	<Experience />
-	<Press />
-	<CTA />
-	<Footer />
+	<div class="halftone-zone">
+		<HalftoneBackground mode="sticky" />
+		<Experience />
+		<Press />
+		<CTA />
+		<Footer />
+	</div>
 </Layout>

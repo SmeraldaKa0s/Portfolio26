@@ -1,13 +1,22 @@
 ---
+import HalftoneBackground from "./HalftoneBackground.astro";
+import ChatButton from "./ChatButton.astro";
+
 const links = [
 	{ href: "/#index", label: "Index" },
 	{ href: "/#work", label: "Work" },
 	{ href: "/#info", label: "Info" },
 ];
+const email = "alek.xandra.lerner@gmail.com";
+// TODO: replace with the real LinkedIn profile URL
+const linkedin = "https://www.linkedin.com/";
 ---
 
-<header class="nav frame">
-	<div class="split">
+<header class="nav frame" data-nav>
+	<HalftoneBackground mode="nav" />
+
+	<!-- desktop (≥ 810px) -->
+	<div class="split nav__desktop">
 		<div class="col-narrow nav__links-cell">
 			<nav class="nav__links">
 				{links.map((link) => (
@@ -19,55 +28,93 @@ const links = [
 					</a>
 				))}
 			</nav>
-
-			<button class="nav__toggle" aria-label="Abrir menú" aria-expanded="false" data-nav-toggle>
-				<span></span>
-				<span></span>
-			</button>
 		</div>
 
 		<div class="col-wide nav__meta-cell">
-			<span class="nav__clock eyebrow" data-clock>
-				<span class="nav__dot"></span>
-				<span data-clock-time>--:--:-- --</span>
+			<span class="nav__clock" data-clock>
+				<span class="nav__dot" data-clock-dot></span>
+				<span class="nav__time" data-clock-time>--:--:-- --</span>
 			</span>
 
-			<a href="#contact" class="pill-button">Hablemos</a>
-			<a href="#contact" class="icon-button" aria-label="Ir a contacto">→</a>
+			<ChatButton href="#contact" label="Hablemos" ariaLabel="Hablemos: ir a contacto" />
 		</div>
 	</div>
 
-	<nav class="nav__mobile" data-nav-mobile>
-		{links.map((link) => <a href={link.href}>{link.label}</a>)}
+	<!-- mobile (< 810px), like ashcamp: clock on the left, "● MENU" on the right -->
+	<div class="nav__bar">
+		<span class="nav__clock" data-clock>
+			<span class="nav__dot" data-clock-dot></span>
+			<span class="nav__time" data-clock-time>--:--:-- --</span>
+		</span>
+
+		<button class="nav__menu" type="button" aria-expanded="false" aria-controls="nav-panel" data-nav-toggle>
+			<span class="nav__menu-dot" aria-hidden="true"></span>
+			<span data-menu-label>MENU</span>
+		</button>
+	</div>
+
+	<nav class="nav__panel" id="nav-panel" data-nav-panel aria-label="Menú">
+		<div class="nav__panel-main">
+			{links.map((link) => <a class="nav__panel-link" href={link.href}>{link.label}</a>)}
+			<a class="nav__panel-link" href="#contact">Hablemos</a>
+		</div>
+
+		<div class="nav__panel-meta">
+			<button class="nav__panel-small nav__email" type="button" data-copy-email data-email={email}>
+				<span class="swap">
+					<span data-copy-label>{email}</span>
+					<span aria-hidden="true">Copiado!</span>
+				</span>
+			</button>
+			<a class="nav__panel-small" href={linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+		</div>
 	</nav>
 </header>
 
 <script>
+	const nav = document.querySelector<HTMLElement>("[data-nav]");
 	const toggle = document.querySelector<HTMLButtonElement>("[data-nav-toggle]");
-	const mobile = document.querySelector<HTMLElement>("[data-nav-mobile]");
+	const label = document.querySelector<HTMLElement>("[data-menu-label]");
+	const panel = document.querySelector<HTMLElement>("[data-nav-panel]");
 
-	toggle?.addEventListener("click", () => {
-		const isOpen = mobile?.classList.toggle("is-open");
-		toggle.setAttribute("aria-expanded", String(Boolean(isOpen)));
+	function setOpen(open: boolean) {
+		nav?.classList.toggle("is-open", open);
+		toggle?.setAttribute("aria-expanded", String(open));
+		if (label) label.textContent = open ? "CLOSE" : "MENU";
+		document.documentElement.style.overflow = open ? "hidden" : "";
+	}
+
+	toggle?.addEventListener("click", () => setOpen(!nav?.classList.contains("is-open")));
+	panel?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setOpen(false)));
+	window.addEventListener("keydown", (e) => {
+		if (e.key === "Escape") setOpen(false);
+	});
+	// leaving the mobile layout while the menu is open: close it
+	matchMedia("(min-width: 810px)").addEventListener("change", (e) => {
+		if (e.matches) setOpen(false);
 	});
 
-	mobile?.querySelectorAll("a").forEach((a) =>
-		a.addEventListener("click", () => {
-			mobile.classList.remove("is-open");
-			toggle?.setAttribute("aria-expanded", "false");
-		})
-	);
-
-	const timeEl = document.querySelector<HTMLElement>("[data-clock-time]");
+	// like ashcamp's instance: Buenos Aires time, "online" (green) from 10 to 18h, red otherwise
+	const TZ = "America/Argentina/Buenos_Aires";
+	const ONLINE_FROM = 10;
+	const ONLINE_TO = 18;
 	const formatter = new Intl.DateTimeFormat("en-US", {
+		timeZone: TZ,
 		hour: "2-digit",
 		minute: "2-digit",
 		second: "2-digit",
 		hour12: true,
 	});
+	const hourFormatter = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", hour12: false });
 
 	function tick() {
-		if (timeEl) timeEl.textContent = formatter.format(new Date());
+		const now = new Date();
+		const text = formatter.format(now);
+		const h = parseInt(hourFormatter.format(now), 10) % 24;
+		document.querySelectorAll<HTMLElement>("[data-clock-time]").forEach((el) => (el.textContent = text));
+		document
+			.querySelectorAll<HTMLElement>("[data-clock-dot]")
+			.forEach((el) => el.classList.toggle("is-online", h >= ONLINE_FROM && h < ONLINE_TO));
 	}
 
 	tick();
@@ -75,11 +122,24 @@ const links = [
 </script>
 
 <style>
+	/* the halftone canvas sits behind the nav content */
+	.nav > :global(.split),
+	.nav__bar,
+	.nav__panel {
+		position: relative;
+		z-index: 1;
+	}
+
 	.nav {
 		position: sticky;
 		top: 0;
 		z-index: 50;
 		background: var(--bg);
+		border-bottom: none; /* ashcamp has no divider between the nav and the hero */
+	}
+
+	.nav__desktop {
+		min-height: var(--nav-h);
 	}
 
 	.nav__links-cell,
@@ -102,92 +162,142 @@ const links = [
 
 	.nav__meta-cell {
 		margin-inline-start: auto;
-		gap: 16px;
+		gap: 64px; /* ashcamp: clock ↔ button */
 		justify-content: flex-end;
 	}
 
+	/* ashcamp's clock: 10px dot + time, 12px apart */
 	.nav__clock {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
+		gap: 12px;
+		white-space: nowrap;
 	}
 
 	.nav__dot {
-		width: 6px;
-		height: 6px;
+		width: 10px;
+		height: 10px;
 		border-radius: 50%;
-		background: #3ddc84;
+		flex-shrink: 0;
+		background: rgb(240, 0, 0);
 	}
 
-	.nav__toggle {
+	.nav__dot.is-online {
+		background: rgb(0, 204, 82);
+	}
+
+	.nav__time {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 400;
+		font-style: normal;
+		letter-spacing: -0.04em;
+		line-height: 1em;
+		color: #fff;
+		user-select: none;
+	}
+
+	/* mobile pieces are hidden on desktop */
+	.nav__bar,
+	.nav__panel {
 		display: none;
-		flex-direction: column;
-		gap: 5px;
-		background: none;
-		border: none;
-		padding: 10px;
-		margin-inline-start: auto;
-		cursor: pointer;
 	}
 
-	.nav__toggle span {
-		width: 18px;
-		height: 1px;
-		background: var(--fg);
-	}
-
-	.nav__mobile {
-		display: none;
-	}
-
-	@media (max-width: 767.98px) {
-		.nav .split {
-			flex-direction: row;
-		}
-
-		.nav .col-narrow {
-			max-width: none;
-			flex: 0 0 auto;
-			border-right: var(--border);
-			border-bottom: none;
-		}
-
-		.nav__links {
+	@media (max-width: 809.98px) {
+		.nav__desktop {
 			display: none;
 		}
 
-		.nav__toggle {
+		/* ashcamp mobile: clock left, "● MENU" right, no divider */
+		.nav__bar {
 			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			min-height: var(--nav-h);
+			padding: 0 28px 0 20px;
 		}
 
-		.nav__meta-cell {
-			gap: 10px;
-		}
-
-		.nav__clock {
-			display: none;
-		}
-
-		.nav__mobile {
-			flex-direction: column;
+		.nav__menu {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 0;
+			background: none;
+			border: 0;
+			color: #fff;
 			font-family: var(--font-mono);
-			text-transform: uppercase;
 			font-size: 11px;
-			max-height: 0;
-			overflow: hidden;
-			border-top: none;
-			transition: max-height 0.2s ease;
+			font-weight: 400;
+			line-height: 1em;
+			text-transform: uppercase;
+			cursor: pointer;
 		}
 
-		.nav__mobile.is-open {
+		.nav__menu-dot {
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background: #fff;
+		}
+
+		/* open: the nav becomes a full-screen panel inside the same dashed frame */
+		.nav.is-open {
+			position: fixed;
+			inset: var(--gutter);
+			z-index: 100;
+			height: auto;
+			overflow-y: auto;
+			border: var(--border);
+			box-shadow: 0 0 0 var(--gutter) var(--bg);
+		}
+
+		.nav.is-open .nav__panel {
 			display: flex;
-			max-height: 200px;
-			border-top: var(--border);
+			flex-direction: column;
+			align-items: flex-start;
+			padding: 16px 20px 24px;
 		}
 
-		.nav__mobile a {
-			padding: 14px 20px;
-			border-bottom: var(--border);
+		.nav__panel-main,
+		.nav__panel-meta {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		/* big links: ashcamp's "Mobile" link variant → 28px / 1.2em, 8px padding, PP Telegraf */
+		.nav__panel-link {
+			padding: 8px;
+			font-family: "PP Telegraf Regular", "PP Telegraf", "Hanken Grotesk", var(--font-display), sans-serif;
+			font-size: 28px;
+			font-weight: 400;
+			line-height: 1.2em;
+			letter-spacing: 0;
+			text-transform: uppercase;
+			color: #fff;
+		}
+
+		/* email / LinkedIn: 11px Martian Mono, 40px below the big links, 15px apart */
+		.nav__panel-meta {
+			gap: 15px;
+			margin-top: 40px;
+		}
+
+		.nav__panel-small {
+			padding: 8px;
+			background: none;
+			border: 0;
+			font-family: var(--font-mono);
+			font-size: 11px;
+			font-weight: 400;
+			line-height: 1.2em;
+			text-transform: uppercase;
+			color: #fff;
+			cursor: pointer;
+		}
+
+		.nav__email.is-copied :global(.swap) > :global(span) {
+			transform: translateY(-100%);
 		}
 	}
 </style>

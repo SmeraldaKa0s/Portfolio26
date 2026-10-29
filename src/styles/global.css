@@ -14,12 +14,19 @@
 	--container: 1600px;
 	--gutter: 20px;
 	--section-gap: 0px;
+	--nav-h: 84px; /* same nav height as ashcamp.co */
 	--col-narrow: 0.7;
 }
 
 @media (max-width: 1199.98px) {
 	:root {
 		--gutter: 20px;
+	}
+}
+
+@media (max-width: 809.98px) {
+	:root {
+		--nav-h: 68px; /* ashcamp's mobile nav row */
 	}
 }
 
@@ -33,6 +40,7 @@ body {
 	padding: 0;
 	background: var(--bg);
 	color: var(--fg);
+	overflow-x: clip; /* los fondos animados son de ancho completo de pantalla (100vw) */
 }
 
 body {
@@ -77,9 +85,10 @@ a {
    screen (minus the outer gutter) without the rest of the page's content
    feeding into that min-height. */
 .hero-screen {
+	position: relative;
 	display: flex;
 	flex-direction: column;
-	min-height: calc(100vh - var(--gutter));
+	min-height: calc(100vh - var(--gutter) - 37px); /* ashcamp's hero ends 37px above the viewport bottom */
 }
 
 .frame {
@@ -88,6 +97,21 @@ a {
 }
 
 .frame + .frame {
+	border-top: none;
+}
+
+/* Zone with the sticky halftone background (Experience -> Footer): the canvas is a
+   viewport-sized layer that stays pinned while the zone scrolls; content sits above it. */
+.halftone-zone {
+	position: relative;
+}
+
+.halftone-zone > :not(.halftone-bg) {
+	position: relative;
+	z-index: 1;
+}
+
+.halftone-zone > .halftone-bg + .frame {
 	border-top: none;
 }
 
@@ -107,7 +131,7 @@ a {
 	padding: 20px;
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 809.98px) {
 	.split {
 		flex-direction: column;
 	}

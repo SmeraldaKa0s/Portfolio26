@@ -1,0 +1,178 @@
+---
+// Botón "Hablemos" basado en el "LET'S CHAT" de ashcamp.co: pastilla + círculo con flecha,
+// ambos en blanco translúcido (0.64 → 0.8 en hover/focus), el texto rueda letra por letra.
+interface Props {
+	href: string;
+	label: string;
+	ariaLabel?: string;
+}
+const { href, label, ariaLabel } = Astro.props;
+const letters = [...label.toUpperCase()];
+---
+
+<a class="chat" href={href} aria-label={ariaLabel ?? label}>
+	<span class="chat__pill">
+		<span class="chat__text" aria-hidden="true">
+			{
+				letters.map((ch, i) => (
+					<span class="chat__ch" style={`--i:${i}`}>
+						<span class="chat__sizer">{ch === " " ? " " : ch}</span>
+						<span class="chat__out">{ch === " " ? " " : ch}</span>
+						<span class="chat__in">{ch === " " ? " " : ch}</span>
+					</span>
+				))
+			}
+		</span>
+	</span>
+
+	<span class="chat__circle" aria-hidden="true">
+		<span class="chat__arrows">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M4 12h16M14 6l6 6-6 6"></path>
+			</svg>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M4 12h16M14 6l6 6-6 6"></path>
+			</svg>
+		</span>
+	</span>
+</a>
+
+<style>
+	.chat {
+		--chat-bg: rgba(255, 255, 255, 0.64);
+		--chat-ease: cubic-bezier(0, -0.12, 0, 0.98); /* la curva de ashcamp (tween .4s) */
+		--chat-fg: var(--bg);
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
+		color: var(--chat-fg);
+		text-decoration: none;
+		cursor: pointer;
+		flex-shrink: 0;
+	}
+
+	.chat:hover,
+	.chat:focus-visible {
+		--chat-bg: rgba(255, 255, 255, 0.8);
+	}
+
+	.chat:focus-visible {
+		outline: 1px solid rgba(255, 255, 255, 0.8);
+		outline-offset: 3px;
+		border-radius: 50px;
+	}
+
+	.chat__pill,
+	.chat__circle {
+		background-color: var(--chat-bg);
+		transition: background-color 0.4s var(--chat-ease);
+	}
+
+	.chat__pill {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 11px 24px;
+		border-radius: 50px;
+	}
+
+	.chat__text {
+		display: flex;
+		align-items: center;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 400;
+		letter-spacing: 0;
+		line-height: 1em;
+	}
+
+	/* cada letra: una copia sale hacia arriba y otra entra desde abajo, con 30ms de desfase */
+	.chat__ch {
+		position: relative;
+		display: inline-block;
+		overflow: hidden;
+	}
+
+	.chat__sizer {
+		visibility: hidden;
+		display: inline-block;
+	}
+
+	.chat__out,
+	.chat__in {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: transform 0.3s ease-in-out;
+		transition-delay: calc(var(--i) * 0.03s);
+	}
+
+	.chat__in {
+		transform: translateY(120%);
+	}
+
+	.chat:hover .chat__out,
+	.chat:focus-visible .chat__out {
+		transform: translateY(-120%);
+	}
+
+	.chat:hover .chat__in,
+	.chat:focus-visible .chat__in {
+		transform: translateY(0);
+	}
+
+	.chat__circle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 33px;
+		height: 33px;
+		border-radius: 100px;
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		overflow: hidden;
+	}
+
+	/* ventana de 16px: la flecha sale hacia la derecha y la siguiente entra desde la izquierda */
+	.chat__arrows {
+		position: relative;
+		display: block;
+		width: 16px;
+		height: 16px;
+		overflow: hidden;
+	}
+
+	.chat__arrows svg {
+		position: absolute;
+		inset: 0;
+		width: 16px;
+		height: 16px;
+		transition: transform 0.4s var(--chat-ease);
+	}
+
+	.chat__arrows svg:last-child {
+		transform: translateX(-130%);
+	}
+
+	.chat:hover .chat__arrows svg:first-child,
+	.chat:focus-visible .chat__arrows svg:first-child {
+		transform: translateX(130%);
+	}
+
+	.chat:hover .chat__arrows svg:last-child,
+	.chat:focus-visible .chat__arrows svg:last-child {
+		transform: translateX(0);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.chat__pill,
+		.chat__circle,
+		.chat__out,
+		.chat__in,
+		.chat__arrows svg {
+			transition: none;
+		}
+	}
+</style>
