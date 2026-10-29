@@ -178,8 +178,10 @@ const headline = lines.map((words, li) => {
 		padding: 16px 20px;
 	}
 
+	/* 60px each side: centered when there is room; when the viewport shrinks it parks 60px from the
+	   vertical divider, exactly like the headline text, and both keep that distance as it shrinks */
 	.hero__footer > :nth-child(2) {
-		padding-inline: 16px;
+		padding-inline: 60px;
 	}
 
 	.hero__footer > :first-child {
