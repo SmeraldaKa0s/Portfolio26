@@ -7,6 +7,9 @@ const links = [
 	{ href: "/#work", label: "Work" },
 	{ href: "/#info", label: "Info" },
 ];
+const email = "alek.xandra.lerner@gmail.com";
+// TODO: replace with the real LinkedIn profile URL
+const linkedin = "https://www.linkedin.com/";
 ---
 
 <header class="nav frame" data-nav>
@@ -51,8 +54,20 @@ const links = [
 	</div>
 
 	<nav class="nav__panel" id="nav-panel" data-nav-panel aria-label="Menú">
-		{links.map((link) => <a class="nav__panel-link" href={link.href}>{link.label}</a>)}
-		<ChatButton href="#contact" label="Hablemos" ariaLabel="Hablemos: ir a contacto" />
+		<div class="nav__panel-main">
+			{links.map((link) => <a class="nav__panel-link" href={link.href}>{link.label}</a>)}
+			<a class="nav__panel-link" href="#contact">Hablemos</a>
+		</div>
+
+		<div class="nav__panel-meta">
+			<button class="nav__panel-small nav__email" type="button" data-copy-email data-email={email}>
+				<span class="swap">
+					<span data-copy-label>{email}</span>
+					<span aria-hidden="true">Copiado!</span>
+				</span>
+			</button>
+			<a class="nav__panel-small" href={linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+		</div>
 	</nav>
 </header>
 
@@ -79,21 +94,23 @@ const links = [
 		if (e.matches) setOpen(false);
 	});
 
+	// like ashcamp's instance: Buenos Aires time, "online" (green) from 10 to 18h, red otherwise
+	const TZ = "America/Argentina/Buenos_Aires";
+	const ONLINE_FROM = 10;
+	const ONLINE_TO = 18;
 	const formatter = new Intl.DateTimeFormat("en-US", {
+		timeZone: TZ,
 		hour: "2-digit",
 		minute: "2-digit",
 		second: "2-digit",
 		hour12: true,
 	});
-
-	// like ashcamp: green while "online" (working hours), red otherwise
-	const ONLINE_FROM = 9;
-	const ONLINE_TO = 18;
+	const hourFormatter = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", hour12: false });
 
 	function tick() {
 		const now = new Date();
 		const text = formatter.format(now);
-		const h = now.getHours();
+		const h = parseInt(hourFormatter.format(now), 10) % 24;
 		document.querySelectorAll<HTMLElement>("[data-clock-time]").forEach((el) => (el.textContent = text));
 		document
 			.querySelectorAll<HTMLElement>("[data-clock-dot]")
@@ -166,7 +183,7 @@ const links = [
 	}
 
 	.nav__dot.is-online {
-		background: #22cc66;
+		background: rgb(0, 204, 82);
 	}
 
 	.nav__time {
@@ -238,16 +255,49 @@ const links = [
 			display: flex;
 			flex-direction: column;
 			align-items: flex-start;
-			gap: 10px; /* ashcamp: 29px rows, 10px apart */
-			padding: 40px 20px 24px;
+			padding: 16px 20px 24px;
 		}
 
+		.nav__panel-main,
+		.nav__panel-meta {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		/* big links: ashcamp's "Mobile" link variant → 28px / 1.2em, 8px padding, PP Telegraf */
 		.nav__panel-link {
+			padding: 8px;
+			font-family: "PP Telegraf Regular", "PP Telegraf", "Hanken Grotesk", var(--font-display), sans-serif;
+			font-size: 28px;
+			font-weight: 400;
+			line-height: 1.2em;
+			letter-spacing: 0;
+			text-transform: uppercase;
+			color: #fff;
+		}
+
+		/* email / LinkedIn: 11px Martian Mono, 40px below the big links, 15px apart */
+		.nav__panel-meta {
+			gap: 15px;
+			margin-top: 40px;
+		}
+
+		.nav__panel-small {
+			padding: 8px;
+			background: none;
+			border: 0;
 			font-family: var(--font-mono);
 			font-size: 11px;
-			line-height: 29px;
+			font-weight: 400;
+			line-height: 1.2em;
 			text-transform: uppercase;
-			color: var(--fg);
+			color: #fff;
+			cursor: pointer;
+		}
+
+		.nav__email.is-copied :global(.swap) > :global(span) {
+			transform: translateY(-100%);
 		}
 	}
 </style>
