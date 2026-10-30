@@ -147,7 +147,7 @@ const linkedin = "https://www.linkedin.com/";
 	/* fixed transparent overlay aligned with the dashed frame (1px transparent borders match its lines) */
 	.nav {
 		position: fixed;
-		top: 0;
+		top: var(--gutter);
 		left: var(--gutter);
 		right: var(--gutter);
 		max-width: var(--container);
@@ -170,14 +170,16 @@ const linkedin = "https://www.linkedin.com/";
 		border-right: none;
 	}
 
+	/* the desktop nav row is exactly 44px tall, so sticky titles can sit 20px below it */
 	.nav__desktop {
-		min-height: var(--nav-h);
+		height: var(--nav-row-h);
 	}
 
-	.nav__links-cell,
-	.nav__meta-cell {
+	.nav__desktop > .nav__links-cell,
+	.nav__desktop > .nav__meta-cell {
 		display: flex;
 		align-items: center;
+		padding-block: 0;
 	}
 
 	.nav__links {
@@ -238,6 +240,10 @@ const linkedin = "https://www.linkedin.com/";
 	@media (max-width: 767.98px) {
 		.nav__desktop {
 			display: none;
+		}
+
+		.nav {
+			top: 0;
 		}
 
 		.nav-slot > :global(*) {

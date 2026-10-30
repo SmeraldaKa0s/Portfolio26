@@ -21,6 +21,9 @@
 	   line: 41.18% (= .7 / 1.7, ashcamp's tablet ratio) capped at 400px (ashcamp's desktop). A percentage
 	   basis ignores each cell's padding, which is what used to make the lines drift apart. */
 	--col-narrow-w: min(400px, 41.1765%);
+	/* the fixed nav row is 44px tall at top: var(--gutter); sticky titles sit 20px below it */
+	--nav-row-h: 44px;
+	--sticky-top: calc(var(--gutter) + var(--nav-row-h) + 20px);
 }
 
 @media (max-width: 1199.98px) {
@@ -150,6 +153,36 @@ a {
 		max-width: none;
 		border-right: none;
 		border-bottom: var(--border);
+	}
+}
+
+/* section titles (Info, Experiencia, Prensa) styled like the project titles in Work: sans 20px (16px
+   below 1200), 80px / 20px cell padding, pinned under the nav while the section scrolls */
+.split > .col-narrow.section-head {
+	padding: 80px 20px;
+}
+
+.section-title {
+	position: sticky;
+	top: var(--sticky-top);
+	margin: 0;
+	font-family: var(--font-sans);
+	font-weight: 400;
+	font-size: 20px;
+	line-height: 1.2em;
+	letter-spacing: 0;
+	color: var(--fg);
+}
+
+@media (max-width: 1199.98px) {
+	.section-title {
+		font-size: 16px;
+	}
+}
+
+@media (max-width: 767.98px) {
+	.section-title {
+		position: static;
 	}
 }
 

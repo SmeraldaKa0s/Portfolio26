@@ -24,7 +24,10 @@ const projects = (await getCollection("projects")).sort(
 			</div>
 
 			<div class="col-wide work__item-media">
-				<Media kind={project.data.media.kind} ratio={project.data.media.ratio} />
+				<div class="work__shot work__shot--full"><Media kind={project.data.media.kind} ratio="8 / 5" /></div>
+				<div class="work__shot"><Media kind="image" ratio="3 / 4" /></div>
+				<div class="work__shot"><Media kind="image" ratio="3 / 4" /></div>
+				<div class="work__shot work__shot--full"><Media kind="image" ratio="8 / 5" /></div>
 			</div>
 		</a>
 	))}
@@ -37,14 +40,14 @@ const projects = (await getCollection("projects")).sort(
 		align-items: stretch;
 	}
 
-	/* text cell: 80px / 20px padding; the block stays pinned 100px from the top while the media scrolls */
+	/* text cell: 80px / 20px padding; the block stays pinned 20px under the nav (20px gutter + 44px nav) while the media scrolls */
 	.work__item > .work__item-text {
 		padding: 80px 20px;
 	}
 
 	.work__item-sticky {
 		position: sticky;
-		top: 100px;
+		top: var(--sticky-top);
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
@@ -87,13 +90,17 @@ const projects = (await getCollection("projects")).sort(
 
 	/* media cell: 60px padding (40px on tablet), media pushed to the bottom-right */
 	.work__item > .work__item-media {
-		display: flex;
-		flex-direction: column;
-		justify-content: flex-end;
-		align-items: flex-end;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		align-content: end;
 		gap: 10px;
 		padding: 60px;
 		overflow: hidden;
+	}
+
+	/* three rows per project: full width, two side by side, full width */
+	.work__shot--full {
+		grid-column: 1 / -1;
 	}
 
 	.work__item-media :global(.placeholder-media) {
