@@ -1,169 +1,1381 @@
 ---
-import Media from "./Media.astro";
-
-const items = [
-	{ letter: "a", outlet: "Lorem Ipsum Magazine", title: "Dolor sit amet consectetur" },
-	{ letter: "b", outlet: "Dolor Sit Radio", title: "Adipiscing elit sed do" },
-	{ letter: "c", outlet: "Consectetur Podcast", title: "Eiusmod tempor incididunt" },
-	{ letter: "d", outlet: "Adipiscing Weekly", title: "Ut labore et dolore magna" },
+// "Experiencia en campo": a pinned, scroll-driven showcase that shows one work at a time.
+// The section is several viewports tall and its stage sticks to the viewport while you scroll
+// through it. Each scroll segment is one work, and crossing a boundary plays one discrete step:
+//  - the text slides out and in word by word, inside line masks;
+//  - a WebGL2 shock wave swaps the media: a ring wavefront with a wobbly edge, ripple distortion
+//    and RGB fringing;
+//  - a focus sweep crosses the whole section: two expanding rings show the sharp art through the
+//    blurred, veiled background.
+// There is no real media yet, so every work gets procedural placeholder art (see `art`).
+//
+// Edit the works here. `title` is a list of lines, keep each line short. `art` is one of:
+// "dusk" | "tide" | "moss" | "coral" | "slate".
+const works = [
+	{
+		type: "Investigación de campo",
+		client: "Lorem Ipsum Co.",
+		title: ["Campo", "abierto"],
+		duration: "6 semanas",
+		year: "2026",
+		roles: ["Entrevistas", "Observación", "Síntesis"],
+		art: "dusk",
+	},
+	{
+		type: "Estudio etnográfico",
+		client: "Dolor Sit Labs",
+		title: ["Marea", "baja"],
+		duration: "3 meses",
+		year: "2025",
+		roles: ["Shadowing", "Diarios", "Mapeo"],
+		art: "tide",
+	},
+	{
+		type: "Test de usabilidad",
+		client: "Amet Studio",
+		title: ["Curvas de", "nivel"],
+		duration: "2 semanas",
+		year: "2024",
+		roles: ["Moderación", "Prototipos", "Reporte"],
+		art: "moss",
+	},
+	{
+		type: "Co-creación",
+		client: "Consectetur SA",
+		title: ["Fuego", "lento"],
+		duration: "4 semanas",
+		year: "2023",
+		roles: ["Workshops", "Facilitación"],
+		art: "coral",
+	},
+	{
+		type: "Auditoría de servicio",
+		client: "Adipiscing Group",
+		title: ["Grafito"],
+		duration: "5 semanas",
+		year: "2022",
+		roles: ["Blueprint", "Entrevistas", "Roadmap"],
+		art: "slate",
+	},
 ];
+
+const words = (text: string) => text.split(/\s+/).filter(Boolean);
 ---
 
-<section class="frame press">
-	<div class="split">
+<section class="frame field" id="campo" data-field style={`--n: ${works.length}`}>
+	<!-- pinned background layer: the WebGL canvas (blurred art, veil, focus sweep and the media box) -->
+	<div class="field__bg-wrap" aria-hidden="true">
+		<div class="field__bg" data-field-bg>
+			<canvas class="field__canvas" data-field-canvas></canvas>
+		</div>
+	</div>
+
+	<div class="split field__split">
 		<div class="col-narrow section-head">
 			<h2 class="section-title" data-reveal>Experiencia en campo</h2>
 		</div>
 
-		<div class="col-wide press__cell">
-			<div class="press__flick" id="press-flick-wrap">
-				<div class="flicking-viewport" id="press-flick">
-					<div class="flicking-camera">
-						{items.map((item) => (
-							<div class="press__panel">
-								<div class="poster">
-									<div class="art"><Media kind="image" ratio="3 / 4" /></div>
+		<div class="col-wide field__track" data-field-track>
+			<div
+				class="field__stage"
+				data-field-stage
+				tabindex="0"
+				role="group"
+				aria-roledescription="carrusel"
+				aria-label="Experiencia en campo: usá las flechas o scrolleá para cambiar de trabajo"
+			>
+				<div class="field__band">
+					<div class="field__bar" aria-hidden="true"><span class="field__thumb" data-field-thumb></span></div>
+
+					<div class="field__media" data-field-media aria-hidden="true"></div>
+
+					<div class="field__info">
+						{works.map((work, i) => (
+							<article
+								class="field__work"
+								data-field-work
+								data-i={i}
+								data-art={work.art}
+								data-label={work.title.join(" ")}
+								aria-hidden={i === 0 ? "false" : "true"}
+							>
+								<div class="field__head">
+									<span class="ln field__label field__label--muted">
+										{words(work.type).map((w, k) => (<Fragment>{k > 0 && " "}<span class="w">{w}</span></Fragment>))}
+									</span>
+									<span class="ln field__label">
+										{words(work.client).map((w, k) => (<Fragment>{k > 0 && " "}<span class="w">{w}</span></Fragment>))}
+									</span>
 								</div>
-								<div class="meta">
-									<span class="press__outlet">({item.letter}) {item.outlet}</span>
-									<p class="press__title">{item.title}</p>
+
+								<h3 class="field__title">
+									{work.title.map((line) => (
+										<span class="ln">
+											{words(line).map((w, k) => (<Fragment>{k > 0 && " "}<span class="w">{w}</span></Fragment>))}
+										</span>
+									))}
+								</h3>
+
+								<div class="field__foot">
+									<span class="ln field__label">
+										{words(work.duration).map((w, k) => (<Fragment>{k > 0 && " "}<span class="w">{w}</span></Fragment>))}
+									</span>
+									<span class="ln field__label field__label--muted"><span class="w">{work.year}</span></span>
 								</div>
+							</article>
+						))}
+					</div>
+
+					<div class="field__roles" aria-hidden="true">
+						{works.map((work, i) => (
+							<div class="field__roles-item" data-field-roles data-i={i}>
+								{work.roles.map((role) => (
+									<span class="ln field__role">
+										{words(role).map((w, k) => (<Fragment>{k > 0 && " "}<span class="w">{w}</span></Fragment>))}
+									</span>
+								))}
 							</div>
 						))}
 					</div>
 				</div>
 
-				<span class="flicking-arrow-prev"></span>
-				<span class="flicking-arrow-next"></span>
-				<div class="flicking-pagination"></div>
+				<p class="field__sr" aria-live="polite" data-field-live></p>
 			</div>
 		</div>
 	</div>
 </section>
 
 <script>
-	import Flicking from "@egjs/flicking";
-	import { Perspective, Parallax, Fade, AutoPlay, Arrow, Pagination } from "@egjs/flicking-plugins";
-	import "@egjs/flicking/dist/flicking.css";
-	import "@egjs/flicking-plugins/dist/flicking-plugins.css";
+	// ---------- tunables ----------
+	const OUT_MS = 450; // outgoing words slide away (inQuint)
+	const IN_MS = 850; // incoming words slide in (outQuint), they start when OUT_MS ends
+	const STAGGER_MS = 25; // per word
+	const STAGGER_MAX_MS = 250;
+	const FLASH_MS = 850; // shock-wave swap of the media (quad in-out)
+	const UNBLUR_MS = 800; // leading focus ring
+	const REBLUR_DELAY_MS = 50; // trailing focus ring starts this much later and lasts FLASH_MS
+	const LOCK_MS = 900; // busy lock: minimum time between two steps (a step's flash never overlaps the next)
+	const MAX_BACKLOG = 2; // if scrolling runs further ahead than this, jump without animating the extra steps
+	const HYSTERESIS = 0.04; // fraction of a segment you must pass a boundary by before it counts
+	const REVEAL_MS = 980; // first reveal of the media box
+	const BAR_RATE = 3; // damping rate (1/s) of the 1px progress thumb
+	const VEIL = 0.6; // background mixed toward #171717 by this much
+	const FLASH_LIFT = 0.15; // the sharp sweep band is veiled this much less, so it reads as a glint
+	const BG = 0x17 / 255;
+	const ABERRATION = 3;
+	const BLUR_SPREAD = 1.6; // blur tap spacing, in blur-target texels
+	const ART_W = 1280;
+	const ART_H = 720;
 
-	const wrap = document.getElementById("press-flick-wrap");
+	const EASE_IN_QUINT = "cubic-bezier(0.64, 0, 0.78, 0)";
+	const EASE_OUT_QUINT = "cubic-bezier(0.22, 1, 0.36, 1)";
+	const EASE_QUAD_IN_OUT = "cubic-bezier(0.45, 0, 0.55, 1)";
 
-	if (wrap) {
-		const flicking = new Flicking("#press-flick", {
-			circular: true,
-			align: "center",
-			moveType: ["snap", { count: 1 }],
+	const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
+	const quadInOut = (x: number) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+
+	// ---------- procedural placeholder art ----------
+	type ArtFn = (g: CanvasRenderingContext2D, w: number, h: number) => void;
+
+	const radial = (g: CanvasRenderingContext2D, x: number, y: number, r: number, rgb: string, a: number) => {
+		const gr = g.createRadialGradient(x, y, 0, x, y, r);
+		gr.addColorStop(0, `rgba(${rgb},${a})`);
+		gr.addColorStop(1, `rgba(${rgb},0)`);
+		g.fillStyle = gr;
+		g.fillRect(0, 0, g.canvas.width, g.canvas.height);
+	};
+
+	const ART: Record<string, ArtFn> = {
+		// warm horizon, sun and furrows in perspective
+		dusk(g, w, h) {
+			const hz = h * 0.62;
+			const sky = g.createLinearGradient(0, 0, 0, hz);
+			sky.addColorStop(0, "#2b1638");
+			sky.addColorStop(0.6, "#b8475a");
+			sky.addColorStop(1, "#ffb36b");
+			g.fillStyle = sky;
+			g.fillRect(0, 0, w, hz);
+			radial(g, w * 0.64, hz - 10, h * 0.4, "255,214,150", 0.55);
+			g.fillStyle = "#ffe1b0";
+			g.beginPath();
+			g.arc(w * 0.64, hz - h * 0.04, h * 0.09, 0, Math.PI * 2);
+			g.fill();
+			const ground = g.createLinearGradient(0, hz, 0, h);
+			ground.addColorStop(0, "#4a2030");
+			ground.addColorStop(1, "#0e0a10");
+			g.fillStyle = ground;
+			g.fillRect(0, hz, w, h - hz);
+			g.strokeStyle = "rgba(255,170,120,0.2)";
+			g.lineWidth = 2;
+			for (let x = -w; x <= 2 * w; x += 70) {
+				g.beginPath();
+				g.moveTo(w * 0.5, hz);
+				g.lineTo(x, h);
+				g.stroke();
+			}
+			for (let k = 1; k <= 14; k++) {
+				const y = hz + (h - hz) * (k / 14) ** 2;
+				g.fillStyle = "rgba(255,170,120,0.12)";
+				g.fillRect(0, y, w, 2);
+			}
+		},
+		// cold blues, diagonal stripes and a bright horizon line
+		tide(g, w, h) {
+			const base = g.createLinearGradient(0, 0, w, h);
+			base.addColorStop(0, "#06213d");
+			base.addColorStop(0.55, "#145d86");
+			base.addColorStop(1, "#6cc4d4");
+			g.fillStyle = base;
+			g.fillRect(0, 0, w, h);
+			g.save();
+			g.translate(w / 2, h / 2);
+			g.rotate(-0.5);
+			g.fillStyle = "rgba(255,255,255,0.06)";
+			for (let x = -w * 1.5; x < w * 1.5; x += 36) g.fillRect(x, -h * 1.5, 16, h * 3);
+			g.restore();
+			radial(g, w * 0.3, h * 0.35, h * 0.55, "170,240,255", 0.35);
+			radial(g, w * 0.78, h * 0.72, h * 0.5, "10,30,90", 0.55);
+			g.fillStyle = "rgba(220,250,255,0.35)";
+			g.fillRect(0, h * 0.55, w, 2);
+		},
+		// greens with topographic contour lines
+		moss(g, w, h) {
+			const base = g.createLinearGradient(0, 0, w * 0.4, h);
+			base.addColorStop(0, "#0c1f15");
+			base.addColorStop(0.6, "#2f6b3f");
+			base.addColorStop(1, "#9fbe72");
+			g.fillStyle = base;
+			g.fillRect(0, 0, w, h);
+			radial(g, w * 0.7, h * 0.3, h * 0.6, "210,240,160", 0.25);
+			for (let k = 0; k <= 34; k++) {
+				const major = k % 5 === 0;
+				g.strokeStyle = `rgba(220,255,200,${major ? 0.28 : 0.12})`;
+				g.lineWidth = major ? 2.5 : 1.2;
+				g.beginPath();
+				for (let x = 0; x <= w; x += 8) {
+					const y = (k / 34) * h * 1.2 - h * 0.1 + Math.sin(x * 0.006 + k * 0.45) * 38 + Math.sin(x * 0.017 + k * 1.3) * 14;
+					if (x === 0) g.moveTo(x, y);
+					else g.lineTo(x, y);
+				}
+				g.stroke();
+			}
+		},
+		// warm blobs and concentric rings
+		coral(g, w, h) {
+			g.fillStyle = "#22071a";
+			g.fillRect(0, 0, w, h);
+			g.save();
+			g.globalCompositeOperation = "lighter";
+			radial(g, w * 0.3, h * 0.5, h * 0.65, "255,94,98", 0.75);
+			radial(g, w * 0.62, h * 0.38, h * 0.55, "255,153,102", 0.7);
+			radial(g, w * 0.82, h * 0.78, h * 0.5, "195,55,100", 0.7);
+			g.restore();
+			g.strokeStyle = "rgba(255,230,210,0.14)";
+			g.lineWidth = 1.5;
+			for (let r = 40; r < 900; r += 46) {
+				g.beginPath();
+				g.arc(w * 0.62, h * 0.38, r, 0, Math.PI * 2);
+				g.stroke();
+			}
+		},
+		// graphite grid, a target circle and one red accent
+		slate(g, w, h) {
+			const base = g.createLinearGradient(0, 0, w, h);
+			base.addColorStop(0, "#121316");
+			base.addColorStop(1, "#5a5f6a");
+			g.fillStyle = base;
+			g.fillRect(0, 0, w, h);
+			g.fillStyle = "rgba(255,255,255,0.07)";
+			for (let x = 0; x < w; x += 48) g.fillRect(x, 0, 1, h);
+			for (let y = 0; y < h; y += 48) g.fillRect(0, y, w, 1);
+			radial(g, w * 0.45, h * 0.45, h * 0.6, "230,235,245", 0.25);
+			g.strokeStyle = "rgba(255,255,255,0.4)";
+			g.lineWidth = 2;
+			g.beginPath();
+			g.arc(w * 0.45, h * 0.48, h * 0.3, 0, Math.PI * 2);
+			g.stroke();
+			g.fillRect(w * 0.45 - 1, h * 0.1, 2, h * 0.76);
+			g.fillRect(w * 0.18, h * 0.48 - 1, w * 0.54, 2);
+			g.fillStyle = "#e2412f";
+			g.fillRect(w * 0.68, h * 0.26, 140, 10);
+			g.beginPath();
+			g.arc(w * 0.45, h * 0.48, 9, 0, Math.PI * 2);
+			g.fill();
+		},
+	};
+
+	let grain: HTMLCanvasElement | null = null;
+	function grainTile() {
+		if (grain) return grain;
+		grain = document.createElement("canvas");
+		grain.width = grain.height = 256;
+		const g = grain.getContext("2d")!;
+		const img = g.createImageData(256, 256);
+		for (let i = 0; i < img.data.length; i += 4) {
+			const v = Math.random() * 255;
+			img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+			img.data[i + 3] = 255;
+		}
+		g.putImageData(img, 0, 0);
+		return grain;
+	}
+
+	function makeArt(kind: string) {
+		const c = document.createElement("canvas");
+		c.width = ART_W;
+		c.height = ART_H;
+		const g = c.getContext("2d")!;
+		(ART[kind] ?? ART.dusk)(g, ART_W, ART_H);
+		g.save();
+		g.globalAlpha = 0.14;
+		g.globalCompositeOperation = "overlay";
+		g.fillStyle = g.createPattern(grainTile(), "repeat")!;
+		g.fillRect(0, 0, ART_W, ART_H);
+		g.restore();
+		const v = g.createRadialGradient(ART_W / 2, ART_H / 2, ART_H * 0.3, ART_W / 2, ART_H / 2, ART_W * 0.65);
+		v.addColorStop(0, "rgba(0,0,0,0)");
+		v.addColorStop(1, "rgba(0,0,0,0.45)");
+		g.fillStyle = v;
+		g.fillRect(0, 0, ART_W, ART_H);
+		return c;
+	}
+
+	// ---------- renderers ----------
+	interface View {
+		flash(from: number, to: number): void; // play the step transition
+		snap(i: number): void; // show work i at once
+		reveal(): void; // first appearance of the media box
+		tick(now: number): boolean; // draw if needed; true while something is still animating
+		destroy(): void;
+	}
+
+	const VS = `#version 300 es
+out vec2 vUv;
+void main() {
+  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  vUv = p;
+  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+}`;
+
+	const COMMON = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 fragColor;
+uniform float uTime;
+#define PI 3.141592653589793
+struct Ring { float mask; float front; float dist; float inten; vec2 p; };
+// expanding ring: radius runs from -0.1 to past the corners, its edge wobbles in 6 lobes mid-way
+Ring ring(float prog, vec2 aspect, vec2 uv, vec2 center) {
+  Ring r;
+  r.inten = sin(prog * PI);
+  r.p = (uv - center) * aspect;
+  r.dist = length(r.p);
+  float ang = atan(r.p.y, r.p.x);
+  float front = prog * (length(aspect * 0.5) + 0.2) - 0.1;
+  float wob = sin(ang * 6.0 + uTime * 3.0) * 0.04 * r.inten;
+  r.front = front + wob * smoothstep(0.0, 0.2, front);
+  r.mask = 1.0 - smoothstep(r.front - 0.06, r.front + 0.06, r.dist);
+  return r;
+}
+// radial uv offset (xy) and chroma shift (zw): travelling rings at the wavefront plus a soft global wave
+vec4 ripple(Ring r, vec2 aspect, float amount, float freq) {
+  float band = 1.0 - smoothstep(0.0, 0.36, abs(r.dist - r.front));
+  float l = sin(r.dist * freq - uTime * 8.0) * band * (0.06 * amount);
+  float u = sin(r.dist * 8.0 - uTime * 2.0) * (0.012 * amount);
+  vec2 dir = r.p / max(r.dist, 1e-4) / aspect * (r.inten * smoothstep(0.0, 0.15, r.dist));
+  return vec4(dir * (l + u), dir * band * 0.006);
+}
+vec2 cover(vec2 uv, float view, float tex) {
+  vec2 s = vec2(min(view / tex, 1.0), min(tex / view, 1.0));
+  return (uv - 0.5) * s + 0.5;
+}
+vec3 splitRGB(sampler2D t, vec2 uv, vec2 s, float view, float tex) {
+  return vec3(texture(t, cover(uv + s, view, tex)).r, texture(t, cover(uv, view, tex)).g, texture(t, cover(uv - s, view, tex)).b);
+}
+`;
+
+	// pass A: sharp full-size art, shock-wave swap from old to new
+	const FS_SHARP =
+		COMMON +
+		`
+uniform sampler2D uOld;
+uniform sampler2D uNew;
+uniform float uProg, uAspect, uTexAspect, uAberration, uReduce;
+void main() {
+  vec2 asp = vec2(uAspect, 1.0);
+  if (uReduce > 0.5) {
+    vec3 a = texture(uOld, cover(vUv, uAspect, uTexAspect)).rgb;
+    vec3 b = texture(uNew, cover(vUv, uAspect, uTexAspect)).rgb;
+    fragColor = vec4(mix(a, b, uProg), 1.0);
+    return;
+  }
+  Ring r = ring(uProg, asp, vUv, vec2(0.5));
+  vec4 o = ripple(r, asp, 1.0, 40.0);
+  vec2 s = o.zw * uAberration;
+  vec3 n = splitRGB(uNew, vUv + o.xy, s, uAspect, uTexAspect);
+  vec3 c = splitRGB(uOld, vUv - o.xy, s, uAspect, uTexAspect);
+  fragColor = vec4(mix(c, n, r.mask), 1.0);
+}`;
+
+	// passes B/C: separable gaussian
+	const FS_BLUR =
+		COMMON +
+		`
+uniform sampler2D uSrc;
+uniform vec2 uDir;
+void main() {
+  vec3 acc = texture(uSrc, vUv).rgb;
+  float wsum = 1.0;
+  for (int i = 1; i <= 15; i++) {
+    float fi = float(i);
+    float w = exp(-0.5 * fi * fi / 25.0);
+    acc += (texture(uSrc, vUv + uDir * fi).rgb + texture(uSrc, vUv - uDir * fi).rgb) * w;
+    wsum += 2.0 * w;
+  }
+  fragColor = vec4(acc / wsum, 1.0);
+}`;
+
+	// pass D: focus sweep + veil over the whole canvas, then the sharp media box on top
+	const FS_FINAL =
+		COMMON +
+		`
+uniform sampler2D uSharp;
+uniform sampler2D uBlur;
+uniform sampler2D uOld;
+uniform sampler2D uNew;
+uniform float uAspect, uUnblur, uReblur, uVeil, uLift, uBg, uProg, uTexAspect, uAberration, uReduce, uReveal, uBoxOn, uRadius;
+uniform vec4 uBox;
+uniform vec2 uRes;
+float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main() {
+  vec2 asp = vec2(uAspect, 1.0);
+  Ring t = ring(uUnblur, asp, vUv, vec2(0.5));
+  Ring b = ring(uReblur, asp, vUv, vec2(0.5));
+  vec2 rr = ripple(b, asp, 0.4, 15.0).xy - ripple(t, asp, 0.4, 15.0).xy;
+  vec3 blurred = texture(uBlur, vUv + rr).rgb;
+  vec3 sharp = texture(uSharp, vUv - rr).rgb;
+  float sharpAmt = 1.0 - max(1.0 - t.mask, b.mask);
+  vec3 col = mix(blurred, sharp, sharpAmt);
+  col = mix(col, vec3(uBg), uVeil - uLift * sharpAmt);
+
+  if (uBoxOn > 0.5) {
+    vec2 frag = vUv * uRes;
+    vec2 c = (uBox.xy + uBox.zw) * 0.5;
+    vec2 h = (uBox.zw - uBox.xy) * 0.5;
+    vec2 q = abs(frag - c) - h + uRadius;
+    float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - uRadius;
+    float inside = clamp(0.5 - d, 0.0, 1.0);
+    if (inside > 0.0) {
+      vec2 buv = (frag - uBox.xy) / (uBox.zw - uBox.xy);
+      float ba = h.x / h.y;
+      vec2 basp = vec2(ba, 1.0);
+      vec3 mc;
+      if (uReduce > 0.5) {
+        mc = mix(texture(uOld, cover(buv, ba, uTexAspect)).rgb, texture(uNew, cover(buv, ba, uTexAspect)).rgb, uProg);
+      } else {
+        Ring r = ring(uProg, basp, buv, vec2(0.5));
+        vec4 o = ripple(r, basp, 0.5, 40.0);
+        vec2 s = o.zw * uAberration;
+        mc = mix(splitRGB(uOld, buv - o.xy, s, ba, uTexAspect), splitRGB(uNew, buv + o.xy, s, ba, uTexAspect), r.mask);
+      }
+      inside *= ring(uReveal, basp, buv, vec2(0.5)).mask;
+      col = mix(col, mc, inside);
+    }
+  }
+  col += (hash(gl_FragCoord.xy) - 0.5) * 0.035;
+  fragColor = vec4(col, 1.0);
+}`;
+
+	type Target = { tex: WebGLTexture; fbo: WebGLFramebuffer; w: number; h: number };
+
+	function createGLView(
+		canvas: HTMLCanvasElement,
+		arts: HTMLCanvasElement[],
+		box: HTMLElement,
+		reduce: boolean,
+		start: number,
+		onLost: () => void,
+	): View | null {
+		const gl = canvas.getContext("webgl2", { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false });
+		if (!gl) return null;
+
+		const compile = (type: number, src: string) => {
+			const s = gl.createShader(type)!;
+			gl.shaderSource(s, src);
+			gl.compileShader(s);
+			if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+				console.warn("[campo] shader:", gl.getShaderInfoLog(s));
+				return null;
+			}
+			return s;
+		};
+		const vs = compile(gl.VERTEX_SHADER, VS);
+		const program = (fs: string) => {
+			const f = compile(gl.FRAGMENT_SHADER, fs);
+			if (!vs || !f) return null;
+			const p = gl.createProgram()!;
+			gl.attachShader(p, vs);
+			gl.attachShader(p, f);
+			gl.linkProgram(p);
+			if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+				console.warn("[campo] link:", gl.getProgramInfoLog(p));
+				return null;
+			}
+			return p;
+		};
+		const pSharp = program(FS_SHARP);
+		const pBlur = program(FS_BLUR);
+		const pFinal = program(FS_FINAL);
+		if (!pSharp || !pBlur || !pFinal) return null;
+
+		const locs = new Map<WebGLProgram, Map<string, WebGLUniformLocation | null>>();
+		const loc = (p: WebGLProgram, name: string) => {
+			let m = locs.get(p);
+			if (!m) locs.set(p, (m = new Map()));
+			if (!m.has(name)) m.set(name, gl.getUniformLocation(p, name));
+			return m.get(name)!;
+		};
+		const f1 = (p: WebGLProgram, n: string, v: number) => gl.uniform1f(loc(p, n), v);
+		const i1 = (p: WebGLProgram, n: string, v: number) => gl.uniform1i(loc(p, n), v);
+
+		const vao = gl.createVertexArray();
+		gl.bindVertexArray(vao);
+
+		const texParams = () => {
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		};
+
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+		const textures = arts.map((art) => {
+			const t = gl.createTexture()!;
+			gl.bindTexture(gl.TEXTURE_2D, t);
+			texParams();
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, art);
+			return t;
+		});
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+
+		const makeTarget = (w: number, h: number): Target | null => {
+			const tex = gl.createTexture()!;
+			gl.bindTexture(gl.TEXTURE_2D, tex);
+			texParams();
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+			const fbo = gl.createFramebuffer()!;
+			gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+			const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+			if (!ok) return null;
+			return { tex, fbo, w, h };
+		};
+		const freeTarget = (t: Target | null) => {
+			if (!t) return;
+			gl.deleteTexture(t.tex);
+			gl.deleteFramebuffer(t.fbo);
+		};
+
+		let sharp: Target | null = null;
+		let blurA: Target | null = null;
+		let blurB: Target | null = null;
+		let cssW = 0;
+		let cssH = 0;
+		let shown = 0;
+		let fxFrom = 0;
+		let fxTo = 0;
+		let fxStart = -1;
+		let revealStart = -1;
+		let revealVal = reduce ? 1 : 0;
+		let bgDirty = true;
+		let dirty = true;
+		let lastBox = "";
+		let lost = false;
+
+		const resize = () => {
+			cssW = canvas.clientWidth;
+			cssH = canvas.clientHeight;
+			if (!cssW || !cssH) return;
+			const dpr = window.devicePixelRatio || 1;
+			const d = Math.min(2, dpr);
+			const ds = Math.min(1.5, dpr);
+			canvas.width = Math.round(cssW * d);
+			canvas.height = Math.round(cssH * d);
+			freeTarget(sharp);
+			freeTarget(blurA);
+			freeTarget(blurB);
+			const sw = Math.max(1, Math.round(cssW * ds));
+			const sh = Math.max(1, Math.round(cssH * ds));
+			sharp = makeTarget(sw, sh);
+			blurA = makeTarget(Math.max(1, Math.round(sw * 0.4)), Math.max(1, Math.round(sh * 0.4)));
+			blurB = makeTarget(Math.max(1, Math.round(sw * 0.4)), Math.max(1, Math.round(sh * 0.4)));
+			bgDirty = dirty = true;
+		};
+		const ro = new ResizeObserver(resize);
+		ro.observe(canvas);
+		resize();
+		if (!sharp || !blurA || !blurB) return null;
+
+		const handleLost = (e: Event) => {
+			e.preventDefault();
+			lost = true;
+			onLost();
+		};
+		canvas.addEventListener("webglcontextlost", handleLost);
+
+		const bindTex = (unit: number, t: WebGLTexture) => {
+			gl.activeTexture(gl.TEXTURE0 + unit);
+			gl.bindTexture(gl.TEXTURE_2D, t);
+		};
+
+		const render = (now: number, prog: number, un: number, re: number, boxRect: number[] | null, redrawBg: boolean) => {
+			if (!sharp || !blurA || !blurB) return;
+			const time = (now - start) / 1000;
+			const aspect = cssW / cssH;
+			const oldT = textures[fxStart >= 0 ? fxFrom : shown];
+			const newT = textures[fxStart >= 0 ? fxTo : shown];
+
+			if (redrawBg) {
+				gl.bindFramebuffer(gl.FRAMEBUFFER, sharp.fbo);
+				gl.viewport(0, 0, sharp.w, sharp.h);
+				gl.useProgram(pSharp);
+				bindTex(0, oldT);
+				bindTex(1, newT);
+				i1(pSharp, "uOld", 0);
+				i1(pSharp, "uNew", 1);
+				f1(pSharp, "uTime", time);
+				f1(pSharp, "uProg", prog);
+				f1(pSharp, "uAspect", aspect);
+				f1(pSharp, "uTexAspect", ART_W / ART_H);
+				f1(pSharp, "uAberration", ABERRATION);
+				f1(pSharp, "uReduce", reduce ? 1 : 0);
+				gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+				gl.useProgram(pBlur);
+				i1(pBlur, "uSrc", 0);
+				gl.bindFramebuffer(gl.FRAMEBUFFER, blurA.fbo);
+				gl.viewport(0, 0, blurA.w, blurA.h);
+				bindTex(0, sharp.tex);
+				gl.uniform2f(loc(pBlur, "uDir"), BLUR_SPREAD / blurA.w, 0);
+				gl.drawArrays(gl.TRIANGLES, 0, 3);
+				gl.bindFramebuffer(gl.FRAMEBUFFER, blurB.fbo);
+				gl.viewport(0, 0, blurB.w, blurB.h);
+				bindTex(0, blurA.tex);
+				gl.uniform2f(loc(pBlur, "uDir"), 0, BLUR_SPREAD / blurB.h);
+				gl.drawArrays(gl.TRIANGLES, 0, 3);
+			}
+
+			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+			gl.viewport(0, 0, canvas.width, canvas.height);
+			gl.useProgram(pFinal);
+			bindTex(0, sharp.tex);
+			bindTex(1, blurB.tex);
+			bindTex(2, oldT);
+			bindTex(3, newT);
+			i1(pFinal, "uSharp", 0);
+			i1(pFinal, "uBlur", 1);
+			i1(pFinal, "uOld", 2);
+			i1(pFinal, "uNew", 3);
+			f1(pFinal, "uTime", time);
+			f1(pFinal, "uAspect", aspect);
+			f1(pFinal, "uUnblur", un);
+			f1(pFinal, "uReblur", re);
+			f1(pFinal, "uVeil", VEIL);
+			f1(pFinal, "uLift", FLASH_LIFT);
+			f1(pFinal, "uBg", BG);
+			f1(pFinal, "uProg", prog);
+			f1(pFinal, "uTexAspect", ART_W / ART_H);
+			f1(pFinal, "uAberration", ABERRATION);
+			f1(pFinal, "uReduce", reduce ? 1 : 0);
+			f1(pFinal, "uReveal", revealVal);
+			f1(pFinal, "uBoxOn", boxRect ? 1 : 0);
+			const sx = canvas.width / cssW;
+			f1(pFinal, "uRadius", 10 * sx);
+			gl.uniform2f(loc(pFinal, "uRes"), canvas.width, canvas.height);
+			if (boxRect) gl.uniform4f(loc(pFinal, "uBox"), boxRect[0], boxRect[1], boxRect[2], boxRect[3]);
+			gl.drawArrays(gl.TRIANGLES, 0, 3);
+		};
+
+		// media box rect in canvas pixels, y up (null when the box is hidden)
+		const measureBox = (): number[] | null => {
+			if (!box.offsetWidth || !box.offsetHeight) return null;
+			const cr = canvas.getBoundingClientRect();
+			const br = box.getBoundingClientRect();
+			if (!cr.width || !cr.height) return null;
+			const sx = canvas.width / cr.width;
+			const sy = canvas.height / cr.height;
+			const x0 = (br.left - cr.left) * sx;
+			const y0 = (cr.bottom - br.bottom) * sy;
+			return [x0, y0, x0 + br.width * sx, y0 + br.height * sy];
+		};
+
+		return {
+			flash(from, to) {
+				if (fxStart >= 0) from = fxTo; // a new step during a running one starts from its target
+				fxFrom = from;
+				fxTo = to;
+				fxStart = performance.now();
+			},
+			snap(i) {
+				shown = i;
+				fxStart = -1;
+				bgDirty = dirty = true;
+			},
+			reveal() {
+				if (reduce || revealStart >= 0 || revealVal >= 1) return;
+				revealStart = performance.now();
+			},
+			tick(now) {
+				if (lost || !cssW || !cssH) return false;
+				let animating = false;
+				let prog = 0;
+				let un = 0;
+				let re = 0;
+				const fxRunning = fxStart >= 0;
+				if (fxRunning) {
+					const e = now - fxStart;
+					prog = quadInOut(clamp01(e / FLASH_MS));
+					if (!reduce) {
+						un = quadInOut(clamp01(e / UNBLUR_MS));
+						re = quadInOut(clamp01((e - REBLUR_DELAY_MS) / FLASH_MS));
+					}
+					if (e >= FLASH_MS + REBLUR_DELAY_MS) {
+						fxStart = -1;
+						shown = fxTo;
+						prog = un = re = 0;
+						bgDirty = dirty = true;
+					} else animating = true;
+				}
+				if (revealStart >= 0) {
+					const e = now - revealStart;
+					revealVal = quadInOut(clamp01(e / REVEAL_MS));
+					if (e >= REVEAL_MS) revealStart = -1;
+					else animating = true;
+					dirty = true;
+				}
+				const boxRect = measureBox();
+				const key = boxRect ? boxRect.map((v) => v.toFixed(1)).join() : "none";
+				if (key !== lastBox) {
+					lastBox = key;
+					dirty = true;
+				}
+				if (!animating && !dirty && !bgDirty) return false;
+				render(now, prog, un, re, boxRect, bgDirty || fxRunning);
+				canvas.classList.add("is-ready");
+				box.classList.add("is-gl");				dirty = bgDirty = false;
+				return animating;
+			},
+			destroy() {
+				ro.disconnect();
+				canvas.removeEventListener("webglcontextlost", handleLost);
+				box.classList.remove("is-gl");
+				canvas.classList.remove("is-ready");
+			},
+		};
+	}
+
+	// no WebGL2: stacked DOM layers, the new art is revealed with a growing circle clip
+	function createFallbackView(bg: HTMLElement, box: HTMLElement, arts: HTMLCanvasElement[], reduce: boolean): View {
+		const urls: string[] = [];
+		const url = (i: number) => (urls[i] ??= arts[i].toDataURL("image/jpeg", 0.85));
+		const veil = document.createElement("div");
+		veil.className = "field__veil";
+		bg.append(veil);
+		const layer = (parent: HTMLElement, i: number, before: Element | null) => {
+			const d = document.createElement("div");
+			d.className = "field__fb";
+			d.style.backgroundImage = `url(${url(i)})`;
+			parent.insertBefore(d, before);
+			return d;
+		};
+		const clear = (parent: HTMLElement) => parent.querySelectorAll(":scope > .field__fb").forEach((n) => n.remove());
+		const reveal = (el: HTMLElement, parent: HTMLElement) => {
+			const a = reduce
+				? el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, easing: "ease" })
+				: el.animate([{ clipPath: "circle(0% at 50% 50%)" }, { clipPath: "circle(75% at 50% 50%)" }], {
+						duration: FLASH_MS,
+						easing: EASE_QUAD_IN_OUT,
+					});
+			a.onfinish = () => parent.querySelectorAll(":scope > .field__fb").forEach((n) => n !== el && n.remove());
+		};
+		return {
+			flash(_from, to) {
+				reveal(layer(bg, to, veil), bg);
+				reveal(layer(box, to, null), box);
+			},
+			snap(i) {
+				clear(bg);
+				clear(box);
+				layer(bg, i, veil);
+				layer(box, i, null);
+			},
+			reveal() {},
+			tick: () => false,
+			destroy() {
+				clear(bg);
+				clear(box);
+				veil.remove();
+			},
+		};
+	}
+
+	// ---------- controller ----------
+	function initField(root: HTMLElement) {
+		const track = root.querySelector<HTMLElement>("[data-field-track]")!;
+		const stage = root.querySelector<HTMLElement>("[data-field-stage]")!;
+		const bg = root.querySelector<HTMLElement>("[data-field-bg]")!;
+		const canvas = root.querySelector<HTMLCanvasElement>("[data-field-canvas]")!;
+		const media = root.querySelector<HTMLElement>("[data-field-media]")!;
+		const thumb = root.querySelector<HTMLElement>("[data-field-thumb]")!;
+		const live = root.querySelector<HTMLElement>("[data-field-live]")!;
+		const infos = [...root.querySelectorAll<HTMLElement>("[data-field-work]")];
+		const roles = [...root.querySelectorAll<HTMLElement>("[data-field-roles]")];
+		const N = infos.length;
+		if (!N) return;
+		const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+		const words = infos.map((el, i) => [
+			...el.querySelectorAll<HTMLElement>(".w"),
+			...(roles[i]?.querySelectorAll<HTMLElement>(".w") ?? []),
+		]);
+		const blocks = infos.map((el, i) => [el, roles[i]].filter(Boolean) as HTMLElement[]);
+
+		let current = 0;
+		let target = 0;
+		let stepAt = -Infinity;
+		let pendingSwap: { from: number; to: number; at: number } | null = null;
+		let bar = 0;
+		let raf = 0;
+		let lastT = 0;
+		let visible = false;
+		let view: View | null = null;
+		let arts: HTMLCanvasElement[] = [];
+		let wantReveal = false;
+		const t0 = performance.now();
+
+		// ----- text -----
+		const settle = (el: HTMLElement) => {
+			for (const a of el.getAnimations()) {
+				try {
+					a.commitStyles();
+				} catch {}
+				a.cancel();
+			}
+		};
+		const isMoving = (el: HTMLElement) => el.getAnimations().some((a) => a.playState === "running");
+
+		const placeText = (i: number) => {
+			words.forEach((list, k) =>
+				list.forEach((w) => {
+					w.getAnimations().forEach((a) => a.cancel());
+					w.style.transform = reduce || k === i ? "translateY(0%)" : "translateY(160%)";
+				}),
+			);
+			blocks.forEach((list, k) =>
+				list.forEach((b) => {
+					b.getAnimations().forEach((a) => a.cancel());
+					b.style.opacity = reduce && k !== i ? "0" : "";
+				}),
+			);
+		};
+
+		const animateText = (from: number, to: number, dir: number) => {
+			if (reduce) {
+				blocks[from].forEach((b) => {
+					settle(b);
+					b.animate([{ opacity: 0 }], { duration: 250, easing: "ease", fill: "forwards" });
+				});
+				blocks[to].forEach((b) => {
+					settle(b);
+					b.animate([{ opacity: 1 }], { duration: 350, delay: 150, easing: "ease", fill: "forwards" });
+				});
+				return;
+			}
+			const exitTo = dir > 0 ? "translateY(-150%)" : "translateY(160%)";
+			const enterFrom = dir > 0 ? "translateY(160%)" : "translateY(-150%)";
+			const stagger = (k: number) => Math.min(k * STAGGER_MS, STAGGER_MAX_MS);
+			words[from].forEach((w, k) => {
+				settle(w);
+				w.animate([{ transform: exitTo }], { duration: OUT_MS, delay: stagger(k), easing: EASE_IN_QUINT, fill: "forwards" });
+			});
+			words[to].forEach((w, k) => {
+				const moving = isMoving(w);
+				settle(w);
+				if (!moving) w.style.transform = enterFrom;
+				w.animate([{ transform: "translateY(0%)" }], {
+					duration: IN_MS,
+					delay: OUT_MS + stagger(k),
+					easing: EASE_OUT_QUINT,
+					fill: "forwards",
+				});
+			});
+		};
+
+		const setActive = (i: number) => {
+			infos.forEach((el, k) => el.setAttribute("aria-hidden", k === i ? "false" : "true"));
+		};
+
+		// ----- steps -----
+		const step = (to: number, now: number) => {
+			const from = current;
+			current = to;
+			stepAt = now;
+			animateText(from, to, Math.sign(to - from));
+			pendingSwap = { from, to, at: now + (reduce ? 0 : OUT_MS) };
+			setActive(to);
+			live.textContent = `${to + 1} / ${N}: ${infos[to].dataset.label ?? ""}`;
+		};
+
+		const snapTo = (i: number) => {
+			current = target = i;
+			bar = i;
+			pendingSwap = null;
+			placeText(i);
+			setActive(i);
+			view?.snap(i);
+			thumb.style.transform = `translateY(${bar * 100}%)`;
+		};
+
+		// scrolled fraction of the pinned track, 0..1
+		const progress = () => {
+			const r = track.getBoundingClientRect();
+			const d = r.height - stage.offsetHeight;
+			return d > 0 ? Math.min(1, Math.max(0, -r.top / d)) : 0;
+		};
+		const readTarget = () => {
+			const raw = progress() * N;
+			if (raw > target + 1 + HYSTERESIS || raw < target - HYSTERESIS) target = Math.min(N - 1, Math.max(0, Math.floor(raw)));
+			return target;
+		};
+
+		const frame = () => {
+			raf = 0;
+			const now = performance.now();
+			const dt = Math.min((now - lastT) / 1000, 1 / 30);
+			lastT = now;
+			readTarget();
+
+			if (target !== current && now - stepAt >= (reduce ? 400 : LOCK_MS)) {
+				const dir = Math.sign(target - current);
+				if (Math.abs(target - current) > MAX_BACKLOG) snapTo(target - dir * MAX_BACKLOG);
+				step(current + dir, now);
+			}
+			if (pendingSwap && now >= pendingSwap.at) {
+				view?.flash(pendingSwap.from, pendingSwap.to);
+				pendingSwap = null;
+			}
+
+			bar += (current - bar) * (1 - Math.exp(-BAR_RATE * dt));
+			if (reduce || Math.abs(current - bar) < 0.001) bar = current;
+			thumb.style.transform = `translateY(${bar * 100}%)`;
+
+			const busy = view?.tick(now) ?? false;
+			if (visible && (busy || bar !== current || target !== current || pendingSwap)) raf = requestAnimationFrame(frame);
+		};
+		const kick = () => {
+			if (raf) return;
+			lastT = performance.now();
+			raf = requestAnimationFrame(frame);
+		};
+
+		// ----- renderer -----
+		const useFallback = () => {
+			view?.destroy();
+			view = createFallbackView(bg, media, arts, reduce);
+			view.snap(current);
+			root.classList.add("is-fallback");
+		};
+		const build = () => {
+			arts = infos.map((el) => makeArt(el.dataset.art ?? "dusk"));
+			let gl: View | null = null;
+			try {
+				gl = createGLView(canvas, arts, media, reduce, t0, () => useFallback());
+			} catch (err) {
+				console.warn("[campo] WebGL2 unavailable, using the CSS fallback", err);
+			}
+			if (gl) {
+				view = gl;
+				view.snap(current);
+				if (wantReveal) view.reveal();
+			} else useFallback();
+			kick();
+		};
+
+		// ----- input: native scroll drives everything; arrows scroll to the next segment -----
+		const scrollToIndex = (i: number) => {
+			const r = track.getBoundingClientRect();
+			const d = r.height - stage.offsetHeight;
+			window.scrollTo({ top: window.scrollY + r.top + (d * (i + 0.5)) / N, behavior: reduce ? "auto" : "smooth" });
+		};
+		stage.addEventListener("keydown", (e) => {
+			const d = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 0;
+			const to = target + d;
+			if (!d || to < 0 || to >= N) return; // past the ends the arrows scroll the page as usual
+			e.preventDefault();
+			scrollToIndex(to);
 		});
 
-		flicking.addPlugins(
-			new Perspective({ selector: ".poster", rotate: -0.42, scale: 0.32, perspective: 900 }),
-			new Parallax(".art", 0.9),
-			new Fade(".meta", 1.6),
-			new AutoPlay({ duration: 2000, animationDuration: 1050, direction: "NEXT", stopOnHover: true }),
-			new Arrow({ parentEl: wrap }),
-			new Pagination({ parentEl: wrap, type: "bullet" }),
+		const onScroll = () => kick();
+		const onResize = () => kick();
+
+		// build the art and the renderer shortly before the section shows up
+		const near = new IntersectionObserver(
+			(entries) => {
+				if (entries.some((e) => e.isIntersecting)) {
+					near.disconnect();
+					build();
+				}
+			},
+			{ rootMargin: "100% 0px" },
 		);
+		near.observe(root);
+
+		// listen and animate only while the section is on screen; re-entering snaps without a flash
+		new IntersectionObserver((entries) => {
+			const on = entries.some((e) => e.isIntersecting);
+			if (on === visible) return;
+			visible = on;
+			if (on) {
+				target = current;
+				readTarget();
+				if (target !== current) snapTo(target);
+				addEventListener("scroll", onScroll, { passive: true });
+				addEventListener("resize", onResize);
+				kick();
+			} else {
+				removeEventListener("scroll", onScroll);
+				removeEventListener("resize", onResize);
+				if (raf) cancelAnimationFrame(raf);
+				raf = 0;
+			}
+		}).observe(root);
+
+		// first appearance of the media box
+		const revealIO = new IntersectionObserver(
+			(entries) => {
+				if (entries.some((e) => e.isIntersecting)) {
+					revealIO.disconnect();
+					wantReveal = true;
+					view?.reveal();
+					kick();
+				}
+			},
+			{ threshold: 0.5 },
+		);
+		revealIO.observe(media);
+
+		placeText(0);
 	}
+
+	const root = document.querySelector<HTMLElement>("[data-field]");
+	if (root) initField(root);
 </script>
 
 <style>
-	/* media-side cell: 60px padding (40px tablet, 40/20 mobile) */
-	.press__cell {
+	.field {
+		/* scroll distance per work */
+		--field-step: 75vh;
+		--band-h: clamp(200px, 15vw, 280px);
+		position: relative;
+	}
+
+	/* pinned background: a section-sized layer with a viewport-tall sticky child, so it pins while the
+	   section scrolls and never runs past the section's bottom edge */
+	.field__bg-wrap {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		pointer-events: none;
+	}
+
+	.field__bg {
+		position: sticky;
+		top: 0;
+		height: 100vh;
+		overflow: hidden;
+		background: #171717;
+		pointer-events: none;
+	}
+
+	.field__canvas {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		display: block;
+		opacity: 0; /* shown after the first frame is drawn, never a black flash */
+		transition: opacity 0.4s ease;
+	}
+
+	.field__canvas.is-ready {
+		opacity: 1;
+	}
+
+	.field__split {
+		position: relative;
+		z-index: 1;
+	}
+
+	/* the tall track the stage is pinned in: one viewport plus one step per work */
+	.split > .col-wide.field__track {
 		min-width: 0;
-		padding: 60px;
+		padding: 0;
+		height: calc(100vh + var(--n) * var(--field-step));
 	}
 
-	.press__flick {
+	.field__stage {
+		position: sticky;
+		top: 0;
+		height: 100vh;
+		height: 100svh;
+		display: flex;
+		align-items: center;
+		padding: calc(var(--gutter) + var(--nav-row-h) + 20px) 60px 40px;
+		outline: none;
+	}
+
+	.field__stage:focus-visible {
+		outline: 1px dashed rgba(255, 255, 255, 0.4);
+		outline-offset: -10px;
+	}
+
+	/* desktop band: bar | media | info | roles, all the same height */
+	.field__band {
+		display: grid;
+		grid-template-columns: 1px auto minmax(0, 1fr) minmax(100px, 0.45fr);
+		column-gap: 32px;
+		align-items: stretch;
+		width: 100%;
+		height: var(--band-h);
+	}
+
+	.field__bar {
 		position: relative;
-		padding-bottom: 56px; /* room for the pagination bullets */
-	}
-
-	.press__flick :global(.flicking-viewport) {
+		width: 1px;
+		height: var(--band-h);
 		overflow: hidden;
+		background: rgba(255, 255, 255, 0.2);
 	}
 
-	.press__panel {
-		width: min(400px, 52vw);
-		padding: 0 10px;
-	}
-
-	.press__panel :global(.poster) {
-		position: relative;
-		overflow: hidden;
-		border-radius: 10px;
-		aspect-ratio: 3 / 4;
-	}
-
-	/* the Parallax plugin sets translate(-50%) + an offset, so the art is centered with left: 50% and is
-	   wider than the poster, leaving room for the shift */
-	.press__panel :global(.art) {
+	.field__thumb {
 		position: absolute;
 		top: 0;
-		left: 50%;
-		width: 130%;
-		height: 100%;
+		left: 0;
+		width: 1px;
+		height: calc(100% / var(--n));
+		background: #fff;
+		will-change: transform;
 	}
 
-	.press__panel :global(.art .placeholder-media) {
-		height: 100%;
-		aspect-ratio: auto !important;
-		border-radius: 0;
+	/* the art is drawn by the canvas underneath; before that (and in the fallback) the box has its own look */
+	.field__media {
+		position: relative;
+		height: var(--band-h);
+		aspect-ratio: 16 / 9;
+		border-radius: 10px;
+		overflow: hidden;
+		background: repeating-linear-gradient(135deg, var(--bg-raised), var(--bg-raised) 10px, #1a1a1a 10px, #1a1a1a 20px);
 	}
 
-	.press__outlet {
+	.field__media.is-gl {
+		background: none;
+	}
+
+	.field__info,
+	.field__roles {
+		position: relative;
+		min-width: 0;
+		height: var(--band-h);
+	}
+
+	.field__work {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+	}
+
+	.field__head {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.field__foot {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20px;
+	}
+
+	/* line mask + word: the words slide inside their line */
+	.ln {
 		display: block;
-		margin-top: 16px;
+		white-space: nowrap;
+		overflow-x: visible;
+		overflow-y: clip;
+		padding: 0.05em 0 0.15em;
+	}
+
+	.w {
+		display: inline-block;
+	}
+
+	/* no-JS / pre-JS: only the first work is in place */
+	[data-i]:not([data-i="0"]) .w {
+		transform: translateY(160%);
+	}
+
+	.field__label {
 		font-family: var(--font-mono);
 		font-size: 11px;
 		line-height: 1.2em;
 		letter-spacing: 0;
 		text-transform: uppercase;
-		color: #666;
-	}
-
-	.press__title {
-		margin: 8px 0 0;
-		font-family: var(--font-sans);
-		font-size: 16px;
-		line-height: 1.2em;
-		letter-spacing: 0;
 		color: var(--fg);
 	}
 
-	/* plugin controls on the dark background */
-	.press__flick :global(.flicking-arrow-prev::before),
-	.press__flick :global(.flicking-arrow-prev::after),
-	.press__flick :global(.flicking-arrow-next::before),
-	.press__flick :global(.flicking-arrow-next::after) {
-		background: #fff;
+	/* the page's #666, as a translucent white so it stays legible over the coloured background */
+	.field__label--muted {
+		color: rgba(255, 255, 255, 0.5);
 	}
 
-	.press__flick :global(.flicking-pagination-bullet) {
-		background: #333;
+	.field__title {
+		position: absolute;
+		top: 50%;
+		left: 0;
+		width: 100%;
+		margin: 0;
+		transform: translateY(-50%);
+		font-family: "Instrument Serif", var(--font-display), serif;
+		font-weight: 400;
+		font-size: clamp(36px, 1.6vw + 22px, 64px);
+		line-height: 0.8;
+		letter-spacing: -0.01em;
+		text-transform: uppercase;
+		color: var(--fg);
 	}
 
-	.press__flick :global(.flicking-pagination-bullet-active) {
-		background: #fff;
+	.field__title .ln {
+		translate: -0.04em 0;
+		padding-left: 0.04em;
 	}
 
+	.field__roles-item {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+	}
+
+	.field__role {
+		font-family: var(--font-sans);
+		font-size: 14px;
+		line-height: 1.2em;
+		color: rgba(255, 255, 255, 0.5);
+	}
+
+	.field__sr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	/* CSS fallback layers (created by the script when WebGL2 is unavailable) */
+	.field :global(.field__fb) {
+		position: absolute;
+		inset: 0;
+		background-size: cover;
+		background-position: center;
+	}
+
+	.field__bg :global(.field__fb) {
+		inset: -40px;
+		filter: blur(24px);
+	}
+
+	.field__bg :global(.field__veil) {
+		position: absolute;
+		inset: 0;
+		background: rgba(23, 23, 23, 0.6);
+	}
+
+	.field.is-fallback .field__canvas {
+		display: none;
+	}
+
+	/* tablet: media box on top, then bar | info | roles */
 	@media (max-width: 1199.98px) {
-		.press__cell {
-			padding: 40px;
+		.field {
+			--band-h: 220px;
 		}
 
-		.press__title {
+		.field__stage {
+			padding: calc(var(--gutter) + var(--nav-row-h) + 20px) 40px 40px;
+		}
+
+		.field__band {
+			grid-template-columns: 1px minmax(0, 1fr) minmax(90px, 0.45fr);
+			grid-template-rows: auto var(--band-h);
+			row-gap: 28px;
+			height: auto;
+		}
+
+		.field__media {
+			grid-column: 1 / -1;
+			grid-row: 1;
+			width: min(100%, calc(36svh * 16 / 9));
+			height: auto;
+		}
+
+		.field__bar {
+			grid-column: 1;
+			grid-row: 2;
+		}
+
+		.field__info {
+			grid-column: 2;
+			grid-row: 2;
+		}
+
+		.field__roles {
+			grid-column: 3;
+			grid-row: 2;
+		}
+
+		.field__role {
 			font-size: 13px;
 		}
 	}
 
+	/* short screens: no room for the box, the art stays visible in the background */
+	@media (max-width: 1199.98px) and (max-height: 560px) {
+		.field__media {
+			display: none;
+		}
+	}
+
 	@media (max-width: 767.98px) {
-		.press__cell {
-			padding: 40px 20px;
+		.field {
+			--band-h: 200px;
 		}
 
-		.press__panel {
-			width: 72vw;
+		.field__stage {
+			padding: calc(var(--nav-h) + 12px) 20px 32px;
+		}
+
+		.field__band {
+			grid-template-columns: 1px minmax(0, 1fr) minmax(80px, 0.4fr);
+			column-gap: 20px;
+			row-gap: 24px;
+		}
+
+		.field__title {
+			font-size: clamp(32px, 9vw, 44px);
 		}
 	}
 </style>

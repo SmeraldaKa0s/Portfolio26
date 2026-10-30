@@ -12,8 +12,6 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@egjs/flicking": "^4.17.1",
-    "@egjs/flicking-plugins": "^4.8.1",
     "astro": "^7.3.3"
   },
   "allowScripts": {
