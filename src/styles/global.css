@@ -266,19 +266,26 @@ a {
 }
 
 /* Scroll-reveal: toggled by the IntersectionObserver in Layout.astro */
+/* enters from 80px below with a fade (perspective 1200px), a soft overdamped spring (~0.7s) */
 [data-reveal] {
 	opacity: 0;
-	transform: translateY(24px);
-	transition: opacity 0.7s ease, transform 0.7s ease;
+	transform: perspective(1200px) translateY(80px);
+	transition:
+		opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+		transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 [data-reveal].is-in {
 	opacity: 1;
-	transform: translateY(0);
+	transform: none;
 }
 
-[data-reveal-group] [data-reveal] {
-	transition-delay: calc(var(--reveal-index, 0) * 80ms);
+@media (prefers-reduced-motion: reduce) {
+	[data-reveal] {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
 }
 
 /* Stacked hover-swap text: markup is <span class="swap"><span>Label</span><span aria-hidden="true">Label</span></span> */
