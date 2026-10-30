@@ -9,109 +9,106 @@ const items = [
 ];
 ---
 
-<section class="frame press" data-carousel>
+<section class="frame press">
 	<div class="split">
 		<div class="col-narrow section-head">
 			<h2 class="section-title" data-reveal>Experiencia en campo</h2>
 		</div>
 
 		<div class="col-wide press__cell">
-			<div class="press__track" data-carousel-track tabindex="0" aria-label="Experiencia en campo">
-				{items.map((item) => (
-					<a href="#" class="press__slide" data-carousel-slide>
-						<Media kind="image" ratio="3 / 4" />
-						<span class="press__outlet">({item.letter}) {item.outlet}</span>
-						<p class="press__title">{item.title}</p>
-					</a>
-				))}
-			</div>
-
-			<div class="press__controls">
-				<span class="press__count"><span data-carousel-current>01</span> / {String(items.length).padStart(2, "0")}</span>
-				<div class="press__buttons">
-					<button type="button" class="press__arrow" data-carousel-prev aria-label="Anterior">←</button>
-					<button type="button" class="press__arrow" data-carousel-next aria-label="Siguiente">→</button>
+			<div class="press__flick" id="press-flick-wrap">
+				<div class="flicking-viewport" id="press-flick">
+					<div class="flicking-camera">
+						{items.map((item) => (
+							<div class="press__panel">
+								<div class="poster">
+									<div class="art"><Media kind="image" ratio="3 / 4" /></div>
+								</div>
+								<div class="meta">
+									<span class="press__outlet">({item.letter}) {item.outlet}</span>
+									<p class="press__title">{item.title}</p>
+								</div>
+							</div>
+						))}
+					</div>
 				</div>
+
+				<span class="flicking-arrow-prev"></span>
+				<span class="flicking-arrow-next"></span>
+				<div class="flicking-pagination"></div>
 			</div>
 		</div>
 	</div>
 </section>
 
 <script>
-	document.querySelectorAll<HTMLElement>("[data-carousel]").forEach((root) => {
-		const track = root.querySelector<HTMLElement>("[data-carousel-track]");
-		const slides = Array.from(root.querySelectorAll<HTMLElement>("[data-carousel-slide]"));
-		const prev = root.querySelector<HTMLButtonElement>("[data-carousel-prev]");
-		const next = root.querySelector<HTMLButtonElement>("[data-carousel-next]");
-		const current = root.querySelector<HTMLElement>("[data-carousel-current]");
-		if (!track || !slides.length) return;
+	import Flicking from "@egjs/flicking";
+	import { Perspective, Parallax, Fade, AutoPlay, Arrow, Pagination } from "@egjs/flicking-plugins";
+	import "@egjs/flicking/dist/flicking.css";
+	import "@egjs/flicking-plugins/dist/flicking-plugins.css";
 
-		// the slide whose left edge is closest to the track's left edge
-		function index() {
-			const left = track!.scrollLeft;
-			let best = 0;
-			slides.forEach((s, i) => {
-				if (Math.abs(s.offsetLeft - track!.offsetLeft - left) < Math.abs(slides[best].offsetLeft - track!.offsetLeft - left)) best = i;
-			});
-			return best;
-		}
+	const wrap = document.getElementById("press-flick-wrap");
 
-		function sync() {
-			const i = index();
-			if (current) current.textContent = String(i + 1).padStart(2, "0");
-			const max = track!.scrollWidth - track!.clientWidth - 1;
-			if (prev) prev.disabled = track!.scrollLeft <= 0;
-			if (next) next.disabled = track!.scrollLeft >= max;
-		}
-
-		function go(i: number) {
-			const slide = slides[Math.max(0, Math.min(slides.length - 1, i))];
-			track!.scrollTo({ left: slide.offsetLeft - track!.offsetLeft, behavior: "smooth" });
-		}
-
-		prev?.addEventListener("click", () => go(index() - 1));
-		next?.addEventListener("click", () => go(index() + 1));
-		track.addEventListener("scroll", sync, { passive: true });
-		track.addEventListener("keydown", (e) => {
-			if (e.key === "ArrowRight") go(index() + 1);
-			if (e.key === "ArrowLeft") go(index() - 1);
+	if (wrap) {
+		const flicking = new Flicking("#press-flick", {
+			circular: true,
+			align: "center",
+			moveType: ["snap", { count: 1 }],
 		});
-		window.addEventListener("resize", sync);
-		sync();
-	});
+
+		flicking.addPlugins(
+			new Perspective({ selector: ".poster", rotate: -0.42, scale: 0.32, perspective: 900 }),
+			new Parallax(".art", 0.9),
+			new Fade(".meta", 1.6),
+			new AutoPlay({ duration: 2000, animationDuration: 1050, direction: "NEXT", stopOnHover: true }),
+			new Arrow({ parentEl: wrap }),
+			new Pagination({ parentEl: wrap, type: "bullet" }),
+		);
+	}
 </script>
 
 <style>
 	/* media-side cell: 60px padding (40px tablet, 40/20 mobile) */
 	.press__cell {
-		display: flex;
-		flex-direction: column;
-		gap: 24px;
 		min-width: 0;
 		padding: 60px;
 	}
 
-	/* the carousel: one slide visible at a time, the next one peeks in; snaps on scroll/swipe */
-	.press__track {
-		display: flex;
-		gap: 10px;
-		overflow-x: auto;
-		scroll-snap-type: x mandatory;
-		scrollbar-width: none;
-		outline: none;
+	.press__flick {
+		position: relative;
+		padding-bottom: 56px; /* room for the pagination bullets */
 	}
 
-	.press__track::-webkit-scrollbar {
-		display: none;
+	.press__flick :global(.flicking-viewport) {
+		overflow: hidden;
 	}
 
-	.press__slide {
-		flex: 0 0 min(100%, 520px);
-		scroll-snap-align: start;
+	.press__panel {
+		width: min(400px, 52vw);
+		padding: 0 10px;
 	}
 
-	.press__slide :global(.placeholder-media) {
+	.press__panel :global(.poster) {
+		position: relative;
+		overflow: hidden;
 		border-radius: 10px;
+		aspect-ratio: 3 / 4;
+	}
+
+	/* the Parallax plugin sets translate(-50%) + an offset, so the art is centered with left: 50% and is
+	   wider than the poster, leaving room for the shift */
+	.press__panel :global(.art) {
+		position: absolute;
+		top: 0;
+		left: 50%;
+		width: 130%;
+		height: 100%;
+	}
+
+	.press__panel :global(.art .placeholder-media) {
+		height: 100%;
+		aspect-ratio: auto !important;
+		border-radius: 0;
 	}
 
 	.press__outlet {
@@ -134,43 +131,20 @@ const items = [
 		color: var(--fg);
 	}
 
-	.press__controls {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
+	/* plugin controls on the dark background */
+	.press__flick :global(.flicking-arrow-prev::before),
+	.press__flick :global(.flicking-arrow-prev::after),
+	.press__flick :global(.flicking-arrow-next::before),
+	.press__flick :global(.flicking-arrow-next::after) {
+		background: #fff;
 	}
 
-	.press__count {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		line-height: 1.2em;
-		color: var(--fg);
+	.press__flick :global(.flicking-pagination-bullet) {
+		background: #333;
 	}
 
-	.press__buttons {
-		display: flex;
-		gap: 8px;
-	}
-
-	.press__arrow {
-		display: grid;
-		place-items: center;
-		width: 32px;
-		height: 32px;
-		padding: 0;
-		border: 0;
-		border-radius: 50%;
-		background: #222;
-		color: var(--fg);
-		font-family: var(--font-mono);
-		font-size: 13px;
-		cursor: pointer;
-		transition: opacity 0.2s ease;
-	}
-
-	.press__arrow:disabled {
-		opacity: 0.32;
-		cursor: default;
+	.press__flick :global(.flicking-pagination-bullet-active) {
+		background: #fff;
 	}
 
 	@media (max-width: 1199.98px) {
@@ -186,6 +160,10 @@ const items = [
 	@media (max-width: 767.98px) {
 		.press__cell {
 			padding: 40px 20px;
+		}
+
+		.press__panel {
+			width: 72vw;
 		}
 	}
 </style>
