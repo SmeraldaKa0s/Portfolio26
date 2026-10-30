@@ -105,6 +105,19 @@ const linkedin = "https://www.linkedin.com/";
 	window.addEventListener("keydown", (e) => {
 		if (e.key === "Escape") setOpen(false);
 	});
+	// email button in the mobile menu: copy to the clipboard and show "Copiado!" for a moment
+	document.querySelectorAll<HTMLButtonElement>(".nav [data-copy-email]").forEach((button) => {
+		button.addEventListener("click", async () => {
+			try {
+				await navigator.clipboard.writeText(button.dataset.email ?? "");
+			} catch {
+				// Clipboard API unavailable; the label swap is cosmetic only.
+			}
+			button.classList.add("is-copied");
+			setTimeout(() => button.classList.remove("is-copied"), 1500);
+		});
+	});
+
 	// leaving the mobile layout while the menu is open: close it
 	matchMedia("(min-width: 768px)").addEventListener("change", (e) => {
 		if (e.matches) setOpen(false);
