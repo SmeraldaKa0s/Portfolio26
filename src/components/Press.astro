@@ -483,8 +483,9 @@ const words = (text: string) => text.split(/\s+/).filter(Boolean);
 		min-width: 0;
 	}
 
-	/* 1px track drawn over the dashed divider (the stage begins right after the line, so it sits at
-	   -stage padding - 1px), same top and height as the media box; grows in when the stage is live */
+	/* 1px bar over the dashed divider (the stage begins right after the line, so it sits at
+	   -stage padding - 1px), same top and height as the media box; grows in when the stage is live.
+	   There is no visible track: only the small solid white thumb shows, the dashed line stays as is */
 	.field__bar {
 		position: absolute;
 		top: 0;
@@ -493,7 +494,6 @@ const words = (text: string) => text.split(/\s+/).filter(Boolean);
 		z-index: 2;
 		width: 1px;
 		overflow: hidden;
-		background: rgba(255, 255, 255, 0.2);
 		opacity: 0;
 		transform: scaleY(0);
 		transform-origin: top;

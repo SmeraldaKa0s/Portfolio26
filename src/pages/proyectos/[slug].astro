@@ -2,7 +2,7 @@
 import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import Nav from "../../components/Nav.astro";
-import Footer from "../../components/Footer.astro";
+import CTA from "../../components/CTA.astro";
 import Media from "../../components/Media.astro";
 
 export async function getStaticPaths() {
@@ -36,7 +36,7 @@ const { Content } = await render(project);
 		</div>
 	</article>
 
-	<Footer />
+	<CTA />
 </Layout>
 
 <style>
