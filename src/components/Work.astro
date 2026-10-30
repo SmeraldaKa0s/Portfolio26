@@ -2,9 +2,13 @@
 import { getCollection } from "astro:content";
 import Media from "./Media.astro";
 
-const projects = (await getCollection("projects")).sort(
-	(a, b) => a.data.order - b.data.order
-);
+// temporary: only the first projects are shown, to keep the page short while working on it.
+// Set to Infinity to show all of them again.
+const VISIBLE_PROJECTS = 3;
+
+const projects = (await getCollection("projects"))
+	.sort((a, b) => a.data.order - b.data.order)
+	.slice(0, VISIBLE_PROJECTS);
 ---
 
 <section id="work" class="frame work">
