@@ -16,9 +16,11 @@ const projects = (await getCollection("projects")).sort(
 			style={i !== projects.length - 1 ? "border-bottom: var(--border)" : ""}
 		>
 			<div class="col-narrow work__item-text">
-				<h3>{project.data.title}</h3>
-				<p>{project.data.excerpt}</p>
-				<span class="work__tag">{project.data.category}</span>
+				<div class="work__item-sticky">
+					<h3>{project.data.title}</h3>
+					<p>{project.data.excerpt}</p>
+					<span class="work__tag">{project.data.category}</span>
+				</div>
 			</div>
 
 			<div class="col-wide work__item-media">
@@ -35,10 +37,16 @@ const projects = (await getCollection("projects")).sort(
 		align-items: stretch;
 	}
 
-	.work__item-text {
+	/* text cell: 80px / 20px padding; the block stays pinned 100px from the top while the media scrolls */
+	.work__item > .work__item-text {
+		padding: 80px 20px;
+	}
+
+	.work__item-sticky {
+		position: sticky;
+		top: 100px;
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
 		align-items: flex-start;
 		gap: 10px;
 	}
@@ -74,10 +82,21 @@ const projects = (await getCollection("projects")).sort(
 		font-size: 11px;
 		line-height: 1.2em;
 		color: var(--fg);
+		opacity: 0.64;
 	}
 
-	.work__item-media {
+	/* media cell: 60px padding (40px on tablet), media pushed to the bottom-right */
+	.work__item > .work__item-media {
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		align-items: flex-end;
+		padding: 60px;
 		overflow: hidden;
+	}
+
+	.work__item-media :global(.placeholder-media) {
+		width: 100%;
 	}
 
 	.work__item-media :global(.placeholder-media) {
@@ -93,22 +112,28 @@ const projects = (await getCollection("projects")).sort(
 		.work__item-text h3 {
 			font-size: 16px;
 		}
+
+		.work__item > .work__item-media {
+			padding: 40px;
+		}
 	}
 
-	/* ashcamp mobile: one column — text cell (80/20 padding, dashed bottom line) then the media
+	/* mobile: one column — text cell (80/20 padding, dashed bottom line) then the media
 	   cell (40/20 padding); the frame's left/right dashed lines run on both sides */
 	@media (max-width: 767.98px) {
 		.work__item > .work__item-text {
 			flex: none;
 			max-width: none;
-			justify-content: flex-start;
-			padding: 80px 20px;
 			border-right: none;
 			border-bottom: var(--border);
 		}
 
 		.work__item-text p {
 			max-width: none;
+		}
+
+		.work__item-sticky {
+			position: static;
 		}
 
 		.work__item > .work__item-media {
