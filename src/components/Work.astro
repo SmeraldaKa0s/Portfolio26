@@ -91,6 +91,7 @@ const projects = (await getCollection("projects")).sort(
 		flex-direction: column;
 		justify-content: flex-end;
 		align-items: flex-end;
+		gap: 10px;
 		padding: 60px;
 		overflow: hidden;
 	}
@@ -101,11 +102,6 @@ const projects = (await getCollection("projects")).sort(
 
 	.work__item-media :global(.placeholder-media) {
 		border-radius: 10px;
-		transition: transform 0.5s ease;
-	}
-
-	.work__item:hover .work__item-media :global(.placeholder-media) {
-		transform: scale(1.04);
 	}
 
 	@media (max-width: 1199.98px) {
