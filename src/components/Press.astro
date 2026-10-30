@@ -9,68 +9,183 @@ const items = [
 ];
 ---
 
-<section class="frame">
+<section class="frame press" data-carousel>
 	<div class="split">
 		<div class="col-narrow section-head">
-			<h2 class="section-title">Prensa &amp; entrevistas</h2>
+			<h2 class="section-title" data-reveal>Experiencia en campo</h2>
 		</div>
 
-		<div class="col-wide press__grid" data-reveal-group>
-			{items.map((item, i) => {
-				const borders = [
-					i % 2 === 0 ? "border-right: var(--border)" : "",
-					i < items.length - 2 ? "border-bottom: var(--border)" : "",
-				].join(";");
-				return (
-					<a href="#" class="press__item" data-reveal style={borders}>
+		<div class="col-wide press__cell">
+			<div class="press__track" data-carousel-track tabindex="0" aria-label="Experiencia en campo">
+				{items.map((item) => (
+					<a href="#" class="press__slide" data-carousel-slide>
 						<Media kind="image" ratio="3 / 4" />
-						<span class="eyebrow">({item.letter}) {item.outlet}</span>
-						<p>{item.title}</p>
+						<span class="press__outlet">({item.letter}) {item.outlet}</span>
+						<p class="press__title">{item.title}</p>
 					</a>
-				);
-			})}
+				))}
+			</div>
+
+			<div class="press__controls">
+				<span class="press__count"><span data-carousel-current>01</span> / {String(items.length).padStart(2, "0")}</span>
+				<div class="press__buttons">
+					<button type="button" class="press__arrow" data-carousel-prev aria-label="Anterior">←</button>
+					<button type="button" class="press__arrow" data-carousel-next aria-label="Siguiente">→</button>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>
 
+<script>
+	document.querySelectorAll<HTMLElement>("[data-carousel]").forEach((root) => {
+		const track = root.querySelector<HTMLElement>("[data-carousel-track]");
+		const slides = Array.from(root.querySelectorAll<HTMLElement>("[data-carousel-slide]"));
+		const prev = root.querySelector<HTMLButtonElement>("[data-carousel-prev]");
+		const next = root.querySelector<HTMLButtonElement>("[data-carousel-next]");
+		const current = root.querySelector<HTMLElement>("[data-carousel-current]");
+		if (!track || !slides.length) return;
+
+		// the slide whose left edge is closest to the track's left edge
+		function index() {
+			const left = track!.scrollLeft;
+			let best = 0;
+			slides.forEach((s, i) => {
+				if (Math.abs(s.offsetLeft - track!.offsetLeft - left) < Math.abs(slides[best].offsetLeft - track!.offsetLeft - left)) best = i;
+			});
+			return best;
+		}
+
+		function sync() {
+			const i = index();
+			if (current) current.textContent = String(i + 1).padStart(2, "0");
+			const max = track!.scrollWidth - track!.clientWidth - 1;
+			if (prev) prev.disabled = track!.scrollLeft <= 0;
+			if (next) next.disabled = track!.scrollLeft >= max;
+		}
+
+		function go(i: number) {
+			const slide = slides[Math.max(0, Math.min(slides.length - 1, i))];
+			track!.scrollTo({ left: slide.offsetLeft - track!.offsetLeft, behavior: "smooth" });
+		}
+
+		prev?.addEventListener("click", () => go(index() - 1));
+		next?.addEventListener("click", () => go(index() + 1));
+		track.addEventListener("scroll", sync, { passive: true });
+		track.addEventListener("keydown", (e) => {
+			if (e.key === "ArrowRight") go(index() + 1);
+			if (e.key === "ArrowLeft") go(index() - 1);
+		});
+		window.addEventListener("resize", sync);
+		sync();
+	});
+</script>
+
 <style>
-	.press__grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		padding: 0;
+	/* media-side cell: 60px padding (40px tablet, 40/20 mobile) */
+	.press__cell {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+		min-width: 0;
+		padding: 60px;
 	}
 
-	.press__item {
-		padding: 24px;
+	/* the carousel: one slide visible at a time, the next one peeks in; snaps on scroll/swipe */
+	.press__track {
+		display: flex;
+		gap: 10px;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		scrollbar-width: none;
+		outline: none;
 	}
 
-	.press__item :global(.placeholder-media) {
-		transition: transform 0.5s ease;
+	.press__track::-webkit-scrollbar {
+		display: none;
 	}
 
-	.press__item:hover :global(.placeholder-media) {
-		transform: scale(1.03);
+	.press__slide {
+		flex: 0 0 min(100%, 520px);
+		scroll-snap-align: start;
 	}
 
-	.press__item p {
-		margin: 12px 0 0;
-		font-family: var(--font-display);
-		font-weight: 500;
-		font-size: 16px;
+	.press__slide :global(.placeholder-media) {
+		border-radius: 10px;
 	}
 
-	.press__item span {
+	.press__outlet {
 		display: block;
 		margin-top: 16px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		line-height: 1.2em;
+		letter-spacing: 0;
+		text-transform: uppercase;
+		color: #666;
+	}
+
+	.press__title {
+		margin: 8px 0 0;
+		font-family: var(--font-sans);
+		font-size: 16px;
+		line-height: 1.2em;
+		letter-spacing: 0;
+		color: var(--fg);
+	}
+
+	.press__controls {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.press__count {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		line-height: 1.2em;
+		color: var(--fg);
+	}
+
+	.press__buttons {
+		display: flex;
+		gap: 8px;
+	}
+
+	.press__arrow {
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: #222;
+		color: var(--fg);
+		font-family: var(--font-mono);
+		font-size: 13px;
+		cursor: pointer;
+		transition: opacity 0.2s ease;
+	}
+
+	.press__arrow:disabled {
+		opacity: 0.32;
+		cursor: default;
+	}
+
+	@media (max-width: 1199.98px) {
+		.press__cell {
+			padding: 40px;
+		}
+
+		.press__title {
+			font-size: 13px;
+		}
 	}
 
 	@media (max-width: 767.98px) {
-		.press__grid {
-			grid-template-columns: 1fr;
-		}
-
-		.press__item {
-			border-right: none !important;
+		.press__cell {
+			padding: 40px 20px;
 		}
 	}
 </style>
