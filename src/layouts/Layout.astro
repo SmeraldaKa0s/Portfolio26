@@ -23,6 +23,16 @@ const {
 		<title>{title}</title>
 		<meta name="description" content={description} />
 
+		<!-- scroll reveal: hide [data-reveal] only when JS runs; if the reveal script has not
+		     started by the load event (it failed), show everything instead of leaving it invisible -->
+		<script is:inline>
+			document.documentElement.classList.add("reveal-on");
+			addEventListener("load", function () {
+				var r = document.documentElement;
+				if (!r.classList.contains("reveal-ready")) r.classList.remove("reveal-on");
+			});
+		</script>
+
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
@@ -40,22 +50,58 @@ const {
 		<Cursor />
 
 		<script>
-			const io = new IntersectionObserver(
-				(entries) => {
-					for (const entry of entries) {
-						if (entry.isIntersecting) {
-							entry.target.classList.add("is-in");
-							io.unobserve(entry.target);
-						}
-					}
-				},
-				{ threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
-			);
+			// Scroll reveal: each [data-reveal] element fades/rises in (global.css) once, when its top
+			// enters the viewport. threshold 0 so tall elements trigger as soon as they show up, at any
+			// viewport size; elements entering in the same frame get a short top-to-bottom stagger.
+			const root = document.documentElement;
+			const pending = new Set<HTMLElement>(document.querySelectorAll<HTMLElement>("[data-reveal]"));
 
-			document.querySelectorAll("[data-reveal]").forEach((el, i) => {
-				el.style.setProperty("--reveal-index", String(i % 8));
-				io.observe(el);
-			});
+			const show = (el: HTMLElement, delay = 0) => {
+				if (!pending.delete(el)) return;
+				io?.unobserve(el);
+				if (delay) {
+					el.style.transitionDelay = `${delay}ms`;
+					el.addEventListener("transitionend", () => el.style.removeProperty("transition-delay"), { once: true });
+				}
+				el.classList.add("is-in");
+			};
+
+			// no animation: for elements already scrolled past (restored scroll, anchor jumps)
+			const showNow = (el: HTMLElement) => {
+				el.style.transition = "none";
+				show(el);
+				void el.offsetWidth;
+				el.style.removeProperty("transition");
+			};
+
+			const io =
+				"IntersectionObserver" in window
+					? new IntersectionObserver(
+							(entries) => {
+								entries
+									.filter((e) => e.isIntersecting)
+									.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+									.forEach((e, i) => show(e.target as HTMLElement, Math.min(i, 4) * 70));
+							},
+							{ threshold: 0, rootMargin: "0px 0px -5% 0px" }
+						)
+					: null;
+
+			// anything whose top is already above the viewport (jumped over or restored past) shows at once
+			const revealPassed = () => {
+				for (const el of pending) if (el.getBoundingClientRect().top < 0) showNow(el);
+			};
+
+			if (io) {
+				pending.forEach((el) => io.observe(el));
+				revealPassed();
+				addEventListener("load", revealPassed);
+				addEventListener("hashchange", revealPassed);
+				addEventListener("pageshow", revealPassed);
+			} else {
+				pending.forEach(showNow);
+			}
+			root.classList.add("reveal-ready");
 		</script>
 	</body>
 </html>

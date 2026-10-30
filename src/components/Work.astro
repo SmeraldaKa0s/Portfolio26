@@ -7,27 +7,26 @@ const projects = (await getCollection("projects")).sort(
 );
 ---
 
-<section id="work" class="frame work" data-reveal-group>
+<section id="work" class="frame work">
 	{projects.map((project, i) => (
 		<a
 			href={`/proyectos/${project.id}`}
 			class="split work__item"
-			data-reveal
 			style={i !== projects.length - 1 ? "border-bottom: var(--border)" : ""}
 		>
 			<div class="col-narrow work__item-text">
 				<div class="work__item-sticky">
-					<h3>{project.data.title}</h3>
-					<p>{project.data.excerpt}</p>
-					<span class="work__tag">{project.data.category}</span>
+					<h3 data-reveal>{project.data.title}</h3>
+					<p data-reveal>{project.data.excerpt}</p>
+					<span class="work__tag" data-reveal>{project.data.category}</span>
 				</div>
 			</div>
 
 			<div class="col-wide work__item-media">
-				<div class="work__shot work__shot--full"><Media kind={project.data.media.kind} ratio="8 / 5" /></div>
-				<div class="work__shot"><Media kind="image" ratio="3 / 4" /></div>
-				<div class="work__shot"><Media kind="image" ratio="3 / 4" /></div>
-				<div class="work__shot work__shot--full"><Media kind="image" ratio="8 / 5" /></div>
+				<div class="work__shot work__shot--full" data-reveal><Media kind={project.data.media.kind} ratio="8 / 5" /></div>
+				<div class="work__shot" data-reveal><Media kind="image" ratio="3 / 4" /></div>
+				<div class="work__shot" data-reveal><Media kind="image" ratio="3 / 4" /></div>
+				<div class="work__shot work__shot--full" data-reveal><Media kind="image" ratio="8 / 5" /></div>
 			</div>
 		</a>
 	))}

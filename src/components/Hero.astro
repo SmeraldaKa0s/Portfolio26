@@ -61,6 +61,30 @@ const headline = lines.map((words, li) => {
 	</div>
 </section>
 
+<!-- Entry gate. CSS animations start counting as soon as styles are computed, but on phones the first
+     frame can land a second or more later (web fonts, canvas/WebGL setup), so most of the headline had
+     already finished "animating" before anything was on screen. This runs synchronously, before the first
+     paint: it arms the hero (text held in its start state) and lets the animation run only once the fonts
+     are in (capped) and a frame has actually been painted. Without JS the hero is never armed, so the text
+     is simply visible. -->
+<script is:inline>
+	(() => {
+		const hero = document.getElementById("index");
+		if (!hero) return;
+		hero.dataset.intro = "armed";
+		let done = false;
+		const play = () => {
+			if (done) return;
+			done = true;
+			requestAnimationFrame(() => requestAnimationFrame(() => (hero.dataset.intro = "play")));
+		};
+		// the headline's font (fonts.ready alone would resolve before layout has requested any font)
+		const font = document.fonts ? document.fonts.load('14px "Fragment Mono"') : Promise.resolve();
+		font.then(play, play);
+		setTimeout(play, 1200);
+	})();
+</script>
+
 <style>
 	.hero {
 		display: flex;
@@ -105,12 +129,19 @@ const headline = lines.map((words, li) => {
 		color: var(--fg);
 	}
 
-	/* per-character entry, as on ashcamp.co (spring ~0.3s, no bounce) */
+	/* per-character entry (spring ~0.3s, no bounce). Held in its start state while the hero is "armed"
+	   and played once the entry gate (script below the section) has seen a painted frame. */
 	.hero__char {
 		display: inline-block;
+	}
+
+	.hero[data-intro="armed"] .hero__char {
 		opacity: 0;
 		filter: blur(10px);
 		transform: translateY(10px);
+	}
+
+	.hero[data-intro="play"] .hero__char {
 		animation: hero-char 0.3s cubic-bezier(0.33, 1, 0.68, 1) both;
 		animation-delay: var(--d, 0s);
 	}
@@ -128,16 +159,23 @@ const headline = lines.map((words, li) => {
 		}
 	}
 
-	/* Hero content is always on-screen on load, so it fades in on a timer
+	/* Hero content is always on-screen on load, so it fades in on a timer (same gate as the headline)
 	   instead of the scroll-triggered [data-reveal] used elsewhere. */
-	.hero__intro {
+	.hero[data-intro="armed"] .hero__intro {
 		opacity: 0;
 		transform: translateY(16px);
-		animation: hero-intro 0.8s ease forwards;
+	}
+
+	.hero[data-intro="play"] .hero__intro {
+		animation: hero-intro 0.8s ease both;
 		animation-delay: var(--intro-delay, 0.1s);
 	}
 
 	@keyframes hero-intro {
+		from {
+			opacity: 0;
+			transform: translateY(16px);
+		}
 		to {
 			opacity: 1;
 			transform: translateY(0);
@@ -145,13 +183,8 @@ const headline = lines.map((words, li) => {
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.hero__intro {
-			animation: none;
-			opacity: 1;
-			transform: none;
-		}
-
-		.hero__char {
+		.hero[data-intro] .hero__intro,
+		.hero[data-intro] .hero__char {
 			animation: none;
 			opacity: 1;
 			filter: none;

@@ -58,22 +58,34 @@ const linkedin = "https://www.linkedin.com/";
 	</div>
 
 	<nav class="nav__panel" id="nav-panel" data-nav-panel aria-label="Menú">
+		<!-- --i: position in the opening stagger (big links first, then email / LinkedIn) -->
 		<div class="nav__panel-main">
-			{links.map((link) => <a class="nav__panel-link" href={link.href}>{link.label}</a>)}
-			<a class="nav__panel-link" href="#contact">Hablemos</a>
+			{links.map((link, i) => <a class="nav__panel-link" href={link.href} style={`--i:${i}`}>{link.label}</a>)}
+			<a class="nav__panel-link" href="#contact" style={`--i:${links.length}`}>Hablemos</a>
 		</div>
 
 		<div class="nav__panel-meta">
-			<button class="nav__panel-small nav__email" type="button" data-copy-email data-email={email}>
+			<button class="nav__panel-small nav__email" type="button" data-copy-email data-email={email} style={`--i:${links.length + 1}`}>
 				<span class="swap">
 					<span data-copy-label>{email}</span>
 					<span aria-hidden="true">Copiado!</span>
 				</span>
 			</button>
-			<a class="nav__panel-small" href={linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+			<a class="nav__panel-small" href={linkedin} target="_blank" rel="noreferrer" style={`--i:${links.length + 2}`}>LinkedIn</a>
 		</div>
 	</nav>
 </header>
+
+<!-- Entry gate for the mobile bar (same idea as the hero's): armed before the first paint, played once a
+     frame has been painted, so the entrance is not spent while the page is still blank. No JS: no gate. -->
+<script is:inline>
+	(() => {
+		const nav = document.querySelector("[data-nav]");
+		if (!nav) return;
+		nav.dataset.intro = "armed";
+		requestAnimationFrame(() => requestAnimationFrame(() => (nav.dataset.intro = "play")));
+	})();
+</script>
 
 <script>
 	const nav = document.querySelector<HTMLElement>("[data-nav]");
@@ -356,6 +368,78 @@ const linkedin = "https://www.linkedin.com/";
 
 		.nav__email.is-copied :global(.swap) > :global(span) {
 			transform: translateY(-100%);
+		}
+
+		/* touch feedback: phones have no hover, so pressing a menu item dims it while held */
+		.nav__menu,
+		.nav__panel-link,
+		.nav__panel-small {
+			-webkit-tap-highlight-color: transparent;
+			transition: opacity 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+		}
+
+		.nav__menu:active,
+		.nav__panel-link:active,
+		.nav__panel-small:active {
+			opacity: 0.55;
+			transition-duration: 0s;
+		}
+
+		/* entrance of the bar (clock + MENU) on load: same rise + fade as the rest of the site, slightly
+		   staggered; held while the gate is armed, played after the first painted frame */
+		.nav[data-intro="armed"] .nav__bar > * {
+			opacity: 0;
+		}
+
+		.nav[data-intro="play"] .nav__bar > * {
+			animation: nav-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+			animation-delay: 0.1s;
+			--rise: 12px;
+		}
+
+		.nav[data-intro="play"] .nav__bar > :last-child {
+			animation-delay: 0.18s;
+		}
+
+		/* opening the menu: the panel goes from display:none to flex, so these replay on every open.
+		   Big links first, then email / LinkedIn, 50ms apart. */
+		.nav.is-open .nav__panel-link,
+		.nav.is-open .nav__panel-small {
+			--rise: 40px;
+			/* backwards, not both: once done the items fall back to their own styles, so :active can dim them */
+			animation: nav-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+			animation-delay: calc(0.06s + var(--i, 0) * 0.05s);
+		}
+	}
+
+	@keyframes nav-rise {
+		from {
+			opacity: 0;
+			transform: translateY(var(--rise, 40px));
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	/* touch screens: the shared hover-swap would stick after a tap (a tapped element keeps :hover), which
+	   left the email showing "Copiado!" indefinitely; only the explicit .is-copied state swaps it */
+	@media (hover: none) {
+		.nav__email:not(.is-copied) :global(.swap) > :global(span) {
+			transform: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.nav[data-intro] .nav__bar > * {
+			animation: none;
+			opacity: 1;
+		}
+
+		.nav.is-open .nav__panel-link,
+		.nav.is-open .nav__panel-small {
+			animation: none;
 		}
 	}
 </style>

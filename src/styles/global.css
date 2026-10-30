@@ -265,26 +265,29 @@ a {
 	transform: rotate(45deg);
 }
 
-/* Scroll-reveal: toggled by the IntersectionObserver in Layout.astro */
-/* enters from 80px below with a fade (perspective 1200px), a soft overdamped spring (~0.7s) */
+/* Scroll-reveal: .is-in is added by the IntersectionObserver in Layout.astro, element by element.
+   Enters from 80px below with a fade (perspective 1200px), a soft overdamped spring (~0.7s).
+   The hidden state only applies under html.reveal-on (set by an inline head script), so without
+   JS nothing stays invisible. Once revealed, the element's own opacity/transform apply again. */
 [data-reveal] {
-	opacity: 0;
-	transform: perspective(1200px) translateY(80px);
 	transition:
 		opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
 		transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-[data-reveal].is-in {
-	opacity: 1;
-	transform: none;
+.reveal-on [data-reveal]:not(.is-in) {
+	opacity: 0;
+	transform: perspective(1200px) translateY(80px);
 }
 
+/* reduced motion: keep a plain fade, no movement */
 @media (prefers-reduced-motion: reduce) {
 	[data-reveal] {
-		opacity: 1;
+		transition: opacity 0.5s ease-out;
+	}
+
+	.reveal-on [data-reveal]:not(.is-in) {
 		transform: none;
-		transition: none;
 	}
 }
 
@@ -311,9 +314,12 @@ a {
 	top: 100%;
 }
 
-a:hover .swap span,
-button:hover .swap span {
-	transform: translateY(-100%);
+/* hover only on devices that really hover: on touch screens :hover sticks after a tap */
+@media (hover: hover) {
+	a:hover .swap span,
+	button:hover .swap span {
+		transform: translateY(-100%);
+	}
 }
 
 /* Dotted halftone texture used behind the hero headline */
