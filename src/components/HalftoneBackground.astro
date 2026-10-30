@@ -56,7 +56,10 @@ const { mode = "fill" } = Astro.props;
 </style>
 
 <script>
+	import { activeRings, WAVE, type Ring } from "../scripts/shockwave";
+
 	const TAU = Math.PI * 2;
+	const NO_RINGS: Ring[] = [];
 	const clamp = (x: number, a: number, b: number) => (x < a ? a : x > b ? b : x);
 	const sstep = (a: number, b: number, x: number) => {
 		const t = clamp((x - a) / (b - a), 0, 1);
@@ -172,6 +175,9 @@ const { mode = "fill" } = Astro.props;
 			H = 0,
 			dpr = 1;
 		let sprite = buildSprite(cell, 1, gain);
+		// brighter dots for the band a shock wave passes through (only used while a wave is live)
+		const hotGain = Math.max(gain, WAVE.halftoneGain);
+		let hot = mode === 'sticky' ? buildSprite(cell, 1, hotGain) : sprite;
 		const pts: number[][] = [];
 		let lastMove = -99;
 
@@ -236,6 +242,12 @@ const { mode = "fill" } = Astro.props;
 			// se apaga hacia los bordes de la pantalla; el hero además se apaga contra su borde inferior
 			const ex = Math.min(120, FW * 0.08),
 				eyBottom = mode === 'fill' ? Math.min(90, H * 0.16) : 0;
+			// shock waves (sticky layer only): along each ring the field is pushed outward and the dots
+			// brighten; both scale with the wave's envelope, which is 0 at its start and end
+			const rings = mode === 'sticky' ? activeRings() : NO_RINGS;
+			const wW = WAVE.halftoneWidth,
+				wShift = WAVE.halftoneShift,
+				wLift = WAVE.halftoneLift;
 			const cols = Math.ceil(W / cell) + 1,
 				rows = Math.ceil(H / cell) + 1,
 				gt = Math.floor(t * 3),
@@ -261,18 +273,38 @@ const { mode = "fill" } = Astro.props;
 						dy += s[3] * w;
 						m += w;
 					}
-					const sx = x - dx * 5,
-						sy = y - dy * 5;
+					let wx = 0,
+						wy = 0,
+						lift = 0;
+					for (const r of rings) {
+						const rx = x - r.x,
+							ry = y - r.y,
+							d = Math.sqrt(rx * rx + ry * ry) || 1,
+							k = (d - r.front) / wW;
+						if (k < -3 || k > 3) continue;
+						const g = Math.exp(-k * k) * r.inten;
+						wx += (rx / d) * g * wShift;
+						wy += (ry / d) * g * wShift;
+						lift += g;
+					}
+					const sx = x - dx * 5 - wx,
+						sy = y - dy * 5 - wy;
 					const n = 0.5 + 1.6 * noise3((sx - FW / 2) * sc * 0.53, (sy - FH / 2) * sc * 0.47 + drift, z);
 					// el campo base, con un corte de negros (más espacio vacío); el puntero/la luz errante
 					// lo apaga alrededor de su estela en vez de iluminarlo
 					const base = Math.max(0, bands(sstep(0, 1, 1 - n) + shift) * vignette(x, y, FW, FH) - BLACK) / (1 - BLACK);
-					let L = base * (1 - Math.min(1, m * 1.1)) * edge;
+					let L = base * (1 - Math.min(1, m * 1.1)) * edge + Math.min(1, lift) * wLift * edge;
 					if (L <= 0.01) continue;
 					L += (hash2(i, j, gt) - 0.5) * 0.07;
 					const k = clamp(Math.floor(L * LEVELS), 0, LEVELS - 1);
 					if (k <= 0) continue;
 					ctx.drawImage(sprite.img, k * sprite.sp, 0, sprite.sp, sprite.sp, x - xOff - cell / 2, yl - cell / 2, cell, cell);
+					if (lift > 0.02) {
+						// fade in the brighter dot with the wave's strength: no hard edge, back to normal at 0
+						ctx.globalAlpha = Math.min(1, lift);
+						ctx.drawImage(hot.img, k * hot.sp, 0, hot.sp, hot.sp, x - xOff - cell / 2, yl - cell / 2, cell, cell);
+						ctx.globalAlpha = 1;
+					}
 				}
 			}
 		};
@@ -285,6 +317,7 @@ const { mode = "fill" } = Astro.props;
 			cv.width = Math.round(W * dpr);
 			cv.height = Math.round(H * dpr);
 			sprite = buildSprite(cell, dpr, gain);
+			hot = mode === 'sticky' ? buildSprite(cell, dpr, hotGain) : sprite;
 			draw(now()); // dibuja justo después de redimensionar: el canvas nunca queda en blanco
 		};
 		new ResizeObserver(resize).observe(cv);
