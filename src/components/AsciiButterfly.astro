@@ -247,7 +247,7 @@
 		ctx.font = FONT;
 		const CW = ctx.measureText('M').width || 4.2;
 		// envergadura (px) según el ancho de pantalla; se recalcula al redimensionar
-		const pickS = () => (window.innerWidth < 480 ? 44 : window.innerWidth < 810 ? 54 : 68);
+		const pickS = () => (window.innerWidth < 480 ? 44 : window.innerWidth < 768 ? 54 : 68);
 		let S = pickS();
 		const FADE = Math.pow(0.8, ST.fadePow);
 

@@ -15,7 +15,7 @@ const linkedin = "https://www.linkedin.com/";
 <header class="nav frame" data-nav>
 	<HalftoneBackground mode="nav" />
 
-	<!-- desktop (≥ 810px) -->
+	<!-- desktop (≥ 768px) -->
 	<div class="split nav__desktop">
 		<div class="col-narrow nav__links-cell">
 			<nav class="nav__links">
@@ -40,7 +40,7 @@ const linkedin = "https://www.linkedin.com/";
 		</div>
 	</div>
 
-	<!-- mobile (< 810px), like ashcamp: clock on the left, "● MENU" on the right -->
+	<!-- mobile (< 768px), like ashcamp: clock on the left, "● MENU" on the right -->
 	<div class="nav__bar">
 		<span class="nav__clock" data-clock>
 			<span class="nav__dot" data-clock-dot></span>
@@ -90,7 +90,7 @@ const linkedin = "https://www.linkedin.com/";
 		if (e.key === "Escape") setOpen(false);
 	});
 	// leaving the mobile layout while the menu is open: close it
-	matchMedia("(min-width: 810px)").addEventListener("change", (e) => {
+	matchMedia("(min-width: 768px)").addEventListener("change", (e) => {
 		if (e.matches) setOpen(false);
 	});
 
@@ -203,7 +203,7 @@ const linkedin = "https://www.linkedin.com/";
 		display: none;
 	}
 
-	@media (max-width: 809.98px) {
+	@media (max-width: 767.98px) {
 		.nav__desktop {
 			display: none;
 		}

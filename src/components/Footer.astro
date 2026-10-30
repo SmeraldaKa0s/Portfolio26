@@ -12,8 +12,8 @@ const email = "alek.xandra.lerner@gmail.com";
 	</button>
 
 	<div class="footer__links">
-		<a href="#" target="_blank" rel="noreferrer">LinkedIn</a>
-		<a href="#" target="_blank" rel="noreferrer">GitHub</a>
+		<a href="#" target="_blank" rel="noreferrer">( LinkedIn )</a>
+		<a href="#" target="_blank" rel="noreferrer">( GitHub )</a>
 	</div>
 
 	<p class="footer__copy eyebrow">© {year} Alexandra Lerner</p>
@@ -65,14 +65,18 @@ const email = "alek.xandra.lerner@gmail.com";
 	.footer__links {
 		display: flex;
 		gap: 16px;
-		color: var(--muted);
+		color: var(--fg); /* ashcamp: white, in parentheses */
+	}
+
+	.footer__links a {
+		transition: color 0.2s ease;
 	}
 
 	.footer__links a:hover {
-		color: var(--fg);
+		color: var(--muted);
 	}
 
-	@media (max-width: 809.98px) {
+	@media (max-width: 767.98px) {
 		.footer {
 			flex-direction: column;
 			text-align: center;

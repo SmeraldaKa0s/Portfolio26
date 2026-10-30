@@ -1,7 +1,7 @@
 :root {
 	--bg: #0a0a0a;
 	--bg-raised: #141414;
-	--fg: #f5f5f3;
+	--fg: #ffffff; /* ashcamp's pure white token */
 	--muted: #8a8a8a;
 	--border-color: #222222;
 	--border: 1px dashed var(--border-color);
@@ -10,12 +10,17 @@
 	--font-display: "Space Grotesk", ui-sans-serif, sans-serif;
 	--font-mono: "Martian Mono", ui-monospace, monospace;
 	--font-mono-read: "Fragment Mono", ui-monospace, monospace;
+	/* ashcamp uses PP Telegraf (licensed); Hanken Grotesk is the free stand-in */
+	--font-sans: "PP Telegraf Regular", "PP Telegraf", "Hanken Grotesk", ui-sans-serif, sans-serif;
 
 	--container: 1600px;
 	--gutter: 20px;
 	--section-gap: 0px;
 	--nav-h: 84px; /* same nav height as ashcamp.co */
-	--col-narrow: 0.7;
+	/* Width of the left column, shared by EVERY section so the vertical dashed line is one straight
+	   line: 41.18% (= .7 / 1.7, ashcamp's tablet ratio) capped at 400px (ashcamp's desktop). A percentage
+	   basis ignores each cell's padding, which is what used to make the lines drift apart. */
+	--col-narrow-w: min(400px, 41.1765%);
 }
 
 @media (max-width: 1199.98px) {
@@ -24,7 +29,7 @@
 	}
 }
 
-@media (max-width: 809.98px) {
+@media (max-width: 767.98px) {
 	:root {
 		--nav-h: 68px; /* ashcamp's mobile nav row */
 	}
@@ -120,8 +125,8 @@ a {
 }
 
 .split > .col-narrow {
-	flex: var(--col-narrow) 0 0;
-	max-width: 400px;
+	flex: 0 0 var(--col-narrow-w);
+	max-width: none;
 	border-right: var(--border);
 	padding: 20px;
 }
@@ -131,7 +136,7 @@ a {
 	padding: 20px;
 }
 
-@media (max-width: 809.98px) {
+@media (max-width: 767.98px) {
 	.split {
 		flex-direction: column;
 	}
@@ -154,7 +159,13 @@ a {
 	letter-spacing: 0;
 	font-size: 11px;
 	font-weight: 400;
+	line-height: 1.2em;
 	color: var(--muted);
+}
+
+/* ashcamp: the section labels and the hero footer labels are white Martian Mono (h6 preset) */
+.col-narrow > .eyebrow {
+	color: var(--fg);
 }
 
 .section {
