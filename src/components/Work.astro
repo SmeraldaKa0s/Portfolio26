@@ -2,27 +2,44 @@
 import { getCollection } from "astro:content";
 import Media from "./Media.astro";
 
-const projects = (await getCollection("projects")).sort(
-	(a, b) => a.data.order - b.data.order
-);
+// temporary: only the first projects are shown, to keep the page short while working on it.
+// Set to Infinity to show all of them again.
+const VISIBLE_PROJECTS = 3;
+
+const projects = (await getCollection("projects"))
+	.sort((a, b) => a.data.order - b.data.order)
+	.slice(0, VISIBLE_PROJECTS);
 ---
 
-<section id="work" class="frame work" data-reveal-group>
+<section id="work" class="frame work">
 	{projects.map((project, i) => (
 		<a
 			href={`/proyectos/${project.id}`}
 			class="split work__item"
-			data-reveal
 			style={i !== projects.length - 1 ? "border-bottom: var(--border)" : ""}
 		>
 			<div class="col-narrow work__item-text">
-				<h3>{project.data.title}</h3>
-				<p>{project.data.excerpt}</p>
-				<span class="work__tag">{project.data.category}</span>
+				<div class="work__item-sticky">
+					<h3 data-reveal>{project.data.title}</h3>
+					<p data-reveal>{project.data.excerpt}</p>
+					<div class="work__meta">
+						<span class="work__tag" data-reveal>{project.data.category}</span>
+						<!-- the whole row is the link; this is its visible, subtle "go" affordance -->
+						<span class="work__go" data-reveal>
+							Ver proyecto
+							<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+								<path d="M4.5 2.5 8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+							</svg>
+						</span>
+					</div>
+				</div>
 			</div>
 
 			<div class="col-wide work__item-media">
-				<Media kind={project.data.media.kind} ratio={project.data.media.ratio} />
+				<div class="work__shot work__shot--full" data-reveal><Media kind={project.data.media.kind} ratio="8 / 5" /></div>
+				<div class="work__shot" data-reveal><Media kind="image" ratio="3 / 4" /></div>
+				<div class="work__shot" data-reveal><Media kind="image" ratio="3 / 4" /></div>
+				<div class="work__shot work__shot--full" data-reveal><Media kind="image" ratio="8 / 5" /></div>
 			</div>
 		</a>
 	))}
@@ -35,10 +52,16 @@ const projects = (await getCollection("projects")).sort(
 		align-items: stretch;
 	}
 
-	.work__item-text {
+	/* text cell: 80px / 20px padding; the block stays pinned 20px under the nav (20px gutter + 44px nav) while the media scrolls */
+	.work__item > .work__item-text {
+		padding: 80px 20px;
+	}
+
+	.work__item-sticky {
+		position: sticky;
+		top: var(--sticky-top);
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
 		align-items: flex-start;
 		gap: 10px;
 	}
@@ -62,6 +85,56 @@ const projects = (await getCollection("projects")).sort(
 		max-width: 32ch;
 	}
 
+	/* tag + "Ver proyecto" side by side */
+	.work__meta {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	/* Subtle button. Rest: --muted text (#8a8a8a on #0a0a0a ≈ 5.6:1) with a chevron, no background.
+	   Hover / keyboard focus: --border-color (#222) pill with --fg text (≈ 15:1). Both pass WCAG AA
+	   for small text; the state also changes shape (background), not colour alone. */
+	.work__go {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 28px;
+		padding: 4px 10px 4px 12px;
+		border-radius: 100px;
+		background: transparent;
+		font-family: var(--font-sans);
+		font-size: 11px;
+		line-height: 1.2em;
+		white-space: nowrap;
+		color: var(--muted);
+		transition:
+			background-color 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.work__go svg {
+		flex-shrink: 0;
+		transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	@media (hover: hover) {
+		.work__go:hover {
+			background: var(--border-color);
+			color: var(--fg);
+		}
+
+		.work__go:hover svg {
+			transform: translateX(2px);
+		}
+	}
+
+	.work__item:focus-visible .work__go {
+		background: var(--border-color);
+		color: var(--fg);
+	}
+
 	.work__tag {
 		display: inline-flex;
 		align-items: center;
@@ -74,41 +147,58 @@ const projects = (await getCollection("projects")).sort(
 		font-size: 11px;
 		line-height: 1.2em;
 		color: var(--fg);
+		opacity: 0.64;
 	}
 
-	.work__item-media {
+	/* media cell: 60px padding (40px on tablet), media pushed to the bottom-right */
+	.work__item > .work__item-media {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		align-content: end;
+		gap: 10px;
+		padding: 60px;
 		overflow: hidden;
+	}
+
+	/* three rows per project: full width, two side by side, full width */
+	.work__shot--full {
+		grid-column: 1 / -1;
+	}
+
+	.work__item-media :global(.placeholder-media) {
+		width: 100%;
 	}
 
 	.work__item-media :global(.placeholder-media) {
 		border-radius: 10px;
-		transition: transform 0.5s ease;
-	}
-
-	.work__item:hover .work__item-media :global(.placeholder-media) {
-		transform: scale(1.04);
 	}
 
 	@media (max-width: 1199.98px) {
 		.work__item-text h3 {
 			font-size: 16px;
 		}
+
+		.work__item > .work__item-media {
+			padding: 40px;
+		}
 	}
 
-	/* ashcamp mobile: one column — text cell (80/20 padding, dashed bottom line) then the media
+	/* mobile: one column — text cell (80/20 padding, dashed bottom line) then the media
 	   cell (40/20 padding); the frame's left/right dashed lines run on both sides */
 	@media (max-width: 767.98px) {
 		.work__item > .work__item-text {
 			flex: none;
 			max-width: none;
-			justify-content: flex-start;
-			padding: 80px 20px;
 			border-right: none;
 			border-bottom: var(--border);
 		}
 
 		.work__item-text p {
 			max-width: none;
+		}
+
+		.work__item-sticky {
+			position: static;
 		}
 
 		.work__item > .work__item-media {

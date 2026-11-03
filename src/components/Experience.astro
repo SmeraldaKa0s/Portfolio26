@@ -1,129 +1,98 @@
 ---
 const roles = [
-	{ company: "Empresa actual", role: "Product Designer", dates: "2025 — Presente" },
-	{ company: "Empresa anterior 1", role: "UX/UI Designer", dates: "2024 — 2025" },
-	{ company: "Empresa anterior 2", role: "UX/UI Designer", dates: "2023 — 2024" },
-	{ company: "Empresa anterior 3", role: "Frontend & UX Engineer", dates: "2022 — 2023" },
-	{ company: "Empresa anterior 4", role: "UX Researcher", dates: "2022 — 2023" },
+	{ title: "Empresa actual", text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt.", dates: "Actual" },
+	{ title: "Empresa anterior 1", text: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.", dates: "2025-26" },
+	{ title: "Empresa anterior 2", text: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.", dates: "2021-2022" },
+	{ title: "Empresa anterior 3", text: "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim.", dates: "2020-2021" },
 ];
 ---
 
 <section class="frame">
 	<div class="split">
-		<div class="col-narrow">
-			<p class="eyebrow">Experiencia</p>
+		<div class="col-narrow section-head">
+			<h2 class="section-title" data-reveal>Experiencia</h2>
 		</div>
 
-		<div class="col-wide">
-			<div class="experience__intro" data-reveal>
-				<h2>Lorem Ipsum Dolor Sit Amet</h2>
-				<p>
-					Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-					eiusmod tempor incididunt ut labore et dolore magna aliqua.
-				</p>
-			</div>
-
-			<ul class="experience__list" data-reveal-group>
-				{roles.map((item, i) => (
-					<li
-						class="experience__row"
-						data-reveal
-						style={i !== roles.length - 1 ? "border-bottom: var(--border)" : ""}
-					>
-						<span class="eyebrow">{item.dates}</span>
-						<div class="experience__logo">
-							<span>Logo</span>
-						</div>
-						<div class="experience__details">
-							<h3>{item.company}</h3>
-							<p>{item.role}</p>
-						</div>
-					</li>
-				))}
-			</ul>
+		<div class="col-wide experience__cell">
+			{roles.map((item) => (
+				<div class="experience__row">
+					<div class="experience__main">
+						<p class="experience__title" data-reveal>{item.title}</p>
+						<p class="experience__text" data-reveal>{item.text}</p>
+					</div>
+					<p class="experience__dates" data-reveal>{item.dates}</p>
+				</div>
+			))}
 		</div>
 	</div>
 </section>
 
 <style>
-	.experience__intro {
-		padding-top: 48px;
-		max-width: 48ch;
-	}
-
-	.experience__intro h2 {
-		font-family: var(--font-display);
-		font-weight: 500;
-		font-size: 28px;
-		margin: 0 0 16px;
-	}
-
-	.experience__intro p {
-		color: var(--muted);
-		margin: 0;
-	}
-
-	.experience__list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-
-	.experience__row {
-		display: grid;
-		grid-template-columns: 140px 64px 1fr;
-		align-items: center;
-		gap: 24px;
-		padding-block: 24px;
-	}
-
-	.experience__logo {
-		width: 64px;
-		height: 64px;
-		border: var(--border);
-		border-radius: 10px;
+	/* media-side cell: 60px padding (40px tablet, 40/20 mobile), rows pushed to the bottom */
+	.experience__cell {
 		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		padding: 60px;
+	}
+
+	/* each row: 20px / 0 padding, solid 1px #222 line underneath */
+	.experience__row {
+		display: flex;
+		justify-content: space-between;
 		align-items: center;
-		justify-content: center;
-		font-family: var(--font-mono);
-		font-size: 11px;
-		text-transform: uppercase;
-		color: var(--muted);
+		width: 100%;
+		padding: 20px 0;
+		border-bottom: 1px solid #222;
 	}
 
-	.experience__details h3 {
-		font-family: var(--font-display);
-		font-weight: 500;
-		font-size: 16px;
-		margin: 0 0 4px;
+	.experience__main {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		flex: 1 0 0;
+		max-width: 400px;
 	}
 
-	.experience__details p {
-		color: var(--muted);
+	.experience__title,
+	.experience__text,
+	.experience__dates {
 		margin: 0;
+		font-family: var(--font-sans);
+		font-size: 16px;
+		line-height: 1.2em;
+		letter-spacing: 0;
+		color: #666;
+	}
+
+	.experience__title {
+		color: var(--fg);
+	}
+
+	.experience__dates {
+		white-space: pre;
+	}
+
+	@media (max-width: 1199.98px) {
+		.experience__cell {
+			padding: 40px;
+		}
+
+		.experience__title,
+		.experience__text,
+		.experience__dates {
+			font-size: 13px;
+		}
 	}
 
 	@media (max-width: 767.98px) {
+		.experience__cell {
+			padding: 40px 20px;
+		}
+
 		.experience__row {
-			grid-template-columns: 48px 1fr;
-			grid-template-areas:
-				"logo details"
-				"dates details";
-			row-gap: 4px;
-		}
-
-		.experience__logo {
-			grid-area: logo;
-			width: 48px;
-			height: 48px;
-		}
-
-		.experience__row > .eyebrow {
-			grid-area: dates;
-		}
-
-		.experience__details {
-			grid-area: details;
+			justify-content: flex-start;
+			gap: 24px;
 		}
 	}
 </style>

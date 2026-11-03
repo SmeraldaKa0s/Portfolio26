@@ -1,76 +1,734 @@
 ---
-import Media from "./Media.astro";
-
-const items = [
-	{ letter: "a", outlet: "Lorem Ipsum Magazine", title: "Dolor sit amet consectetur" },
-	{ letter: "b", outlet: "Dolor Sit Radio", title: "Adipiscing elit sed do" },
-	{ letter: "c", outlet: "Consectetur Podcast", title: "Eiusmod tempor incididunt" },
-	{ letter: "d", outlet: "Adipiscing Weekly", title: "Ut labore et dolore magna" },
+// "Experiencia en campo": a pinned, scroll-driven showcase that shows one work at a time.
+// The section is several viewports tall and its stage sticks to the viewport while you scroll
+// through it. Each scroll segment is one work, and crossing a boundary plays one discrete step:
+//  - the text slides out and in word by word, inside line masks;
+//  - the shared shock wave fires (src/scripts/shockwave.ts): a ring through the page's halftone
+//    background, plus a ring inside the media box that reveals the next slide.
+// The section has no background of its own: the halftone of the surrounding zone shows through.
+//
+// Edit the works here. `title` is a list of lines, keep each line short. `image` is optional (a path
+// under /public or a URL); when it is empty the slide is a plain grey placeholder.
+const works = [
+	{
+		type: "Investigación de campo",
+		client: "Lorem Ipsum Co.",
+		title: ["Campo", "abierto"],
+		duration: "6 semanas",
+		year: "2026",
+		roles: ["Entrevistas", "Observación", "Síntesis"],
+		image: "",
+	},
+	{
+		type: "Estudio etnográfico",
+		client: "Dolor Sit Labs",
+		title: ["Marea", "baja"],
+		duration: "3 meses",
+		year: "2025",
+		roles: ["Shadowing", "Diarios", "Mapeo"],
+		image: "",
+	},
+	{
+		type: "Test de usabilidad",
+		client: "Amet Studio",
+		title: ["Curvas de", "nivel"],
+		duration: "2 semanas",
+		year: "2024",
+		roles: ["Moderación", "Prototipos", "Reporte"],
+		image: "",
+	},
+	{
+		type: "Co-creación",
+		client: "Consectetur SA",
+		title: ["Fuego", "lento"],
+		duration: "4 semanas",
+		year: "2023",
+		roles: ["Workshops", "Facilitación"],
+		image: "",
+	},
+	{
+		type: "Auditoría de servicio",
+		client: "Adipiscing Group",
+		title: ["Grafito"],
+		duration: "5 semanas",
+		year: "2022",
+		roles: ["Blueprint", "Entrevistas", "Roadmap"],
+		image: "",
+	},
 ];
+
+const words = (text: string) => text.split(/\s+/).filter(Boolean);
 ---
 
-<section class="frame">
-	<div class="split">
-		<div class="col-narrow">
-			<p class="eyebrow">Prensa &amp; entrevistas</p>
+<section class="frame field" id="campo" data-field style={`--n: ${works.length}`}>
+	<div class="split field__split">
+		<div class="col-narrow section-head">
+			<h2 class="section-title" data-reveal>Experiencia en campo</h2>
 		</div>
 
-		<div class="col-wide press__grid" data-reveal-group>
-			{items.map((item, i) => {
-				const borders = [
-					i % 2 === 0 ? "border-right: var(--border)" : "",
-					i < items.length - 2 ? "border-bottom: var(--border)" : "",
-				].join(";");
-				return (
-					<a href="#" class="press__item" data-reveal style={borders}>
-						<Media kind="image" ratio="3 / 4" />
-						<span class="eyebrow">({item.letter}) {item.outlet}</span>
-						<p>{item.title}</p>
-					</a>
-				);
-			})}
+		<div class="col-wide field__track" data-field-track>
+			<div
+				class="field__stage"
+				data-field-stage
+				tabindex="0"
+				role="group"
+				aria-roledescription="carrusel"
+				aria-label="Experiencia en campo: usá las flechas o scrolleá para cambiar de trabajo"
+			>
+				<div class="field__band">
+					<!-- media box + progress bar: the bar shares the box's top and height and is pulled left onto
+					     the section's dashed divider (the stage starts right after it) -->
+					<div class="field__media-cell">
+						<div class="field__bar" data-field-bar aria-hidden="true"><span class="field__thumb" data-field-thumb></span></div>
+
+						<div class="field__media" data-field-media aria-hidden="true">
+							{works.map((work, i) => (
+								<div class:list={["field__slide", { "is-on": i === 0 }]} data-field-slide>
+									{work.image && <img src={work.image} alt="" loading="lazy" decoding="async" />}
+								</div>
+							))}
+						</div>
+					</div>
+
+					<div class="field__info">
+						{works.map((work, i) => (
+							<article
+								class="field__work"
+								data-field-work
+								data-i={i}
+								data-label={work.title.join(" ")}
+								aria-hidden={i === 0 ? "false" : "true"}
+							>
+								<div class="field__head">
+									<span class="ln field__label field__label--muted">
+										{words(work.type).map((w, k) => (<Fragment>{k > 0 && " "}<span class="w">{w}</span></Fragment>))}
+									</span>
+									<span class="ln field__label">
+										{words(work.client).map((w, k) => (<Fragment>{k > 0 && " "}<span class="w">{w}</span></Fragment>))}
+									</span>
+								</div>
+
+								<h3 class="field__title">
+									{work.title.map((line) => (
+										<span class="ln">
+											{words(line).map((w, k) => (<Fragment>{k > 0 && " "}<span class="w">{w}</span></Fragment>))}
+										</span>
+									))}
+								</h3>
+
+								<div class="field__foot">
+									<span class="ln field__label">
+										{words(work.duration).map((w, k) => (<Fragment>{k > 0 && " "}<span class="w">{w}</span></Fragment>))}
+									</span>
+									<span class="ln field__label field__label--muted"><span class="w">{work.year}</span></span>
+								</div>
+							</article>
+						))}
+					</div>
+
+					<div class="field__roles" aria-hidden="true">
+						{works.map((work, i) => (
+							<div class="field__roles-item" data-field-roles data-i={i}>
+								{work.roles.map((role) => (
+									<span class="ln field__role">
+										{words(role).map((w, k) => (<Fragment>{k > 0 && " "}<span class="w">{w}</span></Fragment>))}
+									</span>
+								))}
+							</div>
+						))}
+					</div>
+				</div>
+
+				<p class="field__sr" aria-live="polite" data-field-live></p>
+			</div>
 		</div>
 	</div>
 </section>
 
+<script>
+	import { boxGeometry, fireWave, now as waveNow, prepareWave, waveAt } from "../scripts/shockwave";
+
+	// ---------- tunables (the wave itself is configured in src/scripts/shockwave.ts → WAVE) ----------
+	const OUT_MS = 450; // outgoing words slide away (inQuint); the wave fires when this ends
+	const IN_MS = 850; // incoming words slide in (outQuint)
+	const STAGGER_MS = 25; // per word
+	const STAGGER_MAX_MS = 250;
+	const LOCK_MS = 900; // busy lock: minimum time between two steps
+	const MAX_BACKLOG = 2; // if scrolling runs further ahead than this, jump without animating the extra steps
+	const HYSTERESIS = 0.04; // fraction of a segment you must pass a boundary by before it counts
+	const BAR_RATE = 3; // damping rate (1/s) of the 1px progress thumb
+
+	const EASE_IN_QUINT = "cubic-bezier(0.64, 0, 0.78, 0)";
+	const EASE_OUT_QUINT = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+	function initField(root: HTMLElement) {
+		const track = root.querySelector<HTMLElement>("[data-field-track]")!;
+		const stage = root.querySelector<HTMLElement>("[data-field-stage]")!;
+		const media = root.querySelector<HTMLElement>("[data-field-media]")!;
+		const thumb = root.querySelector<HTMLElement>("[data-field-thumb]")!;
+		const live = root.querySelector<HTMLElement>("[data-field-live]")!;
+		const infos = [...root.querySelectorAll<HTMLElement>("[data-field-work]")];
+		const roles = [...root.querySelectorAll<HTMLElement>("[data-field-roles]")];
+		const slides = [...root.querySelectorAll<HTMLElement>("[data-field-slide]")];
+		const N = infos.length;
+		if (!N) return;
+		const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+		const words = infos.map((el, i) => [
+			...el.querySelectorAll<HTMLElement>(".w"),
+			...(roles[i]?.querySelectorAll<HTMLElement>(".w") ?? []),
+		]);
+		const blocks = infos.map((el, i) => [el, roles[i]].filter(Boolean) as HTMLElement[]);
+
+		let current = 0;
+		let target = 0;
+		let stepAt = -Infinity;
+		let pendingSwap: { from: number; to: number; at: number } | null = null;
+		let reveal: { el: HTMLElement; start: number } | null = null;
+		let bar = 0;
+		let raf = 0;
+		let lastT = 0;
+		let visible = false;
+
+		// ----- text -----
+		const settle = (el: HTMLElement) => {
+			for (const a of el.getAnimations()) {
+				try {
+					a.commitStyles();
+				} catch {}
+				a.cancel();
+			}
+		};
+		const isMoving = (el: HTMLElement) => el.getAnimations().some((a) => a.playState === "running");
+
+		const placeText = (i: number) => {
+			words.forEach((list, k) =>
+				list.forEach((w) => {
+					w.getAnimations().forEach((a) => a.cancel());
+					w.style.transform = reduce || k === i ? "translateY(0%)" : "translateY(160%)";
+				}),
+			);
+			blocks.forEach((list, k) =>
+				list.forEach((b) => {
+					b.getAnimations().forEach((a) => a.cancel());
+					b.style.opacity = reduce && k !== i ? "0" : "";
+				}),
+			);
+		};
+
+		const animateText = (from: number, to: number, dir: number) => {
+			if (reduce) {
+				blocks[from].forEach((b) => {
+					settle(b);
+					b.animate([{ opacity: 0 }], { duration: 250, easing: "ease", fill: "forwards" });
+				});
+				blocks[to].forEach((b) => {
+					settle(b);
+					b.animate([{ opacity: 1 }], { duration: 350, delay: 150, easing: "ease", fill: "forwards" });
+				});
+				return;
+			}
+			const exitTo = dir > 0 ? "translateY(-150%)" : "translateY(160%)";
+			const enterFrom = dir > 0 ? "translateY(160%)" : "translateY(-150%)";
+			const stagger = (k: number) => Math.min(k * STAGGER_MS, STAGGER_MAX_MS);
+			words[from].forEach((w, k) => {
+				settle(w);
+				w.animate([{ transform: exitTo }], { duration: OUT_MS, delay: stagger(k), easing: EASE_IN_QUINT, fill: "forwards" });
+			});
+			words[to].forEach((w, k) => {
+				const moving = isMoving(w);
+				settle(w);
+				if (!moving) w.style.transform = enterFrom;
+				w.animate([{ transform: "translateY(0%)" }], {
+					duration: IN_MS,
+					delay: OUT_MS + stagger(k),
+					easing: EASE_OUT_QUINT,
+					fill: "forwards",
+				});
+			});
+		};
+
+		const setActive = (i: number) => {
+			infos.forEach((el, k) => el.setAttribute("aria-hidden", k === i ? "false" : "true"));
+		};
+
+		// ----- slides: the next one is revealed by a circle that follows the box ring -----
+		const showSlide = (i: number) => {
+			reveal = null;
+			slides.forEach((s, k) => {
+				s.getAnimations().forEach((a) => a.cancel());
+				s.classList.toggle("is-on", k === i);
+				s.classList.remove("is-top");
+				s.style.clipPath = "";
+			});
+		};
+		const finishReveal = () => {
+			if (!reveal) return;
+			const el = reveal.el;
+			reveal = null;
+			el.style.clipPath = "";
+			el.classList.remove("is-top");
+			slides.forEach((s) => s !== el && s.classList.remove("is-on"));
+		};
+		const swapSlide = (to: number, start: number) => {
+			finishReveal();
+			const el = slides[to];
+			if (!el) return;
+			el.classList.add("is-on", "is-top");
+			if (start < 0) {
+				// reduced motion: plain crossfade
+				reveal = { el, start: -1 };
+				el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 350, easing: "ease" }).onfinish = () => {
+					if (reveal?.el === el) finishReveal();
+				};
+			} else {
+				el.style.clipPath = "circle(0px at 50% 50%)";
+				reveal = { el, start };
+			}
+		};
+		const updateReveal = () => {
+			if (!reveal || reveal.start < 0) return;
+			const g = boxGeometry(media);
+			const s = waveAt(waveNow() - reveal.start, g.reach, g.scale);
+			reveal.el.style.clipPath = `circle(${Math.max(0, s.front).toFixed(1)}px at 50% 50%)`;
+			if (s.t >= 1) finishReveal();
+		};
+
+		// ----- steps -----
+		const step = (to: number, now: number) => {
+			const from = current;
+			current = to;
+			stepAt = now;
+			animateText(from, to, Math.sign(to - from));
+			pendingSwap = { from, to, at: now + (reduce ? 0 : OUT_MS) };
+			setActive(to);
+			live.textContent = `${to + 1} / ${N}: ${infos[to].dataset.label ?? ""}`;
+		};
+
+		const snapTo = (i: number) => {
+			current = target = i;
+			bar = i;
+			pendingSwap = null;
+			placeText(i);
+			setActive(i);
+			showSlide(i);
+			thumb.style.transform = `translateY(${bar * 100}%)`;
+		};
+
+		// scrolled fraction of the pinned track, 0..1
+		const progress = () => {
+			const r = track.getBoundingClientRect();
+			const d = r.height - stage.offsetHeight;
+			return d > 0 ? Math.min(1, Math.max(0, -r.top / d)) : 0;
+		};
+		const readTarget = () => {
+			const raw = progress() * N;
+			if (raw > target + 1 + HYSTERESIS || raw < target - HYSTERESIS) target = Math.min(N - 1, Math.max(0, Math.floor(raw)));
+			return target;
+		};
+
+		const frame = () => {
+			raf = 0;
+			const now = performance.now();
+			const dt = Math.min((now - lastT) / 1000, 1 / 30);
+			lastT = now;
+			readTarget();
+
+			// off screen (e.g. a jump past the section): settle silently, never fire a wave nobody sees
+			const tr = track.getBoundingClientRect();
+			if (tr.bottom <= 1 || tr.top >= innerHeight - 1) {
+				if (target !== current || pendingSwap) snapTo(target);
+			} else if (target !== current && now - stepAt >= (reduce ? 400 : LOCK_MS)) {
+				const dir = Math.sign(target - current);
+				if (Math.abs(target - current) > MAX_BACKLOG) snapTo(target - dir * MAX_BACKLOG);
+				step(current + dir, now);
+			}
+			if (pendingSwap && now >= pendingSwap.at) {
+				const boxOn = media.offsetWidth > 0;
+				const start = fireWave({ anchor: boxOn ? media : stage, box: boxOn ? media : null });
+				if (boxOn) swapSlide(pendingSwap.to, start);
+				else showSlide(pendingSwap.to);
+				pendingSwap = null;
+			}
+			updateReveal();
+
+			bar += (current - bar) * (1 - Math.exp(-BAR_RATE * dt));
+			if (reduce || Math.abs(current - bar) < 0.001) bar = current;
+			thumb.style.transform = `translateY(${bar * 100}%)`;
+
+			if (visible && (reveal || bar !== current || target !== current || pendingSwap)) raf = requestAnimationFrame(frame);
+		};
+		const kick = () => {
+			if (raf) return;
+			lastT = performance.now();
+			raf = requestAnimationFrame(frame);
+		};
+
+		// ----- input: native scroll drives everything; arrows scroll to the next segment -----
+		const scrollToIndex = (i: number) => {
+			const r = track.getBoundingClientRect();
+			const d = r.height - stage.offsetHeight;
+			window.scrollTo({ top: window.scrollY + r.top + (d * (i + 0.5)) / N, behavior: reduce ? "auto" : "smooth" });
+		};
+		stage.addEventListener("keydown", (e) => {
+			const d = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 0;
+			const to = target + d;
+			if (!d || to < 0 || to >= N) return; // past the ends the arrows scroll the page as usual
+			e.preventDefault();
+			scrollToIndex(to);
+		});
+
+		const onScroll = () => kick();
+		const onResize = () => kick();
+
+		// compile the wave shader shortly before the section shows up
+		const near = new IntersectionObserver(
+			(entries) => {
+				if (entries.some((e) => e.isIntersecting)) {
+					near.disconnect();
+					prepareWave();
+				}
+			},
+			{ rootMargin: "100% 0px" },
+		);
+		near.observe(root);
+
+		// listen and animate only while the section is on screen; re-entering snaps without a wave
+		new IntersectionObserver((entries) => {
+			const on = entries.some((e) => e.isIntersecting);
+			if (on === visible) return;
+			visible = on;
+			if (on) {
+				target = current;
+				readTarget();
+				if (target !== current) snapTo(target);
+				addEventListener("scroll", onScroll, { passive: true });
+				addEventListener("resize", onResize);
+				kick();
+			} else {
+				removeEventListener("scroll", onScroll);
+				removeEventListener("resize", onResize);
+				if (raf) cancelAnimationFrame(raf);
+				raf = 0;
+				finishReveal();
+			}
+		}).observe(root);
+
+		// the progress bar grows in when the media box is on screen, and resets when it leaves
+		const barEl = root.querySelector<HTMLElement>("[data-field-bar]");
+		if (barEl)
+			new IntersectionObserver(
+				(entries) => {
+					for (const e of entries) barEl.classList.toggle("is-live", e.isIntersecting);
+				},
+				{ threshold: 0.5 },
+			).observe(media);
+
+		placeText(0);
+	}
+
+	const root = document.querySelector<HTMLElement>("[data-field]");
+	if (root) initField(root);
+</script>
+
 <style>
-	.press__grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
+	.field {
+		/* scroll distance per work */
+		--field-step: 75vh;
+		--band-h: clamp(200px, 15vw, 280px);
+		position: relative;
+	}
+
+	.field__split {
+		position: relative;
+		z-index: 1;
+	}
+
+	/* the tall track the stage is pinned in: one viewport plus one step per work */
+	.split > .col-wide.field__track {
+		min-width: 0;
 		padding: 0;
+		height: calc(100vh + var(--n) * var(--field-step));
 	}
 
-	.press__item {
-		padding: 24px;
+	.field__stage {
+		/* horizontal padding; the progress bar is pulled left by exactly this much to sit on the divider */
+		--stage-px: 60px;
+		position: sticky;
+		top: 0;
+		height: 100vh;
+		height: 100svh;
+		display: flex;
+		align-items: center;
+		padding: calc(var(--gutter) + var(--nav-row-h) + 20px) var(--stage-px) 40px;
+		outline: none;
 	}
 
-	.press__item :global(.placeholder-media) {
-		transition: transform 0.5s ease;
+	.field__stage:focus-visible {
+		outline: 1px dashed rgba(255, 255, 255, 0.4);
+		outline-offset: -10px;
 	}
 
-	.press__item:hover :global(.placeholder-media) {
-		transform: scale(1.03);
+	/* desktop band: media | info | roles, all the same height */
+	.field__band {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) minmax(100px, 0.45fr);
+		column-gap: 32px;
+		align-items: stretch;
+		width: 100%;
+		height: var(--band-h);
 	}
 
-	.press__item p {
-		margin: 12px 0 0;
-		font-family: var(--font-display);
-		font-weight: 500;
-		font-size: 16px;
+	.field__media-cell {
+		position: relative;
+		min-width: 0;
 	}
 
-	.press__item span {
+	/* 1px bar over the dashed divider (the stage begins right after the line, so it sits at
+	   -stage padding - 1px), same top and height as the media box; grows in when the stage is live.
+	   There is no visible track: only the small solid white thumb shows, the dashed line stays as is */
+	.field__bar {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: calc(-1 * var(--stage-px) - 1px);
+		z-index: 2;
+		width: 1px;
+		overflow: hidden;
+		opacity: 0;
+		transform: scaleY(0);
+		transform-origin: top;
+		transition:
+			transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+			opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	.field__bar.is-live {
+		opacity: 1;
+		transform: none;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.field__bar {
+			transition: none;
+		}
+	}
+
+	.field__thumb {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 1px;
+		height: calc(100% / var(--n));
+		background: var(--fg);
+		will-change: transform;
+	}
+
+	/* 16:9 rounded box; each slide is a uniform grey placeholder until it gets an image */
+	.field__media {
+		position: relative;
+		height: var(--band-h);
+		aspect-ratio: 16 / 9;
+		border-radius: 10px;
+		overflow: hidden;
+		background: var(--border-color);
+	}
+
+	.field__slide {
+		position: absolute;
+		inset: 0;
+		visibility: hidden;
+		background: var(--border-color);
+	}
+
+	.field__slide.is-on {
+		visibility: visible;
+	}
+
+	.field__slide.is-top {
+		z-index: 2;
+	}
+
+	.field__slide img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.field__info,
+	.field__roles {
+		position: relative;
+		min-width: 0;
+		height: var(--band-h);
+	}
+
+	.field__work {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+	}
+
+	.field__head {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.field__foot {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20px;
+	}
+
+	/* line mask + word: the words slide inside their line */
+	.ln {
 		display: block;
-		margin-top: 16px;
+		white-space: nowrap;
+		overflow-x: visible;
+		overflow-y: clip;
+		padding: 0.05em 0 0.15em;
+	}
+
+	.w {
+		display: inline-block;
+	}
+
+	/* no-JS / pre-JS: only the first work is in place */
+	[data-i]:not([data-i="0"]) .w {
+		transform: translateY(160%);
+	}
+
+	.field__label {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		line-height: 1.2em;
+		letter-spacing: 0;
+		text-transform: uppercase;
+		color: var(--fg);
+	}
+
+	.field__label--muted {
+		color: #666;
+	}
+
+	.field__title {
+		position: absolute;
+		top: 50%;
+		left: 0;
+		width: 100%;
+		margin: 0;
+		transform: translateY(-50%);
+		font-family: "Instrument Serif", var(--font-display), serif;
+		font-weight: 400;
+		font-size: clamp(36px, 1.6vw + 22px, 64px);
+		line-height: 0.8;
+		letter-spacing: -0.01em;
+		text-transform: uppercase;
+		color: var(--fg);
+	}
+
+	.field__title .ln {
+		translate: -0.04em 0;
+		padding-left: 0.04em;
+	}
+
+	.field__roles-item {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+	}
+
+	.field__role {
+		font-family: var(--font-sans);
+		font-size: 14px;
+		line-height: 1.2em;
+		color: #666;
+	}
+
+	.field__sr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	/* tablet: media box on top, then bar | info | roles */
+	@media (max-width: 1199.98px) {
+		.field {
+			--band-h: 220px;
+		}
+
+		.field__stage {
+			--stage-px: 40px;
+		}
+
+		.field__band {
+			grid-template-columns: minmax(0, 1fr) minmax(90px, 0.45fr);
+			grid-template-rows: auto var(--band-h);
+			row-gap: 28px;
+			height: auto;
+		}
+
+		/* the box row: the bar spans the box height because the cell is exactly as tall as the box */
+		.field__media-cell {
+			grid-column: 1 / -1;
+			grid-row: 1;
+			justify-self: start;
+			width: min(100%, calc(36svh * 16 / 9));
+		}
+
+		.field__media {
+			width: 100%;
+			height: auto;
+		}
+
+		.field__info {
+			grid-column: 1;
+			grid-row: 2;
+		}
+
+		.field__roles {
+			grid-column: 2;
+			grid-row: 2;
+		}
+
+		.field__role {
+			font-size: 13px;
+		}
+	}
+
+	/* short screens: no room for the box; the page wave still plays from the stage centre */
+	@media (max-width: 1199.98px) and (max-height: 560px) {
+		.field__media-cell {
+			display: none;
+		}
 	}
 
 	@media (max-width: 767.98px) {
-		.press__grid {
-			grid-template-columns: 1fr;
+		.field {
+			--band-h: 200px;
 		}
 
-		.press__item {
-			border-right: none !important;
+		/* mobile: no column divider any more, the bar sits on the frame's left dashed edge */
+		.field__stage {
+			--stage-px: 20px;
+			padding-top: calc(var(--nav-h) + 12px);
+			padding-bottom: 32px;
+		}
+
+		.field__band {
+			grid-template-columns: minmax(0, 1fr) minmax(80px, 0.4fr);
+			column-gap: 20px;
+			row-gap: 24px;
+		}
+
+		.field__title {
+			font-size: clamp(32px, 9vw, 44px);
 		}
 	}
 </style>

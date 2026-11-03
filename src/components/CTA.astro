@@ -1,31 +1,280 @@
 ---
-import Media from "./Media.astro";
+const email = "alek.xandra.lerner@gmail.com";
+// TODO: replace with the real profile URLs
+const linkedin = "https://www.linkedin.com/";
+const github = "https://github.com/";
 ---
 
+<!-- Closing screen: one full-height cell inside the dashed frame, content centered, links row pinned to the
+     bottom. The nav hides while this section is in view (see Nav.astro). -->
 <section id="contact" class="frame cta">
-	<Media kind="image" ratio="3 / 2" label="Foto" />
+	<div class="cta__content">
+		<div class="cta__text">
+			<h2 class="cta__heading">¿Necesitás un partner de diseño?</h2>
+			<p class="cta__copy">
+				Agendá una llamada conmigo para explorar tus objetivos y ver si somos buen equipo para colaborar.
+			</p>
+		</div>
 
-	<div class="cta__content" data-reveal>
-		<h2 class="cta__heading">Lorem ipsum dolor sit amet consectetur?</h2>
-		<a href="mailto:alek.xandra.lerner@gmail.com" class="pill-button">Decime hola</a>
+		<a class="cta__hi" href={`mailto:${email}`}>
+			<span>Decime hola</span>
+		</a>
+	</div>
+
+	<div class="cta__links">
+		<div class="cta__link cta__link--start">
+			<a class="cta__a" href={linkedin} target="_blank" rel="noreferrer">
+				<span class="swap">
+					<span>( LinkedIn )</span>
+					<span aria-hidden="true">( LinkedIn )</span>
+				</span>
+			</a>
+		</div>
+
+		<div class="cta__link cta__link--mid">
+			<button class="cta__mail" type="button" data-copy-email data-email={email} aria-label={email}>
+				<span class="cta__mail-label" data-mail-default>{email}</span>
+				<span class="cta__mail-label cta__mail-label--done" aria-hidden="true">
+					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+						<path d="M2 6.5 4.8 9 10 3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+					</svg>
+					Copiado!
+				</span>
+			</button>
+		</div>
+
+		<div class="cta__link cta__link--end">
+			<a class="cta__a" href={github} target="_blank" rel="noreferrer">
+				<span class="swap">
+					<span>( GitHub )</span>
+					<span aria-hidden="true">( GitHub )</span>
+				</span>
+			</a>
+		</div>
 	</div>
 </section>
 
+<script>
+	document.querySelectorAll<HTMLButtonElement>(".cta [data-copy-email]").forEach((button) => {
+		let timer: number | undefined;
+		button.addEventListener("click", async () => {
+			try {
+				await navigator.clipboard.writeText(button.dataset.email ?? "");
+			} catch {
+				// Clipboard API unavailable; the label change below is cosmetic only.
+			}
+			button.classList.add("is-copied");
+			clearTimeout(timer);
+			timer = window.setTimeout(() => button.classList.remove("is-copied"), 1500);
+		});
+	});
+</script>
+
 <style>
+	/* one cell as tall as the viewport, content centered, 60px padding (0 / 20px on mobile) */
 	.cta {
-		text-align: center;
-		padding: 48px 20px;
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		min-height: 100svh;
+		padding: 60px;
 	}
 
 	.cta__content {
-		margin-top: 48px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 40px;
+		width: 100%;
 	}
 
+	.cta__text {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 10px;
+		width: 100%;
+		text-align: center;
+	}
+
+	/* h1 preset: sans 40px (28px below 1200), 1.2em, white */
 	.cta__heading {
-		font-family: var(--font-display);
-		font-weight: 500;
-		font-size: 28px;
-		max-width: 18ch;
-		margin: 0 auto 32px;
+		margin: 0;
+		font-family: var(--font-sans);
+		font-weight: 400;
+		font-size: 40px;
+		line-height: 1.2em;
+		letter-spacing: 0;
+		color: var(--fg);
+	}
+
+	/* body preset: sans 16px (13px below 1200), #666, 400px wide */
+	.cta__copy {
+		margin: 0;
+		width: 100%;
+		max-width: 400px;
+		font-family: var(--font-sans);
+		font-size: 16px;
+		line-height: 1.2em;
+		letter-spacing: 0;
+		color: #666;
+	}
+
+	/* 200px circle with a dashed white outline; on hover it fills white (border turns solid, text goes dark),
+	   on press it shrinks to 190px. Spring: 0.4s, bounce 0.2 */
+	.cta__hi {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 200px;
+		height: 200px;
+		border: 1px dashed var(--fg);
+		border-radius: 50%;
+		background: transparent;
+		color: var(--fg);
+		font-family: var(--font-sans);
+		font-size: 16px;
+		line-height: 1.2em;
+		white-space: pre;
+		cursor: pointer;
+		transition:
+			background-color 0.4s ease,
+			color 0.4s ease,
+			border-color 0.4s ease,
+			transform 0.4s cubic-bezier(0.34, 1.4, 0.64, 1);
+	}
+
+	.cta__hi:hover,
+	.cta__hi:active {
+		border-style: solid;
+		background: var(--fg);
+		color: var(--bg);
+	}
+
+	.cta__hi:active {
+		transform: scale(0.95);
+	}
+
+	/* links row pinned 20px above the bottom: LinkedIn left, email center, GitHub right */
+	.cta__links {
+		position: absolute;
+		bottom: 20px;
+		left: 50%;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		width: 100%;
+		padding: 0 40px;
+		transform: translateX(-50%);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		line-height: 1.2em;
+		letter-spacing: 0;
+		text-transform: uppercase;
+		color: var(--fg);
+	}
+
+	.cta__link {
+		display: flex;
+		align-items: center;
+		flex: 1 0 0;
+		width: 1px;
+	}
+
+	.cta__link--start {
+		justify-content: flex-start;
+	}
+
+	.cta__link--mid {
+		justify-content: center;
+	}
+
+	.cta__link--end {
+		justify-content: flex-end;
+	}
+
+	/* email: 32px tall hit area, the label cross-fades to "Copiado!" with a check (180ms) */
+	.cta__mail {
+		display: inline-grid;
+		place-items: center;
+		min-height: 32px;
+		padding: 4px;
+		background: none;
+		border: 1px solid transparent;
+		border-radius: 10px;
+		color: inherit;
+		font: inherit;
+		text-transform: inherit;
+		line-height: 1.5em;
+		cursor: pointer;
+	}
+
+	.cta__mail-label {
+		grid-area: 1 / 1;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		transition: opacity 0.18s ease;
+	}
+
+	.cta__mail-label--done {
+		opacity: 0;
+	}
+
+	.cta__mail.is-copied .cta__mail-label:not(.cta__mail-label--done) {
+		opacity: 0;
+	}
+
+	.cta__mail.is-copied .cta__mail-label--done {
+		opacity: 1;
+	}
+
+	@media (max-width: 1199.98px) {
+		.cta__heading {
+			font-size: 28px;
+		}
+
+		.cta__copy {
+			font-size: 13px;
+		}
+	}
+
+	/* mobile: padding 0 / 20px, links stacked and centered: email, LinkedIn, GitHub */
+	@media (max-width: 767.98px) {
+		.cta {
+			padding: 0 20px;
+		}
+
+		.cta__copy {
+			max-width: none;
+		}
+
+		.cta__links {
+			flex-direction: column;
+			justify-content: flex-start;
+			gap: 10px;
+			padding: 0;
+		}
+
+		.cta__link {
+			flex: none;
+			width: 100%;
+			justify-content: center;
+		}
+
+		.cta__link--mid {
+			order: 0;
+		}
+
+		.cta__link--start {
+			order: 1;
+		}
+
+		.cta__link--end {
+			order: 2;
+		}
 	}
 </style>
