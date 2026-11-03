@@ -22,7 +22,16 @@ const projects = (await getCollection("projects"))
 				<div class="work__item-sticky">
 					<h3 data-reveal>{project.data.title}</h3>
 					<p data-reveal>{project.data.excerpt}</p>
-					<span class="work__tag" data-reveal>{project.data.category}</span>
+					<div class="work__meta">
+						<span class="work__tag" data-reveal>{project.data.category}</span>
+						<!-- the whole row is the link; this is its visible, subtle "go" affordance -->
+						<span class="work__go" data-reveal>
+							Ver proyecto
+							<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+								<path d="M4.5 2.5 8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+							</svg>
+						</span>
+					</div>
 				</div>
 			</div>
 
@@ -74,6 +83,56 @@ const projects = (await getCollection("projects"))
 		color: #666;
 		margin: 0;
 		max-width: 32ch;
+	}
+
+	/* tag + "Ver proyecto" side by side */
+	.work__meta {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	/* Subtle button. Rest: --muted text (#8a8a8a on #0a0a0a ≈ 5.6:1) with a chevron, no background.
+	   Hover / keyboard focus: --border-color (#222) pill with --fg text (≈ 15:1). Both pass WCAG AA
+	   for small text; the state also changes shape (background), not colour alone. */
+	.work__go {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 28px;
+		padding: 4px 10px 4px 12px;
+		border-radius: 100px;
+		background: transparent;
+		font-family: var(--font-sans);
+		font-size: 11px;
+		line-height: 1.2em;
+		white-space: nowrap;
+		color: var(--muted);
+		transition:
+			background-color 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.work__go svg {
+		flex-shrink: 0;
+		transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	@media (hover: hover) {
+		.work__go:hover {
+			background: var(--border-color);
+			color: var(--fg);
+		}
+
+		.work__go:hover svg {
+			transform: translateX(2px);
+		}
+	}
+
+	.work__item:focus-visible .work__go {
+		background: var(--border-color);
+		color: var(--fg);
 	}
 
 	.work__tag {
