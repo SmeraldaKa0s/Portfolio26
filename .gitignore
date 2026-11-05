@@ -36,3 +36,6 @@ pnpm-debug.log*
 !.vscode/extensions.json
 !.vscode/launch.json
 Thumbs.db
+
+# design comparison pages: local only, never deployed
+public/*.html
