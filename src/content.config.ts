@@ -11,6 +11,10 @@ const projects = defineCollection({
 		media: z.object({
 			kind: z.enum(["image", "video"]).default("image"),
 			ratio: z.string().default("8 / 5"),
+			src: z.string().optional(),
+			poster: z.string().optional(),
+			// colour behind the video: the whole frame stays visible inside the box
+			background: z.string().optional(),
 		}),
 	}),
 });

@@ -1,9 +1,14 @@
 ---
 // Mariposa ASCII blanca. Ciclo: surge de la trama de caracteres (derecha del viewport) ->
 // vuela hasta el extremo derecho del texto del hero -> aterriza (gira a vista de perfil) y se
-// posa de costado sobre "amet" moviendo las alas -> se desvanece desprendiéndose en caracteres
-// -> vuelve a surgir. Con destellos y polvillo de hada.
-// Se posiciona sobre el contenedor padre (que debe ser position: relative).
+// posa de costado sobre "amet" moviendo las alas -> baja rodeando el texto y se queda posada sobre
+// la línea punteada del pie del hero. Con destellos y polvillo de hada.
+// Al scrollear deja el ciclo y baja volando hacia la primera imagen de Work, que se ve a lo lejos: entra de
+// costado por su borde derecho, pasa por detrás y no se la ve más. Cerca del final de cada proyecto reaparece abajo a la
+// izquierda, cruza por el pie de la pantalla, sigue el giro de la cámara y se posa en el proyecto siguiente,
+// donde se queda 2 segundos y se deshace. El vuelo sigue al scroll, ida y vuelta.
+// El canvas cubre la pantalla entera para poder salir del hero. Con movimiento reducido no hay vuelo: queda
+// sobre el contenedor padre (que debe ser position: relative) y se va con el hero.
 ---
 
 <canvas class="ascii-butterfly" aria-hidden="true"></canvas>
@@ -16,9 +21,20 @@
 		height: 100%;
 		pointer-events: none;
 	}
+
+	/* above the sections it crosses, below the nav. lvh: the phone's address bar must not resize it mid-flight */
+	@media (prefers-reduced-motion: no-preference) {
+		.ascii-butterfly {
+			position: fixed;
+			z-index: 40;
+			height: 100lvh;
+		}
+	}
 </style>
 
 <script>
+	import { firstProject, hops } from '../scripts/firstProject';
+
 	const canvas = document.querySelector<HTMLCanvasElement>('.ascii-butterfly');
 	const ctx = canvas?.getContext('2d');
 	if (canvas && ctx) init(canvas, ctx);
@@ -30,6 +46,7 @@
 		const hash = (a: number, b: number) => frac(Math.sin(a * 127.1 + b * 311.7) * 43758.5453);
 		const smooth = (e: number) => e * e * (3 - 2 * e);
 		const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+		const sstepF = (a: number, b: number, x: number) => smooth(clamp((x - a) / (b - a), 0, 1));
 		function mulberry(seed: number) {
 			return () => {
 				seed |= 0;
@@ -274,6 +291,11 @@
 			{ a: [0.03, -0.08], b: [0.28, -0.46], br: 1, w: 1.7 },
 		].map((l) => ({ ...l, ang: Math.atan2(l.b[1] - l.a[1], l.b[0] - l.a[0]) }));
 
+		// her legs when she's clinging to something on her right
+		const SIDE_LEGS = PROF_LINES.slice(0, 3).map((l) => {
+			const a = [-l.a[1], l.a[0]], b = [-l.b[1], l.b[0]];
+			return { ...l, a, b, ang: Math.atan2(b[1] - a[1], b[0] - a[0]) };
+		});
 		const rng = mulberry(2091);
 		let W = 0, H = 0, cols = 0, rows = 0, top = 0, bot = 0;
 		let tb = new Float32Array(0), tc = new Uint16Array(0), tk = new Uint8Array(0);
@@ -285,6 +307,7 @@
 			t: 0, x: 0, y: 0, px: 0, py: 0, vx: 0, vy: 0, hd: 0, hv: 0,
 			ph: rng(), fm: 1, flap: 1, fq: 2, vis: 1, dis: 0,
 			yoff: 0, tilt: 0, roll: 0, ps: 1, kf: 1, kh: 1,
+			size: 1, air: false, shedding: false, forming: false, gathering: false, free: false, phi: 0, bodyTilt: 0, fold: 0, legs: '', wings: [[1, 1], [-1, -1]], parked: 0, dodge: 0, push: 0, textMid: 0, airTime: 0,
 		};
 
 		function resize() {
@@ -314,9 +337,9 @@
 				s.init = true;
 			}
 			// the layout changed: re-aim at the text (and re-pick the emergence point)
-			if (s.phase && s.phase !== 'gone') {
+			if (s.phase) {
 				if (s.phase === 'emerge') pickEmerge();
-				else s.perch = perchPoint();
+				else s.perch = onLine.includes(s.phase) ? linePoint() : perchPoint();
 			}
 			if (reduce) render();
 		}
@@ -343,22 +366,283 @@
 			}
 			return [W * 0.5, H * 0.4];
 		}
-		// borde superior del texto del hero, en coords del canvas (con margen por la animación de entrada)
-		function textTop(): number {
+		// the hero's text as it reads on screen, in the canvas's coordinates
+		function headlineBox() {
 			const h1 = document.querySelector('.hero__headline');
-			if (!h1) return H * 0.5;
-			return h1.getBoundingClientRect().top - canvas.getBoundingClientRect().top - 16;
+			const cb = canvas.getBoundingClientRect();
+			if (!h1) return { left: W * 0.3, right: W * 0.6, top: H * 0.4, bottom: H * 0.6 };
+			const r = document.createRange();
+			r.selectNodeContents(h1);
+			const b = r.getBoundingClientRect();
+			return { left: b.left - cb.left, right: b.right - cb.left, top: b.top - cb.top, bottom: b.bottom - cb.top };
 		}
+		// how big she can be to pass beside the text: on a phone the gap is narrow
+		const fitBeside = () => clamp((W - headlineBox().right - 14) / (3 * S), 0.3, 1);
 		function pickEmerge() {
 			// siempre por encima del texto: el cuerpo llega a ~0.8·S bajo el centro
-			const maxY = Math.max(top + S * 0.3, Math.min(H * 0.42, textTop() - S * 1.0));
+			const maxY = Math.max(top + S * 0.3, Math.min(H * 0.42, headlineBox().top - S * 1.0));
 			s.e0 = [clamp(W * (0.76 + 0.1 * rng()), S * 1.4, W - S * 1.4), lerp(top + S * 0.2, maxY, rng())];
 		}
+		// where she stays: standing on the dashed line at the hero's foot, to the right of the text and clear of its labels
+		function linePoint(): number[] {
+			const foot = document.querySelector('.hero__footer');
+			const cb = canvas.getBoundingClientRect();
+			let x = clamp(headlineBox().right + 156, S * 1.4, W - S * 1.4);
+			if (!foot) return [x, H - S * 0.55];
+			const r = document.createRange();
+			const labels = [...foot.children]
+				.map((el) => {
+					r.selectNodeContents(el);
+					return r.getBoundingClientRect();
+				})
+				.filter((b) => b.width)
+				.sort((a, b) => a.left - b.left);
+			// the free stretch of the line closest to there
+			const clear = S * 0.8;
+			const want = x;
+			let best = Infinity;
+			labels.forEach((b, i) => {
+				const from = (i ? labels[i - 1].right : cb.left) - cb.left + clear;
+				const to = b.left - cb.left - clear;
+				const edge = i === labels.length - 1 ? [[b.right - cb.left + clear, W - S * 1.4]] : [];
+				for (const [lo, hi] of [[from, to], ...edge]) {
+					if (hi < lo) continue;
+					const spot = clamp(want, lo, hi);
+					if (Math.abs(spot - want) < best) {
+						best = Math.abs(spot - want);
+						x = spot;
+					}
+				}
+			});
+			return [x, Math.min(foot.getBoundingClientRect().bottom - cb.top, window.innerHeight) - S * 0.55];
+		}
 
-		// surge -> vuela al texto -> se posa -> se disuelve -> (pausa) -> surge de nuevo
-		const PH: Record<string, number> = { emerge: 1.9, fly: 2.8, land: 0.6, perch: 0.5, diss: 1.0, gone: 1.4 };
-		const NEXT: Record<string, string> = { emerge: 'fly', fly: 'land', land: 'perch', perch: 'diss', diss: 'gone', gone: 'emerge' };
+		// surge -> vuela al texto -> se posa -> levanta -> baja a la línea -> se posa y se queda
+		const PH: Record<string, number> = { emerge: 2.4, fly: 2.8, land: 0.6, perch: 1.5, lift: 0.6, down: 3.4, settle: 0.6, rest: Infinity };
+		const NEXT: Record<string, string> = { emerge: 'fly', fly: 'land', land: 'perch', perch: 'lift', lift: 'down', down: 'settle', settle: 'rest' };
+		const onLine = ['down', 'settle', 'rest'];
+		// passing beside the text, where a phone has little room
+		const beside = () => s.phase === 'down' || (s.phase === 'fly' && s.around);
+
+		// ---- the flight down: everything here follows the scroll (screens since Work came in) ----
+		const GONE = 0.72; // behind the image, with the camera starting to close in
+		const REACH = 0.62; // of the way down: she's at the image's right and starts to go behind it
+		const journey = document.querySelector<HTMLElement>('[data-journey]');
+		let scrolled = -99;
+
+		// from one project to the next: the moments come from workOrbit.ts, all driven by the scroll except her stay
+		const STAY = 2;
+		const FADE_OUT = 0.6;
+		function hopFlight(dt: number) {
+			const p = hops.progress;
+			let i = -1;
+			hops.list.forEach((h, k) => {
+				if (p >= h.appear) i = k;
+			});
+			if (i < 0) {
+				s.hopOn = 0;
+				s.free = false;
+				s.legs = '';
+				s.fold = 0;
+				return false;
+			}
+			const h = hops.list[i];
+			const target = hops.targets[i + 1];
+			if (s.hopOn !== i + 1) {
+				s.hopOn = i + 1;
+				s.dis = 1.22;
+				s.stay = 0;
+				s.view = 'top';
+				s.free = true; // a body in space: which side she shows comes from where she's going
+				s.phi = 0;
+				s.bodyTilt = 0;
+				s.fold = 0;
+				s.legs = '';
+			}
+			const size = clamp((target.hw * 2 * 0.065) / (S * 0.72), 0.28, 1);
+			const landed = p >= h.arrive;
+			const before = s.dis;
+			if (landed) {
+				s.stay += dt;
+				s.dis = p > h.end ? 1.22 : 1.22 * sstepF(STAY, STAY + FADE_OUT, s.stay);
+				s.flap = 0;
+			} else {
+				s.stay = 0;
+				s.dis = 1.22 * (1 - sstepF(0, 0.9, (p - h.appear) / (h.lift - h.appear)));
+				s.flap = Math.sin(p * 900 + 1) > -0.2 ? 1 : 0;
+			}
+			s.shedding = landed && s.dis > before + 0.001;
+			s.forming = !landed;
+			s.fold += ((landed ? 1 : 0) - s.fold) * (1 - Math.exp(-dt * 4)); // she closes her wings as she settles
+			s.vis = s.dis >= 1.2 ? 0 : 1;
+			s.fq = 4;
+			const u = clamp((p - h.lift) / (h.arrive - h.lift), 0, 1);
+			s.size += (size * (1 - 0.1 * Math.sin(Math.PI * u)) - s.size) * (1 - Math.exp(-dt * 10));
+			// the green circle at the foot of the left column, then along the bottom of the screen, under the images.
+			// On a phone the info takes that strip, so she goes just above it
+			const capTop = document.querySelector<HTMLElement>('[data-journey-cap]')?.offsetTop ?? H;
+			const floor = W < 768 ? capTop - S * 0.6 : H * 0.9;
+			const sx = W * 0.166;
+			const sy = Math.min(H * 0.78, floor - S * 0.3);
+			const v = clamp((p - h.lift) / (h.turn - h.lift), 0, 1);
+			const aloft = 1 - sstepF(0.8, 1, v);
+			const bx = lerp(sx, W * 0.84, smooth(v));
+			const by = lerp(sy, floor, sstepF(0, 0.35, v)) + H * 0.03 * sstepF(0.2, 0.4, v) * aloft * Math.sin(v * 15);
+			// then to the next project, which comes in from the right with the turn: she waits for it well inside
+			// the screen, with both wings in view
+			const w = clamp((p - h.turn) / (h.arrive - h.turn), 0, 1);
+			// she lands on the image's left side, clinging to it with her wings closed away from it. A phone has no
+			// room there, so she stands on the top edge, at its left end
+			const reach = S * s.size * 0.55;
+			const beside = target.x - target.hw > S * s.size * 1.3;
+			const tx = beside ? target.x - target.hw - reach : target.x - target.hw + S * s.size * 0.9;
+			const ty = beside ? target.y - target.hh * 0.4 : target.y - target.hh - reach;
+			s.legs = landed && s.fold > 0.5 ? (beside ? 'side' : 'down') : '';
+			s.rest = beside ? [1.4, -0.08] : [-1.4, -0.9];
+			// under the image while it comes in and then up along its side
+			const along = sstepF(0, 0.75, w), up = sstepF(0.55, 1, w);
+			const air = landed ? 0 : Math.sin(Math.PI * Math.min(1, v * 0.5 + w * 0.5));
+			s.x = Math.min(lerp(bx, tx, along), W - S * s.size * 1.4) + air * s.size * (10 * Math.sin(s.t * 1.3) + 5 * Math.sin(s.t * 3.1 + 1));
+			s.y = Math.min(lerp(by, ty, up), H - S * s.size * 1.1) + air * s.size * (7 * Math.sin(s.t * 1.7 + 2) + 4 * Math.sin(s.t * 4.3));
+			return true;
+		}
+
+		function scrollFlight(dt: number) {
+			s.behind = null;
+			s.dusty = false;
+			if (!journey) return false;
+			const b = journey.getBoundingClientRect();
+			const vh = window.innerHeight;
+			const raw = (vh - b.top) / vh;
+			const atTop = (vh - (b.top + window.scrollY)) / vh; // where the page starts
+			// a wheel moves in steps: this keeps her from teleporting between them
+			scrolled = scrolled === -99 ? raw : scrolled + (raw - scrolled) * (1 - Math.exp(-dt * 8));
+			if (window.scrollY <= 8 && (!s.air || scrolled - atTop < 0.01)) {
+				if (s.air) {
+					// back at the top: she picks up where she was, the line if she had got there and otherwise the word
+					s.air = false;
+					s.free = false;
+					s.phase = s.lined ? 'down' : 'fly';
+					s.around = true;
+					s.pt = 0;
+					s.e0 = [s.x, s.y];
+					s.perch = s.lined ? linePoint() : perchPoint();
+					s.vis = 1;
+				}
+				s.size += ((beside() ? fitBeside() : 1) - s.size) * (1 - Math.exp(-dt * 6));
+				return false;
+			}
+			if (!s.air) {
+				s.air = true;
+				s.phi = 0;
+				s.bodyTilt = 0;
+				s.lined = onLine.includes(s.phase);
+				s.launch = [s.x, s.y];
+				s.dodge = 0;
+				s.push = 0;
+				s.airTime = 0;
+				s.textMid = Infinity; // she starts on the near side of the text
+			}
+			const onCamera = journey.classList.contains('is-3d') && firstProject.ready;
+			if (onCamera && hopFlight(dt)) return true;
+			s.free = true;
+			const f = clamp((scrolled - atTop) / (GONE - atTop), 0, 1);
+			// on the camera she doesn't slow down at the image: she goes on past its edge
+			const f1 = onCamera ? Math.min(1, f / REACH) : f;
+			const k = onCamera ? f1 * f1 * (1.5 - 0.5 * f1) : smooth(f);
+			const fp = firstProject;
+			// she ends up about 6.5% as wide as the image. Size goes as 1 / distance: it drops fast at first and then slowly
+			const landSize = onCamera ? clamp((fp.hw * 2 * 0.065) / (S * 0.72), 0.28, 1) : 1;
+			const depthSize = 1 / (1 + sstepF(0.1, 1, f) * (1 / landSize - 1));
+			// the text, which rises as the page scrolls: where she can't be. On a phone the gap beside it is
+			// narrow, so she stays small enough to fit until she's past it
+			const range = document.createRange();
+			const h1 = document.querySelector('.hero__headline');
+			if (h1) range.selectNodeContents(h1);
+			const text = h1 ? range.getBoundingClientRect() : null;
+			const alongside = text && s.y < text.bottom + S * 0.85;
+			const fit = alongside ? clamp((W - text.right - 14) / (2.5 * S), 0.3, 1) : 1;
+			s.size += (Math.min(depthSize, fit) - s.size) * (1 - Math.exp(-dt * 10));
+			// to the image's right, and from there sideways behind it
+			const imgY = Math.max(b.top, 0) + fp.y;
+			const imgR = fp.x + fp.hw;
+			const tx = onCamera ? imgR + S * s.size * 1.5 : W * 0.6;
+			const ty = onCamera ? imgY - fp.hh * 0.3 : H * 0.6;
+			// it goes around the side of the hero's text
+			const cx = W < 768 ? W - S : W * 0.75;
+			const cy = Math.max(s.launch[1], H * 0.55);
+			const aloft = sstepF(0, 0.08, f) * (1 - sstepF(0.82, 1, f));
+			// she glides down in long, wide arcs, not straight: the height drops in steps, little on the
+			// traverses and more where the arc turns
+			const hop = k + 0.025 * aloft * Math.sin(f * 12.6 + 0.7) * (1 - sstepF(0.8, 1, f1));
+			let bx = (1 - hop) * (1 - hop) * s.launch[0] + 2 * hop * (1 - hop) * cx + hop * hop * tx;
+			let by = (1 - hop) * (1 - hop) * s.launch[1] + 2 * hop * (1 - hop) * cy + hop * hop * ty;
+			const g = onCamera ? clamp((f - REACH) / (1 - REACH), 0, 1) : 0;
+			if (g > 0) {
+				const qx = imgR - S * s.size * 1.6, qy = imgY - fp.hh * 0.1;
+				const mx = imgR + S * s.size * 0.5, my = imgY - fp.hh * 0.2;
+				bx = (1 - g) * (1 - g) * tx + 2 * g * (1 - g) * mx + g * g * qx;
+				by = (1 - g) * (1 - g) * ty + 2 * g * (1 - g) * my + g * g * qy;
+			}
+			s.dusty = onCamera && f < 1; // the way down leaves a trail, which is gone by the time the camera arrives
+			if (onCamera && f > REACH) s.behind = [fp.x - fp.hw, imgY - fp.hh, fp.hw * 2, fp.hh * 2];
+			const dx = tx - s.launch[0], dy = ty - s.launch[1];
+			const len = Math.hypot(dx, dy) || 1;
+			const weave = Math.min(W * 0.1, 130) * s.size * aloft * (1 - 0.8 * g) * (Math.sin(f * 7.9 + 0.4) + 0.2 * Math.sin(f * 15.1 + 2));
+			// and it keeps fluttering on its own, even with the page still
+			const t = s.t, flutter = aloft * s.size;
+			const wantX = bx - (dy / len) * weave + flutter * (10 * Math.sin(t * 1.3) + 5 * Math.sin(t * 3.1 + 1) + 2 * Math.sin(t * 7.3));
+			const wantY = by + (dx / len) * weave + flutter * (7 * Math.sin(t * 1.7 + 2) + 4 * Math.sin(t * 4.3));
+			// if the rising text is about to reach her she veers up and to the right, diagonally, and only
+			// comes back once it has gone by
+			let clearX = wantX, clearY = wantY, left = 0, right = 0, over = 0, under = 0;
+			if (text) {
+				const wing = S * s.size * 1.25 + 10;
+				left = text.left - wing;
+				right = text.right + wing;
+				// when she takes off from the word she's standing on it: the clearance opens up in a moment, no jump
+				s.airTime += dt;
+				const open = Math.min(1, s.airTime / 0.35);
+				over = text.top - S * s.size * (0.55 + 0.35 * open) - 10 * open;
+				under = text.bottom + S * s.size * 0.85 + 10;
+				const inTheWay = wantX > left && wantX < right && wantY > over - 70 && wantY < under;
+				clearX = inTheWay ? right : wantX;
+			}
+			s.dodge += (clearX - wantX - s.dodge) * (1 - Math.exp(-dt * 9));
+			s.x = wantX + s.dodge;
+			// a fast flick can outrun that: whatever happens she never touches it, the text just pushes her
+			// along and she eases back afterwards
+			s.push *= Math.exp(-dt * 6);
+			s.y = wantY - 0.3 * s.dodge + s.push;
+			if (text) {
+				if (s.x > left && s.x < right && s.y > over && s.y < under) {
+					const edge = s.py < s.textMid ? over : under;
+					s.push += edge - s.y;
+					s.y = edge;
+				}
+				s.textMid = (text.top + text.bottom) / 2;
+			}
+
+			// she takes off with her wings open: the change of view happens hidden in the dissolve, as on the word
+			const changing = s.view === 'prof';
+			const leave = onCamera ? 0 : sstepF(0.25, 0.55, scrolled); // without the camera there's no image to go behind
+			s.forming = false;
+			const before = s.dis;
+			s.dis += clamp((changing ? 1 : leave * 1.22) - s.dis, -dt * 6, dt * 6); // 1.22: past the last cell's band
+			if (changing && s.dis >= 0.99) s.view = 'top';
+			s.shedding = !changing && s.dis > before + 0.001;
+			s.vis = s.dis >= 1.2 || (onCamera && f >= 1) ? 0 : 1;
+			// wings still on the glide, a few beats to recover at two points of the way; if the page stops she
+			// hovers, beating in bursts
+			const moving = Math.abs(raw - scrolled) > 0.003;
+			const beating = moving ? Math.sin(f * 9 + 1) > 0.25 : Math.sin(t * 1.1) + Math.sin(t * 2.7 + 1) > -0.7;
+			s.flap = beating ? 1 : 0;
+			s.fq = 3.5;
+			return true;
+		}
+
 		function fly(dt: number) {
+			if (scrollFlight(dt)) return;
 			if (!s.phase) {
 				s.phase = 'emerge';
 				s.pt = 0;
@@ -367,34 +651,56 @@
 			s.pt += dt;
 			const e = Math.min(1, s.pt / PH[s.phase]);
 			s.vis = 1;
+			s.shedding = false;
+			s.forming = s.phase === 'emerge';
 			const [px, py] = s.perch || [W * 0.5, H * 0.4];
-			s.view = s.phase === 'land' ? (e < 0.5 ? 'top' : 'prof') : s.phase === 'perch' || s.phase === 'diss' ? 'prof' : 'top';
+			const turning = s.phase === 'land' || s.phase === 'settle';
+			s.view = turning ? (e < 0.5 ? 'top' : 'prof') : s.phase === 'lift' ? (e < 0.5 ? 'prof' : 'top') : s.phase === 'perch' || s.phase === 'rest' ? 'prof' : 'top';
 			if (s.phase === 'emerge') {
 				s.x = s.e0[0] + 6 * Math.sin(s.t * 1.7);
 				s.y = s.e0[1] + 4 * Math.sin(s.t * 2.3);
 				s.flap = 1; s.fq = 2.4; s.dis = 1 - smooth(e);
-			} else if (s.phase === 'fly') {
+			} else if (s.phase === 'fly' && !s.around) {
 				const k = smooth(e);
 				s.x = lerp(s.e0[0], px, k) + 10 * Math.sin(e * 9) * Math.sin(Math.PI * e);
 				s.y = lerp(s.e0[1], py, k) - 26 * Math.sin(Math.PI * e) + 4 * Math.sin(e * 22) * (1 - e);
 				s.flap = 1; s.fq = 5.5; s.dis = 0;
-			} else if (s.phase === 'land') {
-				// la vista de frente se deshace en caracteres y se recompone de perfil
+			} else if (s.phase === 'fly' || s.phase === 'down') {
+				// around the text's right side, without touching it; once past it the arcs can open up
+				const box = headlineBox();
+				const air = Math.sin(Math.PI * e);
+				const down = s.phase === 'down';
+				const clear = box.right + S * s.size * 1.25;
+				const side = Math.min(clear + 130, W - S * s.size);
+				// three moves that overlap: out to the side, past the text's height, and back in once it's behind her
+				const out = sstepF(0, 0.35, e), home = sstepF(down ? 0.6 : 0.65, 1, e);
+				const drop = sstepF(down ? 0.15 : 0, down ? 1 : 0.7, e) + (down ? 0.02 * air * Math.sin(e * 12.6) : 0);
+				const arc = lerp(clamp(side - clear - 10, 0, 34), 34 * s.size, sstepF(box.bottom, box.bottom + S, s.y));
+				s.x = lerp(lerp(s.e0[0], side, out), px, home) + (arc * Math.sin(e * 9) + 5 * Math.sin(s.t * 3.1)) * air;
+				s.y = lerp(s.e0[1], py, drop) - S * 0.35 * out * (1 - drop) + 4 * Math.sin(s.t * 4.3) * air;
+				// on the way down she glides, a few beats at a time
+				s.flap = !down || Math.sin(e * 11 + 1) > -0.2 ? 1 : 0;
+				s.fq = down ? 4 : 5.5;
+				s.dis = 0;
+			} else if (turning || s.phase === 'lift') {
+				// la vista cambia escondida: se deshace en caracteres y se recompone
 				s.x = px; s.y = py; s.flap = 1; s.fq = 3;
 				s.dis = e < 0.5 ? smooth(e * 2) : 1 - smooth((e - 0.5) * 2);
-			} else if (s.phase === 'perch') {
-				s.x = px; s.y = py; s.flap = 0; s.dis = 0;
-			} else if (s.phase === 'diss') {
-				s.x = px; s.y = py - 5 * smooth(e); s.flap = 0; s.dis = smooth(e);
 			} else {
-				s.dis = 1;
+				s.x = px; s.y = py; s.flap = 0; s.dis = 0;
 			}
 			if (e >= 1) {
 				const nx = NEXT[s.phase];
 				s.phase = nx;
 				s.pt = 0;
-				if (nx === 'fly') s.perch = perchPoint();
-				if (nx === 'emerge') { pickEmerge(); s.ph = 0; }
+				if (nx === 'fly') {
+					s.around = false;
+					s.perch = perchPoint();
+				}
+				if (nx === 'down') {
+					s.e0 = [s.x, s.y];
+					s.perch = linePoint();
+				}
 			}
 		}
 
@@ -403,7 +709,9 @@
 			if (!W || dt <= 0) return;
 			s.t += dt;
 			s.px = s.x; s.py = s.y;
+			const wasDis = s.dis;
 			fly(dt);
+			s.gathering = s.forming && s.dis < wasDis - 0.0005;
 			const vx = (s.x - s.px) / dt, vy = (s.y - s.py) / dt, kv = Math.min(1, dt * 6);
 			s.vx += (vx - s.vx) * kv;
 			s.vy += (vy - s.vy) * kv;
@@ -419,14 +727,31 @@
 			const ga = g.ga + 2.5 * Math.sin(s.t * 6.5);
 			const aF = lerp(ga, wingAng(g, s.ph), s.fm),
 				aH = lerp(ga, wingAng(g, s.ph - 0.06), s.fm);
+			if (s.free) {
+				// going sideways she shows her side and leans into it, going up or down or hovering she shows her
+				// back. It all follows the velocity, so she passes through every angle in between, and never quite still
+				const gx = clamp(s.vx / 110, -1, 1), gy = clamp(s.vy / 110, -1, 1);
+				const wantPhi = s.fold > 0.5 ? s.rest[0] : 0.28 * Math.sin(s.t * 0.9 + 1) + 1.05 * gx * (1 - 0.5 * Math.abs(gy));
+				const wantTilt = s.fold > 0.5 ? s.rest[1] : 0.7 * gx * (1 - 0.4 * Math.max(0, gy)) + 0.06 * Math.sin(s.t * 1.7);
+				s.phi += (wantPhi - s.phi) * Math.min(1, dt * 3);
+				s.bodyTilt += (wantTilt - s.bodyTilt) * Math.min(1, dt * 3);
+				// each wing is hinged on the body, turning the body round its axis shows them differently
+				const af = (lerp(aF, 80, s.fold) * Math.PI) / 180, ah = (lerp(aH, 80, s.fold) * Math.PI) / 180;
+				const thin = (k: number) => (Math.abs(k) < 0.12 ? (k < 0 ? -0.12 : 0.12) : k);
+				const R = [thin(Math.cos(af + s.phi)), thin(Math.cos(ah + s.phi))];
+				const L = [thin(-Math.cos(af - s.phi)), thin(-Math.cos(ah - s.phi))];
+				s.wings = s.phi >= 0 ? [R, L] : [L, R];
+			}
 			const ph = frac(s.ph),
 				ph2 = ph < g.down ? (0.5 * ph) / g.down : 0.5 + (0.5 * (ph - g.down)) / (1 - g.down);
 			const toR = Math.PI / 180;
 			s.kf = Math.max(g.kmin, Math.cos(aF * toR));
 			s.kh = Math.max(g.kmin, Math.cos(aH * toR));
-			const yo = g.bob * Math.cos(2 * Math.PI * ph2) * s.fm;
+			// each wingbeat lifts her and she sinks between them, more in the open air
+			const yo = g.bob * (s.air ? 1.4 * s.size : 1) * Math.cos(2 * Math.PI * ph2) * s.fm;
 			s.yoff += (yo - s.yoff) * Math.min(1, dt * 18);
-			const tt = clamp((s.vx / 60) * 0.22, -0.32, 0.32) + 0.03 * Math.sin(2 * Math.PI * ph2) * s.fm;
+			const lean = s.air ? 0.14 : 0.32; // barely leans on the way down
+			const tt = clamp((s.vx / 60) * 0.22, -lean, lean) + 0.03 * Math.sin(2 * Math.PI * ph2) * s.fm;
 			s.tilt += (tt - s.tilt) * Math.min(1, dt * 4);
 			s.roll += (clamp(s.hv * 0.1, -0.35, 0.35) - s.roll) * Math.min(1, dt * 5);
 			const pt = 1 - clamp(-s.vy / 300, -0.08, 0.12) - 0.04 * Math.sin(2 * Math.PI * ph2) * s.fm;
@@ -437,19 +762,32 @@
 		// ============ caracteres que se desprenden ============
 		function spawnDust(x: number, y: number) {
 			if (parts.length > 900) return;
-			parts.push({ x, y, ch: '.·*+'[(rng() * 4) | 0], kind: 'dust', vx: (rng() - 0.5) * 12, vy: 3 + rng() * 14, age: 0, life: 1.1 + rng() * 1.6, seed: rng() * 9 });
+			const set = s.dusty ? '.·*+~/\\|-:' : '.·*+';
+			parts.push({ x, y, ch: set[(rng() * set.length) | 0], kind: 'dust', slow: s.dusty, vx: (rng() - 0.5) * 12, vy: 3 + rng() * 14, age: 0, life: 1.1 + rng() * 1.6, seed: rng() * 9 });
 		}
 		function spawn(x: number, y: number, ch: string) {
 			if (parts.length > 900) return;
 			parts.push({ x, y, ch, vx: (rng() - 0.5) * 80, vy: -(8 + rng() * 34), age: 0, life: 1.5 + rng() * 1.8, seed: rng() * 9 });
 		}
+		// a character on its way to its place in the wing, as she forms
+		function spawnGather(x: number, y: number, ch: string) {
+			if (parts.length > 900) return;
+			const a = rng() * Math.PI * 2, r = S * s.size * (0.7 + 1.2 * rng());
+			parts.push({ kind: 'gather', x: x + Math.cos(a) * r, y: y + Math.sin(a) * r, sx: x + Math.cos(a) * r, sy: y + Math.sin(a) * r, tx: x, ty: y, ch, age: 0, life: 0.4 + rng() * 0.5, seed: rng() * 9 });
+		}
 		function stepParts(dt: number) {
 			for (let i = parts.length - 1; i >= 0; i--) {
 				const p = parts[i];
-				p.age += dt;
+				p.age += dt * (p.slow ? 2 : s.air && p.kind !== 'gather' ? 3 : 1); // over Work they go fast: the projects' videos need a clean screen
 				if (p.age > p.life) {
 					parts[i] = parts[parts.length - 1];
 					parts.pop();
+					continue;
+				}
+				if (p.kind === 'gather') {
+					const e = p.age / p.life, k = e * e * (3 - 2 * e);
+					p.x = lerp(p.sx, p.tx, k);
+					p.y = lerp(p.sy, p.ty, k);
 					continue;
 				}
 				p.x += (p.vx + 14 * Math.sin(p.age * 3.2 + p.seed)) * dt;
@@ -476,7 +814,7 @@
 
 		function raster() {
 			const prof = s.view === 'prof';
-			const X = s.x, Y = s.y + s.yoff, kF = s.kf, kH = s.kh, tilt = prof ? 0 : s.tilt, ps = prof ? 1 : s.ps, roll = s.roll;
+			const X = s.x, Y = s.y + s.yoff, kF = s.kf, kH = s.kh, tilt = prof ? 0 : s.free ? s.bodyTilt : s.tilt, ps = prof || s.free ? 1 : s.ps, roll = s.roll;
 			const dis = s.dis, gain = ST.gain, B = ST.body;
 			const kp = 1 - 0.22 * (0.5 + 0.5 * Math.sin(s.t * 2.3)); // las alas plegadas se abren y cierran un poco
 			const kfs = [kF * (1 - Math.max(0, -roll)), kF * (1 - Math.max(0, roll))];
@@ -484,6 +822,7 @@
 			const cos = Math.cos(tilt), sin = Math.sin(tilt);
 			const cwN = CW / S, chN = CH / S;
 			const R = S * 1.5;
+			const near = (c: number, o: number) => o + (c - o) * s.size; // a cell's place on screen at this distance
 			const c0 = Math.max(0, Math.floor((X - R) / CW)), c1 = Math.min(cols - 1, Math.ceil((X + R) / CW));
 			const r0 = Math.max(0, Math.floor((Y - R) / CH)), r1 = Math.min(rows - 1, Math.ceil((Y + R) / CH));
 			const put = (i: number, code: number, b: number, k: number) => {
@@ -491,23 +830,32 @@
 				if (dis > 0) {
 					// cada celda pasa por '.' ':' '+' antes de ser el glifo (o al revés al disolverse)
 					const h = hash(i % cols, (i / cols) | 0);
-					const BAND = 0.22;
+					const BAND = s.forming ? 0.42 : 0.22; // forming shows more cells on their way
 					if (h < dis - BAND) return;
 					if (h < dis) {
 						const t = (h - (dis - BAND)) / BAND;
-						if (s.phase === 'diss' && t < 0.3 && rng() < 0.8 && !reduce)
-							spawn((i % cols + 0.5) * CW, (((i / cols) | 0) + 0.5) * CH, String.fromCharCode(code));
-						code = (t < 0.34 ? '.' : t < 0.67 ? ':' : '+').charCodeAt(0);
-						alpha *= 0.35 + 0.65 * t;
+						if (s.shedding && t < 0.3 && rng() < 0.8 && !reduce)
+							spawn(near((i % cols + 0.5) * CW, X), near((((i / cols) | 0) + 0.5) * CH, Y), String.fromCharCode(code));
+						if (s.gathering && t < 0.2 && rng() < 0.3 && !reduce)
+							spawnGather(near((i % cols + 0.5) * CW, X), near((((i / cols) | 0) + 0.5) * CH, Y), String.fromCharCode(code));
+						if (s.forming && !reduce) {
+							// the cell runs through characters until it lands on its own
+							const cycle = '.:+*#%/\\|~-=';
+							code = cycle.charCodeAt((((h * 977) | 0) + Math.floor(s.t * 16)) % cycle.length);
+							alpha = Math.max(alpha, 0.55) * (0.4 + 0.6 * t);
+						} else {
+							code = (t < 0.34 ? '.' : t < 0.67 ? ':' : '+').charCodeAt(0);
+							alpha *= 0.35 + 0.65 * t;
+						}
 					}
 				}
 				fb[i] = alpha;
 				fc[i] = code;
 				fk[i] = k;
 				ff[i] = stamp;
-				const tv = b * gain * s.vis * (dis > 0 ? 1 - dis : 1);
+				const tv = b * gain * s.vis * (dis > 0 ? 1 - dis : 1) * s.size * s.size;
 				if (tv >= tb[i]) { tb[i] = tv; tc[i] = code; tk[i] = k; }
-				if (b > 0.45 && dis < 0.3 && rng() < 0.006 && !reduce) spawnDust((i % cols + 0.5) * CW, (((i / cols) | 0) + 0.5) * CH);
+				if (b > 0.45 && dis < 0.3 && rng() < (s.dusty ? 0.009 : 0.006) && !reduce) spawnDust(near((i % cols + 0.5) * CW, X), near((((i / cols) | 0) + 0.5) * CH, Y));
 			};
 			const orient = (a: number, side: number, k: number) => {
 				const bx = Math.cos(a) * side * k, by = -Math.sin(a) * ps;
@@ -536,11 +884,37 @@
 					}
 					continue;
 				}
+				if (s.legs) {
+					const pu = x / S, pv = -y / S;
+					let hit = false;
+					for (const l of s.legs === 'side' ? SIDE_LEGS : PROF_LINES.slice(0, 3)) {
+						if (segDist(pu, pv, l.a, l.b) < 0.5 * (Math.abs(Math.sin(l.ang)) * cwN + Math.abs(Math.cos(l.ang)) * chN) * 0.72) {
+							put(i, orient(l.ang, 1, 1).charCodeAt(0), l.br, B.col);
+							hit = true;
+							break;
+						}
+					}
+					if (hit) continue;
+				}
 				if ((bu / Math.max(0.05, hw)) ** 2 + ((bv - 0.235) / 0.05) ** 2 < 1) { put(i, B.h.charCodeAt(0), 1, B.col); continue; }
 				if ((bu / Math.max(0.055, hw * 1.05)) ** 2 + ((bv - 0.1) / 0.12) ** 2 < 1) { put(i, B.t.charCodeAt(0), 1, B.col); continue; }
 				if (bv < -0.02 && bv > -0.62 && au < Math.max(hw * 0.95, 0.05 * (1 - (0.6 * (-0.02 - bv)) / 0.6))) { put(i, B.a.charCodeAt(0), 0.95, B.col); continue; }
-				let L = tex.f, j = look(L, au / kfs[si], bv), k = kfs[si];
-				if (j < 0) { L = tex.h; j = look(L, au / khs[si], bv); k = khs[si]; }
+				if (s.free) {
+					let found = false;
+					for (const [kf, kh] of s.wings) {
+						let W2 = tex.f, kw = kf, jw = look(W2, bu / kf, bv);
+						if (jw < 0) { W2 = tex.h; kw = kh; jw = look(W2, bu / kh, bv); }
+						if (jw >= 0) {
+							const code = W2.ch[jw] === 1 ? orient(W2.ang[jw], 1, kw).charCodeAt(0) : W2.ch[jw];
+							put(i, code, W2.b[jw] * (0.75 + 0.25 * Math.abs(kw)), W2.col[jw]);
+							found = true;
+							break;
+						}
+					}
+					if (found) continue;
+				}
+				let L = tex.f, j = s.free ? -1 : look(L, au / kfs[si], bv), k = kfs[si];
+				if (j < 0 && !s.free) { L = tex.h; j = look(L, au / khs[si], bv); k = khs[si]; }
 				if (j >= 0) {
 					const code = L.ch[j] === 1 ? orient(L.ang[j], side, k).charCodeAt(0) : L.ch[j];
 					put(i, code, L.b[j] * (0.75 + 0.25 * k), L.col[j]);
@@ -548,10 +922,11 @@
 				}
 				if (bv > 0.25 && bv < 0.82) {
 					const e = ANT[2];
-					if (Math.hypot(au - e[0], bv - e[1]) < Math.max(0.035, hw * 0.9)) { put(i, B.c.charCodeAt(0), 0.95, B.col); continue; }
+					const auA = s.free ? au / Math.max(0.35, Math.abs(Math.cos(s.phi))) : au; // seen from the side they're one behind the other
+					if (Math.hypot(auA - e[0], bv - e[1]) < Math.max(0.035, hw * 0.9)) { put(i, B.c.charCodeAt(0), 0.95, B.col); continue; }
 					for (let m = 0; m < 2; m++) {
 						const a = ANT[m], b = ANT[m + 1], ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
-						if (segDist(au, bv, a, b) < 0.5 * (Math.abs(Math.sin(ang)) * cwN + Math.abs(Math.cos(ang)) * chN) * 0.72) {
+						if (segDist(auA, bv, a, b) < 0.5 * (Math.abs(Math.sin(ang)) * cwN + Math.abs(Math.cos(ang)) * chN) * 0.72) {
 							put(i, orient(ang, side, 1).charCodeAt(0), 0.8, B.col);
 							break;
 						}
@@ -586,25 +961,36 @@
 			const tr = ST.trail, pal = ST.pal;
 			let lastK = -1;
 			const glow: number[] = [];
+			const body: number[] = [];
+			// la estela
 			for (let r = 0; r < rows; r++) for (let q = 0; q < cols; q++) {
 				const i = r * cols + q;
-				let ch: string, a: number, k: number;
-				if (ff[i] === stamp) {
-					ch = String.fromCharCode(fc[i]); a = fb[i]; k = fk[i];
-					if (!reduce) {
-						// destellos de hada: cada celda titila a su ritmo y a veces estalla en un '*'
-						const tw = Math.sin(s.t * 5 + hash(q, r) * 40);
-						a *= 0.82 + 0.18 * tw;
-						if (tw > 0.97) { ch = '*'; a = 1; }
-						glow.push(i);
-					}
-				} else {
-					const b = tb[i];
-					if (b < 0.06) continue;
-					ch = tr[Math.min(tr.length - 1, 1 + Math.max(0, Math.floor((b - 0.1) * (tr.length - 1) * 1.5)))];
-					a = b * 0.75;
-					if (ch === ' ') continue;
-					k = tk[i];
+				if (ff[i] === stamp) { body.push(i); continue; }
+				const b = tb[i];
+				if (b < 0.06) continue;
+				const ch = tr[Math.min(tr.length - 1, 1 + Math.max(0, Math.floor((b - 0.1) * (tr.length - 1) * 1.5)))];
+				if (ch === ' ') continue;
+				const k = tk[i];
+				if (k !== lastK) { ctx.fillStyle = pal[k] || pal[0]; lastK = k; }
+				ctx.globalAlpha = clamp(b * 0.75, 0, 1);
+				ctx.fillText(ch, q * CW, r * CH);
+			}
+			// la mariposa, a la escala que le da la distancia
+			const cy = s.y + s.yoff;
+			ctx.save();
+			ctx.translate(s.x, cy);
+			ctx.scale(s.size, s.size);
+			ctx.translate(-s.x, -cy);
+			for (const i of body) {
+				const q = i % cols, r = (i / cols) | 0;
+				let ch = String.fromCharCode(fc[i]), a = fb[i];
+				const k = fk[i];
+				if (!reduce) {
+					// destellos de hada: cada celda titila a su ritmo y a veces estalla en un '*'
+					const tw = Math.sin(s.t * 5 + hash(q, r) * 40);
+					a *= 0.82 + 0.18 * tw;
+					if (tw > 0.97) { ch = '*'; a = 1; }
+					glow.push(i);
 				}
 				if (k !== lastK) { ctx.fillStyle = pal[k] || pal[0]; lastK = k; }
 				ctx.globalAlpha = clamp(a, 0, 1);
@@ -613,7 +999,7 @@
 			// resplandor suave sobre los glifos de la mariposa
 			if (glow.length) {
 				ctx.shadowColor = 'rgba(255,255,255,0.95)';
-				ctx.shadowBlur = 5;
+				ctx.shadowBlur = 5 * s.size;
 				ctx.fillStyle = pal[0];
 				for (const i of glow) {
 					ctx.globalAlpha = clamp(fb[i] * 0.45, 0, 1);
@@ -622,13 +1008,17 @@
 				ctx.shadowBlur = 0;
 				ctx.shadowColor = 'transparent';
 			}
+			ctx.restore();
 			// caracteres desprendidos y polvillo de hada
 			for (const p of parts) {
 				const e = p.age / p.life;
-				if (p.kind === 'dust') {
+				if (p.kind === 'gather') {
+					ctx.fillStyle = pal[0];
+					ctx.globalAlpha = clamp(0.25 + 0.75 * e, 0, 1);
+				} else if (p.kind === 'dust') {
 					const tw = 0.5 + 0.5 * Math.sin(p.age * 14 + p.seed * 6);
 					ctx.fillStyle = pal[p.seed < 4 ? 0 : p.seed < 7 ? 4 : 5];
-					ctx.globalAlpha = clamp((1 - e) * (0.2 + 0.8 * tw), 0, 1);
+					ctx.globalAlpha = clamp((1 - e) * (0.2 + 0.8 * tw) * (p.slow ? 0.6 : 1), 0, 1);
 				} else {
 					ctx.fillStyle = pal[0];
 					ctx.globalAlpha = clamp((1 - e) * 0.8, 0, 1);
@@ -636,6 +1026,8 @@
 				ctx.fillText(p.ch, Math.floor(p.x / CW) * CW, Math.floor(p.y / CH) * CH);
 			}
 			ctx.globalAlpha = 1;
+			// the image is in front of her, and of everything she leaves behind
+			if (s.behind) ctx.clearRect(s.behind[0], s.behind[1], s.behind[2], s.behind[3]);
 		}
 
 		let last = -1;
@@ -644,7 +1036,10 @@
 			const dt = last < 0 ? 0 : clamp(t - last, 0, 0.05);
 			last = t;
 			step(dt);
-			render();
+			// past Work's first project there's nothing to draw until she's needed again
+			s.parked = s.air && !s.vis && !parts.length ? s.parked + 1 : 0;
+			if (s.parked === 90) ctx.clearRect(0, 0, W, H);
+			if (s.parked < 90) render();
 			requestAnimationFrame(frame);
 		}
 

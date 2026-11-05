@@ -3,7 +3,7 @@ import { getCollection } from "astro:content";
 import Media from "./Media.astro";
 
 // temporary: only the first projects are shown, to keep the page short while working on it.
-// Set to Infinity to show all of them again.
+// The camera journey in scripts/workOrbit.ts is tuned for 3: more projects need its orbit retuned.
 const VISIBLE_PROJECTS = 3;
 
 const projects = (await getCollection("projects"))
@@ -11,63 +11,217 @@ const projects = (await getCollection("projects"))
 	.slice(0, VISIBLE_PROJECTS);
 ---
 
-<section id="work" class="frame work">
-	{projects.map((project, i) => (
-		<a
-			href={`/proyectos/${project.id}`}
-			class="split work__item"
-			style={i !== projects.length - 1 ? "border-bottom: var(--border)" : ""}
-		>
-			<div class="col-narrow work__item-text">
-				<div class="work__item-sticky">
-					<h3 data-reveal>{project.data.title}</h3>
-					<p data-reveal>{project.data.excerpt}</p>
-					<div class="work__meta">
-						<span class="work__tag" data-reveal>{project.data.category}</span>
-						<!-- the whole row is the link; this is its visible, subtle "go" affordance -->
-						<span class="work__go" data-reveal>
-							Ver proyecto
-							<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-								<path d="M4.5 2.5 8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-							</svg>
-						</span>
-					</div>
-				</div>
-			</div>
+<section id="work" class="journey" data-journey aria-label="Proyectos">
+	<!-- 3D only if WebGL2 is there and motion is allowed; otherwise, and without JS, this is a plain list.
+	     Set before the first paint so the page's height doesn't jump. -->
+	<script is:inline>
+		(() => {
+			const journey = document.querySelector("[data-journey]");
+			if (!journey || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+			if (document.createElement("canvas").getContext("webgl2")) journey.classList.add("is-3d");
+		})();
+	</script>
 
-			<div class="col-wide work__item-media">
-				<div class="work__shot work__shot--full" data-reveal><Media kind={project.data.media.kind} ratio="8 / 5" /></div>
-				<div class="work__shot" data-reveal><Media kind="image" ratio="3 / 4" /></div>
-				<div class="work__shot" data-reveal><Media kind="image" ratio="3 / 4" /></div>
-				<div class="work__shot work__shot--full" data-reveal><Media kind="image" ratio="8 / 5" /></div>
-			</div>
-		</a>
-	))}
+	<div class="journey__pin" data-journey-pin>
+		<canvas class="journey__field" data-journey-field aria-hidden="true"></canvas>
+		<div class="journey__lines" data-journey-lines aria-hidden="true"></div>
+
+		<div class="journey__stage" data-journey-stage>
+			{projects.map((project) => (
+				<article class="journey__project">
+					<!-- mouse target over the video; the caption holds the link for keyboard and screen readers -->
+					<a
+						href={`/proyectos/${project.id}`}
+						class="journey__panel"
+						data-journey-panel
+						tabindex="-1"
+						aria-hidden="true"
+					>
+						<!-- three rows per project: full width, two side by side, full width -->
+						<div class="journey__shot journey__shot--full" data-journey-shot><Media
+								kind={project.data.media.kind}
+								ratio="8 / 5"
+								src={project.data.media.src}
+								poster={project.data.media.poster}
+								background={project.data.media.background}
+								alt={project.data.title}
+							/></div>
+						<div class="journey__shot" data-journey-shot><Media kind="image" ratio="3 / 4" /></div>
+						<div class="journey__shot" data-journey-shot><Media kind="image" ratio="3 / 4" /></div>
+						<div class="journey__shot journey__shot--full" data-journey-shot><Media kind="image" ratio="8 / 5" /></div>
+					</a>
+
+					<div class="journey__cap" data-journey-cap>
+						<h3 data-journey-part>{project.data.title}</h3>
+						<p data-journey-part>{project.data.excerpt}</p>
+						<div class="journey__meta" data-journey-part>
+							<span class="journey__tag">{project.data.category}</span>
+							<a class="journey__go" href={`/proyectos/${project.id}`}>
+								Ver proyecto
+								<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+									<path d="M4.5 2.5 8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+								</svg>
+							</a>
+						</div>
+					</div>
+				</article>
+			))}
+		</div>
+	</div>
 </section>
 
+<script>
+	import "../scripts/workOrbit";
+</script>
+
 <style>
-	/* stretch (not center) so the text column's right border runs the full height of the row:
-	   the vertical dashed line stays continuous */
-	.work__item {
-		align-items: stretch;
+	/* ---- plain list: no JS, no WebGL2, or reduced motion ---- */
+	.journey__field,
+	.journey__lines {
+		display: none;
 	}
 
-	/* text cell: 80px / 20px padding; the block stays pinned 20px under the nav (20px gutter + 44px nav) while the media scrolls */
-	.work__item > .work__item-text {
-		padding: 80px 20px;
+	.journey__project {
+		display: flex;
+		flex-direction: row-reverse;
+		border-block: var(--border);
 	}
 
-	.work__item-sticky {
-		position: sticky;
-		top: var(--sticky-top);
+	.journey__project + .journey__project {
+		border-top: none;
+	}
+
+	.journey__panel {
+		flex: 1 0 0;
+		min-width: 0;
+		padding: 60px;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		align-content: start;
+		gap: 10px;
+	}
+
+	.journey__shot--full {
+		grid-column: 1 / -1;
+	}
+
+	.journey__cap {
+		flex: 0 0 var(--col-narrow-w);
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 10px;
+		padding: 80px 20px;
+		border-right: var(--border);
 	}
 
-	/* ashcamp: title 20px (16px below 1200), description 14px #666, tag as a #222 pill */
-	.work__item-text h3 {
+	/* ---- camera journey: workOrbit.ts sets the final height from the images' size ---- */
+	.journey.is-3d {
+		position: relative;
+		height: 720vh;
+	}
+
+	.is-3d .journey__pin {
+		position: sticky;
+		top: 0;
+		height: 100vh;
+		height: 100svh;
+		/* full width of the screen: it covers the page's dashed frame, redrawn below so it can fade */
+		width: 100vw;
+		margin-left: calc(50% - 50vw);
+		overflow: hidden;
+		background: var(--bg);
+	}
+
+	.is-3d .journey__field {
+		display: block;
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	.is-3d .journey__lines {
+		display: block;
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		border-inline: var(--border);
+		pointer-events: none;
+	}
+
+	.is-3d .journey__lines::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: var(--col);
+		border-left: var(--border);
+	}
+
+	.is-3d .journey__stage {
+		position: absolute;
+		inset: 0;
+	}
+
+	.is-3d .journey__project {
+		display: contents;
+	}
+
+	/* placed by the camera in workOrbit.ts; 900px wide = 3 world units. The top margin centres the first image */
+	.is-3d .journey__panel {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 900px;
+		margin-left: -450px;
+		padding: 0;
+		backface-visibility: hidden;
+		visibility: hidden;
+	}
+
+	.journey__panel :global(.placeholder-media) {
+		width: 100%;
+	}
+
+	.is-3d .journey__cap {
+		position: absolute;
+		z-index: 2000;
+		left: var(--cap-left, 40px);
+		top: var(--sticky-top);
+		width: var(--cap-width, 300px);
+		padding: 0;
+		border: 0;
+		opacity: 0;
+		pointer-events: none;
+		transform-origin: 0 0;
+	}
+
+	.is-3d .journey__cap :global(.journey__word),
+	.is-3d .journey__cap :global(.journey__char) {
+		display: inline-block;
+		white-space: nowrap;
+	}
+
+	.is-3d .journey__cap :global(.journey__read) {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	.is-3d .journey__cap:focus-within,
+	.is-3d .journey__cap:focus-within [data-journey-part],
+	.is-3d .journey__cap:focus-within :global(.journey__char) {
+		opacity: 1 !important;
+		filter: none !important;
+		transform: none !important;
+	}
+
+	/* ---- caption ---- */
+	.journey__cap h3 {
 		font-family: var(--font-sans);
 		font-weight: 400;
 		font-size: 20px;
@@ -76,7 +230,7 @@ const projects = (await getCollection("projects"))
 		margin: 0;
 	}
 
-	.work__item-text p {
+	.journey__cap p {
 		font-family: var(--font-sans);
 		font-size: 14px;
 		line-height: 1.4;
@@ -86,7 +240,7 @@ const projects = (await getCollection("projects"))
 	}
 
 	/* tag + "Ver proyecto" side by side */
-	.work__meta {
+	.journey__meta {
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
@@ -96,7 +250,7 @@ const projects = (await getCollection("projects"))
 	/* Subtle button. Rest: --muted text (#8a8a8a on #0a0a0a ≈ 5.6:1) with a chevron, no background.
 	   Hover / keyboard focus: --border-color (#222) pill with --fg text (≈ 15:1). Both pass WCAG AA
 	   for small text; the state also changes shape (background), not colour alone. */
-	.work__go {
+	.journey__go {
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
@@ -114,28 +268,28 @@ const projects = (await getCollection("projects"))
 			color 0.2s ease;
 	}
 
-	.work__go svg {
+	.journey__go svg {
 		flex-shrink: 0;
 		transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 	}
 
 	@media (hover: hover) {
-		.work__go:hover {
+		.journey__go:hover {
 			background: var(--border-color);
 			color: var(--fg);
 		}
 
-		.work__go:hover svg {
+		.journey__go:hover svg {
 			transform: translateX(2px);
 		}
 	}
 
-	.work__item:focus-visible .work__go {
+	.journey__go:focus-visible {
 		background: var(--border-color);
 		color: var(--fg);
 	}
 
-	.work__tag {
+	.journey__tag {
 		display: inline-flex;
 		align-items: center;
 		width: min-content;
@@ -150,60 +304,45 @@ const projects = (await getCollection("projects"))
 		opacity: 0.64;
 	}
 
-	/* media cell: 60px padding (40px on tablet), media pushed to the bottom-right */
-	.work__item > .work__item-media {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		align-content: end;
-		gap: 10px;
-		padding: 60px;
-		overflow: hidden;
-	}
-
-	/* three rows per project: full width, two side by side, full width */
-	.work__shot--full {
-		grid-column: 1 / -1;
-	}
-
-	.work__item-media :global(.placeholder-media) {
-		width: 100%;
-	}
-
-	.work__item-media :global(.placeholder-media) {
-		border-radius: 10px;
-	}
-
 	@media (max-width: 1199.98px) {
-		.work__item-text h3 {
+		.journey__cap h3 {
 			font-size: 16px;
 		}
 
-		.work__item > .work__item-media {
+		.journey__panel {
 			padding: 40px;
 		}
 	}
 
-	/* mobile: one column — text cell (80/20 padding, dashed bottom line) then the media
-	   cell (40/20 padding); the frame's left/right dashed lines run on both sides */
 	@media (max-width: 767.98px) {
-		.work__item > .work__item-text {
+		.journey__project {
+			flex-direction: column-reverse;
+		}
+
+		.journey__panel {
 			flex: none;
-			max-width: none;
+			padding: 40px 20px;
+		}
+
+		.journey__cap {
+			flex: none;
 			border-right: none;
 			border-bottom: var(--border);
 		}
 
-		.work__item-text p {
+		.journey__cap p {
 			max-width: none;
 		}
 
-		.work__item-sticky {
-			position: static;
-		}
-
-		.work__item > .work__item-media {
-			flex: none;
-			padding: 40px 20px;
+		/* the images scroll beneath it on phones: a solid base keeps it readable */
+		.is-3d .journey__cap {
+			left: 0;
+			right: 0;
+			top: auto;
+			bottom: 0;
+			width: auto;
+			padding: 56px 20px 28px;
+			background: linear-gradient(to bottom, transparent, var(--bg) 40px);
 		}
 	}
 </style>

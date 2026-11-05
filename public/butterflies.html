@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mariposas ASCII — companion</title>
+<style>
+	:root { --bg:#0a0a0a; --fg:#f5f5f3; --muted:#8a8a8a; --line:#222; }
+	* { box-sizing: border-box; }
+	body { margin:0; background:var(--bg); color:var(--fg); font-family: ui-monospace, Menlo, Consolas, monospace; }
+	header { display:flex; flex-wrap:wrap; gap:16px 32px; align-items:center; justify-content:space-between; padding:20px; border-bottom:1px dashed var(--line); }
+	h1 { margin:0; font-size:14px; font-weight:400; letter-spacing:.04em; }
+	h1 span { color:var(--muted); }
+	label { font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center; }
+	input[type=range] { accent-color:#f5f5f3; }
+	.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); }
+	.card { border-right:1px dashed var(--line); border-bottom:1px dashed var(--line); position:relative; }
+	.card canvas { display:block; width:100%; height:260px; }
+	.meta { padding:10px 16px 14px; border-top:1px dashed var(--line); font-size:12px; }
+	.meta b { font-weight:400; }
+	.meta b::before { content:attr(data-n) "  "; color:var(--muted); }
+	.meta p { margin:4px 0 0; color:var(--muted); line-height:1.4; }
+</style>
+</head>
+<body>
+<header>
+	<h1>MARIPOSAS ASCII <span>/ 10 estilos de estructura y vuelo</span></h1>
+	<label>tamaño <input id="size" type="range" min="35" max="110" value="58" /></label>
+	<label>estela <input id="trail" type="range" min="50" max="92" value="78" /></label>
+</header>
+<div class="grid" id="grid"></div>
+
+<script>
+// ---------- geometría ----------
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const bez = (a, c, b, t) => [
+	(1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * c[0] + t * t * b[0],
+	(1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * c[1] + t * t * b[1],
+];
+// curva de Bézier cuadrática con ancho que se afina -> lista de segmentos "blade"
+function curve(a, c, b, w0, w1, n = 10) {
+	const out = [];
+	for (let i = 0; i < n; i++) {
+		const p = bez(a, c, b, i / n), q = bez(a, c, b, (i + 1) / n);
+		out.push({ k: 'seg', ax: p[0], ay: p[1], bx: q[0], by: q[1], w0: w0 + (w1 - w0) * (i / n), w1: w0 + (w1 - w0) * ((i + 1) / n) });
+	}
+	return out;
+}
+const ell = (cx, cy, rx, ry, rot) => [{ k: 'ell', cx, cy, rx, ry, rot }];
+const blade = (a, b, w0, w1) => [{ k: 'seg', ax: a[0], ay: a[1], bx: b[0], by: b[1], w0, w1 }];
+
+function partVal(p, x, y) {
+	if (p.k === 'seg') {
+		const dx = p.bx - p.ax, dy = p.by - p.ay;
+		const t = clamp(((x - p.ax) * dx + (y - p.ay) * dy) / (dx * dx + dy * dy), 0, 1);
+		const d = Math.hypot(x - (p.ax + t * dx), y - (p.ay + t * dy));
+		const w = p.w0 + (p.w1 - p.w0) * t;
+		return d < w ? 1 - d / w : 0;
+	}
+	const c = Math.cos(p.rot), s = Math.sin(p.rot), dx = x - p.cx, dy = y - p.cy;
+	const a = (dx * c + dy * s) / p.rx, b = (-dx * s + dy * c) / p.ry, d = a * a + b * b;
+	return d < 1 ? 1 - Math.sqrt(d) : 0;
+}
+
+// ---------- estilos ----------
+const RAMP = ' .:-=+*#%@';
+const STYLES = [
+	{
+		name: 'Sylph', desc: 'Cola de golondrina: ala alta curva y dos colas largas. Vuelo: ocho planeando.',
+		parts: [...curve([.04, .1], [.5, .75], [.95, .62], .17, .03), ...curve([.04, -.05], [.3, -.5], [.35, -.98], .12, .015), ...curve([.1, -.1], [.55, -.3], [.72, -.7], .09, .015)],
+		mode: 'soft', body: [-.7, .45, .028], flap: 6, fmin: .25,
+		path: t => [.5 + .32 * Math.sin(.5 * t), .5 + .22 * Math.sin(t)],
+	},
+	{
+		name: 'Luna', desc: 'Ala delantera lanceolada con venas y colas colgantes. Vuelo: deriva lenta y ancha.',
+		parts: [...ell(.5, .3, .55, .17, .45), ...curve([.08, -.1], [.4, -.6], [.22, -1.15], .11, .01), ...ell(.22, -.2, .22, .13, -1)],
+		mode: 'outline', veins: 13, body: [-.65, .45, .03], flap: 3.6, fmin: .18,
+		path: t => [.5 + .36 * Math.sin(.25 * t), .46 + .14 * Math.sin(.5 * t + 1)],
+	},
+	{
+		name: 'Filigrana', desc: 'Solo el contorno de las alas, como encaje. Vuelo: errático y nervioso.',
+		parts: [...ell(.5, .36, .56, .2, .62), ...ell(.32, -.3, .34, .15, -.62)],
+		mode: 'outline', veins: 18, body: [-.6, .45, .026], flap: 13, fmin: .15,
+		path: t => [.5 + .3 * Math.sin(.7 * t) + .1 * Math.sin(2.3 * t), .5 + .25 * Math.sin(.9 * t + 2) + .09 * Math.sin(3.1 * t)],
+	},
+	{
+		name: 'Libélula élfica', desc: 'Dos pares de alas finísimas, cuerpo largo. Vuelo: dardos y quietud.',
+		parts: [...curve([.05, .1], [.55, .34], [1.05, .3], .09, .035), ...curve([.05, -.02], [.5, -.12], [.95, -.3], .08, .03)],
+		mode: 'outline', veins: 0, body: [-.95, .42, .028], flap: 26, fmin: .55,
+		path: (t) => { const s = t / 1.5, i = Math.floor(s), f = s - i, e = f * f * (3 - 2 * f), h = (n, m) => { const x = Math.sin(n * 127.1 + m * 311.7) * 43758.5; return x - Math.floor(x); }; return [.2 + .6 * (h(i, 1) + (h(i + 1, 1) - h(i, 1)) * e), .25 + .5 * (h(i, 2) + (h(i + 1, 2) - h(i, 2)) * e)]; },
+	},
+	{
+		name: 'Creciente', desc: 'Alas en hoz, barridas hacia atrás. Vuelo: espiral que se abre y se cierra.',
+		parts: [...curve([.05, .0], [.75, .15], [.62, 1.0], .24, .01), ...curve([.05, -.08], [.4, -.15], [.42, -.7], .12, .01)],
+		mode: 'soft', body: [-.7, .4, .028], flap: 7, fmin: .22,
+		path: t => { const r = .15 + .12 * Math.sin(.3 * t), a = .8 * t; return [.5 + r * 1.5 * Math.cos(a), .5 + r * 1.2 * Math.sin(a)]; },
+	},
+	{
+		name: 'Pétalo', desc: 'Tres pétalos puntiagudos por lado. Vuelo: cae en zigzag como una hoja.',
+		parts: [...ell(.5, .32, .55, .12, .72), ...ell(.56, .05, .52, .09, .18), ...ell(.44, -.26, .45, .1, -.72)],
+		mode: 'soft', body: [-.65, .42, .028], flap: 7, fmin: .25,
+		path: t => [.5 + .3 * Math.sin(1.3 * t) * Math.cos(.3 * t), 1.12 - ((t * .09) % 1.3)],
+	},
+	{
+		name: 'Estrella', desc: 'Tres rayos afilados por lado, forma de estrella. Vuelo: órbita con rebote.',
+		parts: [...blade([.04, .06], [.9, .85], .13, 0), ...blade([.04, .0], [1.05, .1], .1, 0), ...blade([.04, -.06], [.72, -.8], .12, 0)],
+		mode: 'soft', body: [-.55, .4, .03], flap: 8, fmin: .3,
+		path: t => [.5 + .3 * Math.cos(.6 * t), .5 + .24 * Math.sin(.6 * t) + .05 * Math.sin(5 * t)],
+	},
+	{
+		name: 'Velo', desc: 'Ala alta y dos cintas largas, contorno suelto. Vuelo: ascenso en ondas.',
+		parts: [...curve([.04, .1], [.3, .9], [.62, 1.12], .19, .02), ...curve([.04, -.1], [.75, -.4], [.5, -1.25], .08, .01), ...curve([.04, -.05], [.2, -.7], [.05, -1.2], .06, .008)],
+		mode: 'outline', veins: 9, body: [-.7, .45, .026], flap: 5, fmin: .18,
+		path: t => [.5 + .16 * Math.sin(1.2 * t) + .08 * Math.sin(.5 * t), 1.15 - ((t * .1) % 1.35)],
+	},
+	{
+		name: 'Orquídea', desc: 'Asimétrica: ala alta grande, trasera diminuta, con ocelo. Vuelo: flotar con aleteo lento.',
+		parts: [...ell(.55, .4, .62, .3, .6), ...ell(.2, -.28, .2, .12, -.5)],
+		mode: 'soft', spots: [[.62, .46, .14]], body: [-.55, .42, .03], flap: 2.5, fmin: .1,
+		path: t => [.5 + .2 * Math.sin(.3 * t), .5 + .1 * Math.sin(.8 * t) + .04 * Math.sin(2.5 * t)],
+		bob: 12,
+	},
+	{
+		name: 'Glifo', desc: 'Alas en X de líneas finas y símbolos. Vuelo: picadas en U.',
+		parts: [...blade([.03, .05], [1.0, .92], .08, .005), ...blade([.03, -.05], [.85, -.92], .08, .005), ...blade([.03, .02], [1.1, -.12], .045, .005)],
+		mode: 'soft', ramp: ' ·.:+*✦', body: [-.5, .4, .028], flap: 9, fmin: .3,
+		path: t => [.5 + .38 * Math.sin(.55 * t), .28 + .42 * Math.abs(Math.sin(.55 * t + .8))],
+	},
+];
+
+// ---------- render ----------
+const FONT_PX = 9, CH = 9.4;
+const sizeEl = document.getElementById('size'), trailEl = document.getElementById('trail');
+const grid = document.getElementById('grid');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FONT = `${FONT_PX}px ui-monospace, Menlo, Consolas, monospace`;
+
+function wingBright(st, au, v) {
+	let val = 0;
+	for (const p of st.parts) { const q = partVal(p, au, v); if (q > val) val = q; }
+	if (val <= 0) return 0;
+	if (st.spots) for (const [sx, sy, sr] of st.spots) { const d = Math.hypot(au - sx, v - sy); if (d < sr) return d < sr * .55 ? .08 : .95; }
+	if (st.mode === 'outline') {
+		if (val < .3) return .95;
+		if (st.veins && Math.sin(Math.atan2(v, au) * st.veins) > .93) return .5;
+		return .1;
+	}
+	return .22 + .72 * (1 - (1 - val) * (1 - val));
+}
+
+function sample(st, u, v, k) {
+	const [b0, b1, bw] = st.body;
+	if (Math.abs(u) < bw && v > b0 && v < b1) return 1;
+	if (u * u + (v - b1 - .04) ** 2 < .004) return 1;
+	const ax = Math.abs(u);
+	if (v > b1 && v < b1 + .45 && Math.abs(ax - (v - b1) * .5) < .022) return .75; // antenas
+	return wingBright(st, ax / k, v);
+}
+
+const cards = STYLES.map((st, i) => {
+	const el = document.createElement('div');
+	el.className = 'card';
+	el.innerHTML = `<canvas></canvas><div class="meta"><b data-n="${String(i + 1).padStart(2, '0')}">${st.name}</b><p>${st.desc}</p></div>`;
+	grid.appendChild(el);
+	const canvas = el.querySelector('canvas'), ctx = canvas.getContext('2d');
+	const c = { st, canvas, ctx, W: 0, H: 0, cols: 0, rows: 0, trail: new Float32Array(0), CW: 5.4, px: 0, py: 0, tilt: 0 };
+	const resize = () => {
+		const dpr = devicePixelRatio || 1;
+		c.W = canvas.clientWidth; c.H = canvas.clientHeight;
+		canvas.width = c.W * dpr; canvas.height = c.H * dpr;
+		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+		ctx.font = FONT; c.CW = ctx.measureText('M').width || 5.4;
+		c.cols = Math.ceil(c.W / c.CW); c.rows = Math.ceil(c.H / CH);
+		c.trail = new Float32Array(c.cols * c.rows);
+	};
+	new ResizeObserver(resize).observe(canvas);
+	resize();
+	return c;
+});
+
+function draw(c, t) {
+	const { st, ctx } = c, SIZE = +sizeEl.value, FADE = trailEl.value / 100;
+	const phase = t * st.flap, k = Math.max(st.fmin, Math.abs(Math.cos(phase)));
+	const [nx, ny] = st.path(t);
+	const bx = c.W * nx, by = c.H * ny + (st.bob || 6) * Math.sin(phase * 2);
+	const vx = bx - c.px, vy = by - c.py; c.px = bx; c.py = by;
+	const tt = clamp(vx * .08, -.5, .5) + clamp(vy * .02, -.2, .2);
+	c.tilt += (tt - c.tilt) * .1;
+	const cos = Math.cos(c.tilt), sin = Math.sin(c.tilt);
+
+	for (let i = 0; i < c.trail.length; i++) c.trail[i] *= FADE;
+	const reach = SIZE * 1.3;
+	const c0 = Math.max(0, Math.floor((bx - reach) / c.CW)), c1 = Math.min(c.cols - 1, Math.ceil((bx + reach) / c.CW));
+	const r0 = Math.max(0, Math.floor((by - reach) / CH)), r1 = Math.min(c.rows - 1, Math.ceil((by + reach) / CH));
+	for (let r = r0; r <= r1; r++) for (let q = c0; q <= c1; q++) {
+		const x = (q + .5) * c.CW - bx, y = (r + .5) * CH - by;
+		const b = sample(st, (x * cos + y * sin) / SIZE, (x * sin - y * cos) / SIZE, k);
+		const i = r * c.cols + q;
+		if (b > c.trail[i]) c.trail[i] = b;
+	}
+
+	const ramp = st.ramp || RAMP;
+	ctx.clearRect(0, 0, c.W, c.H);
+	ctx.font = FONT; ctx.textBaseline = 'top';
+	for (let r = 0; r < c.rows; r++) for (let q = 0; q < c.cols; q++) {
+		const b = c.trail[r * c.cols + q];
+		if (b < .06) continue;
+		const ch = ramp[Math.min(ramp.length - 1, Math.floor(b * ramp.length))];
+		if (ch === ' ') continue;
+		ctx.fillStyle = `rgba(245,245,243,${.2 + b * .65})`;
+		ctx.fillText(ch, q * c.CW, r * CH);
+	}
+}
+
+function frame(now) {
+	for (const c of cards) draw(c, now / 1000);
+	if (!reduce) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

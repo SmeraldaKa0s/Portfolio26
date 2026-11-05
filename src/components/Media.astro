@@ -3,11 +3,59 @@ interface Props {
 	kind?: "image" | "video";
 	ratio?: string;
 	label?: string;
+	src?: string;
+	poster?: string;
+	background?: string;
+	alt?: string;
 }
 
-const { kind = "image", ratio = "8 / 5", label } = Astro.props;
+const { kind = "image", ratio = "8 / 5", label, src, poster, background, alt } = Astro.props;
+const hasVideo = kind === "video" && Boolean(src);
+const boxStyle = [`aspect-ratio: ${ratio}`, hasVideo && background && `background: ${background}`]
+	.filter(Boolean)
+	.join("; ");
 ---
 
-<div class="placeholder-media" style={`aspect-ratio: ${ratio}`}>
-	<span>{label ?? (kind === "video" ? "Video" : "Imagen")}</span>
+<div class:list={["placeholder-media", { "media--video": hasVideo }]} style={boxStyle}>
+	{hasVideo ? (
+		<video
+			class="media-video"
+			src={src}
+			poster={poster}
+			autoplay
+			muted
+			loop
+			playsinline
+			preload="auto"
+			aria-label={alt}
+			data-media-video
+		/>
+	) : (
+		<span>{label ?? (kind === "video" ? "Video" : "Imagen")}</span>
+	)}
 </div>
+
+<script>
+	if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+		document.querySelectorAll<HTMLVideoElement>("[data-media-video]").forEach((video) => {
+			video.removeAttribute("autoplay");
+			video.pause();
+		});
+	}
+</script>
+
+<style>
+	.media--video {
+		border: 0;
+	}
+
+	/* A 16:9 video at this width leaves the same margin on all four sides of an 8:5 box,
+	   and the whole frame stays visible. */
+	.media-video {
+		display: block;
+		width: 85.7%;
+		height: auto;
+		aspect-ratio: 16 / 9;
+		border-radius: 6px;
+	}
+</style>

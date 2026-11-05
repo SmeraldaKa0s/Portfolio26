@@ -4,7 +4,7 @@ category: "Consectetur"
 excerpt: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum."
 order: 3
 media:
-  kind: image
+  kind: video
   ratio: "8 / 5"
 ---
 
