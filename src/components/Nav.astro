@@ -1,5 +1,6 @@
 ---
 import ChatButton from "./ChatButton.astro";
+import AgentView from "./AgentView.astro";
 import { contact } from "../content/site";
 
 const links = [
@@ -34,10 +35,7 @@ const { email, linkedin, booking } = contact;
 		</div>
 
 		<div class="col-wide nav__meta-cell">
-			<span class="nav__clock" data-clock>
-				<span class="nav__dot" data-clock-dot></span>
-				<span class="nav__time" data-clock-time>--:--:-- --</span>
-			</span>
+			<AgentView />
 
 			<ChatButton href={booking} label="Hablemos" ariaLabel="Hablemos: agendar una llamada" />
 		</div>
@@ -222,7 +220,7 @@ const { email, linkedin, booking } = contact;
 
 	.nav__meta-cell {
 		margin-inline-start: auto;
-		gap: 64px; /* ashcamp: clock ↔ button */
+		gap: 64px; /* ashcamp: clock ↔ button; now the agent view button ↔ "Hablemos" */
 		justify-content: flex-end;
 	}
 

@@ -1,0 +1,123 @@
+---
+// "Ver como agente IA", like vercel.com's: opens this page's Markdown version (src/lib/markdown.ts) in a new tab.
+// Same translucent circle as the arrow of "Hablemos"; on hover the window icon's two eyes turn into a
+// pixel face and a tooltip appears.
+const label = "Ver como agente IA";
+const path = Astro.url.pathname.replace(/\/$/, "");
+// the home's is /.md (built as /index.md, see vercel.json and astro.config.mjs)
+const href = path ? `${path}.md` : "/.md";
+---
+
+<a class="agent" href={href} target="_blank" rel="noopener" aria-label={`${label} (se abre en una pestaña nueva)`}>
+	<span class="agent__icon" aria-hidden="true">
+		<svg class="agent__eyes" viewBox="0 0 16 16"
+			><path
+				fill="currentColor"
+				d="M13.76 1.01A2.5 2.5 0 0 1 16 3.5v9a2.5 2.5 0 0 1-2.5 2.5h-11a2.5 2.5 0 0 1-2.49-2.24L0 12.5v-9c0-1.3.98-2.36 2.24-2.49L2.5 1h11zM1.5 12.5a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V5h-13zm5.25-5.57v4.01h-1.5V6.92zm4 4h-1.5v-4h1.5zm-9-8.43a.25.25 0 0 0-.25.25v1c0 .14.11.25.25.25H3V2.5zM4 2.5V4h1.5V2.5zm2.5 0V4h1.25c.14 0 .25-.11.25-.25v-1a.25.25 0 0 0-.25-.25z"
+			></path></svg
+		>
+		<svg class="agent__face" viewBox="0 0 16 16"
+			><path
+				fill="currentColor"
+				d="M13.76 1.01A2.5 2.5 0 0 1 16 3.5v9a2.5 2.5 0 0 1-2.5 2.5h-11a2.5 2.5 0 0 1-2.49-2.24L0 12.5v-9c0-1.3.98-2.36 2.24-2.49L2.5 1h11zM1.5 12.5a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V5h-13zM3.63 10H2.38V8.75h1.25zm3.75 0H6.13V8.75h1.25zm2.5 0H8.62V8.75h1.26zm3.74 0h-1.24V8.75h1.24zm-7.5-1.25h-2.5V7.5h2.5zm6.26 0h-2.5V7.5h2.5zM1.74 2.5a.25.25 0 0 0-.25.25v1c0 .14.11.25.25.25H3V2.5zM4 2.5V4h1.5V2.5zm2.5 0V4h1.25c.14 0 .25-.11.25-.25v-1a.25.25 0 0 0-.25-.25z"
+			></path></svg
+		>
+	</span>
+	<span class="agent__tip" aria-hidden="true">{label}</span>
+</a>
+
+
+<style>
+	/* the arrow circle of "Hablemos" (ChatButton.astro): 33px, translucent white, ashcamp's curve */
+	.agent {
+		--agent-bg: rgba(255, 255, 255, 0.64);
+		position: relative;
+		display: inline-grid;
+		place-items: center;
+		flex-shrink: 0;
+		width: 33px;
+		height: 33px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: var(--agent-bg);
+		color: var(--bg);
+		cursor: pointer;
+		transition: background-color 0.4s cubic-bezier(0, -0.12, 0, 0.98);
+	}
+
+	.agent:hover,
+	.agent:focus-visible {
+		--agent-bg: rgba(255, 255, 255, 0.8);
+	}
+
+	.agent:focus-visible {
+		outline: 1px solid rgba(255, 255, 255, 0.8);
+		outline-offset: 3px;
+	}
+
+	.agent__icon {
+		position: relative;
+		display: block;
+		width: 16px;
+		height: 16px;
+	}
+
+	.agent__icon svg {
+		position: absolute;
+		inset: 0;
+		width: 16px;
+		height: 16px;
+		transition: opacity 0.15s ease;
+	}
+
+	.agent__face,
+	.agent:hover .agent__eyes,
+	.agent:focus-visible .agent__eyes {
+		opacity: 0;
+	}
+
+	.agent:hover .agent__face,
+	.agent:focus-visible .agent__face {
+		opacity: 1;
+	}
+
+	/* tooltip under the button: rises 4px and fades in after a short pause */
+	.agent__tip {
+		position: absolute;
+		top: calc(100% + 12px);
+		left: 50%;
+		padding: 7px 10px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		background: var(--bg-raised);
+		color: var(--fg);
+		font-family: var(--font-mono);
+		font-size: 10px;
+		line-height: 1em;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		translate: -50% 4px;
+		transition:
+			opacity 0.2s ease,
+			translate 0.3s cubic-bezier(0, -0.12, 0, 0.98);
+	}
+
+	.agent:hover .agent__tip,
+	.agent:focus-visible .agent__tip {
+		opacity: 1;
+		translate: -50% 0;
+		transition-delay: 0.25s;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.agent,
+		.agent__icon svg,
+		.agent__tip {
+			transition: none;
+		}
+	}
+</style>
