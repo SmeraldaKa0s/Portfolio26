@@ -5,11 +5,13 @@ import AsciiButterfly from "./AsciiButterfly.astro";
 // Entry effect copied from ashcamp.co: per-character "appear" (blur 10px, opacity 0, y +10px →
 // normal), 0.05s stagger between characters, lines starting at 0 / 0.25 / 0.5 / 0.75s.
 const lines = [
-	["Lorem", "ipsum", "dolor", "sit", "amet,"],
-	["consectetur", "adipiscing", "elit,"],
-	["sed", "do", "eiusmod,"],
-	["tempor", "incididunt", "ut", "labore", "et", "dolore."],
+	["Alexandra", "is", "a", "product", "designer"],
+	["and", "AI", "builder"],
+	["for", "startups", "&", "product", "teams,"],
+	["backed", "by", "5+", "years", "of", "experience."],
 ];
+// the word the butterfly lands on
+const PERCH = "designer";
 const LINE_START = [0, 0.25, 0.5, 0.75];
 const CHAR_STAGGER = 0.05;
 const ariaText = lines.map((l) => l.join(" ")).join(" ");
@@ -19,7 +21,7 @@ const headline = lines.map((words, li) => {
 	return words.map((word, wi) => {
 		const chars = [...word].map((ch) => ({ ch, delay: LINE_START[li] + idx++ * CHAR_STAGGER }));
 		idx++; // the space after the word also counts as a character
-		return { chars, strong: li === 0 && wi === 0 };
+		return { chars, strong: li === 0 && wi === 0, perch: word === PERCH };
 	});
 });
 ---
@@ -37,7 +39,7 @@ const headline = lines.map((words, li) => {
 							{words.map((w, wi) => (
 								<Fragment>
 									{wi > 0 && " "}
-									<span class:list={["hero__word", { "hero__word--strong": w.strong }]} aria-hidden="true">
+									<span class:list={["hero__word", { "hero__word--strong": w.strong }]} data-perch={w.perch || undefined} aria-hidden="true">
 										{w.chars.map((c) => (
 											<span class="hero__char" style={`--d:${c.delay.toFixed(2)}s`}>
 												{c.ch}
@@ -55,9 +57,8 @@ const headline = lines.map((words, li) => {
 	</div>
 
 	<div class="hero__footer">
-		<span class="eyebrow hero__intro" style="--intro-delay: 0.3s">( Lorem Ipsum )</span>
-		<span class="eyebrow hero__intro" style="--intro-delay: 0.38s">* Dolor Sit Amet *</span>
-		<span class="eyebrow hero__intro" style="--intro-delay: 0.46s">( Consectetur )</span>
+		<span class="eyebrow hero__intro" style="--intro-delay: 0.3s">( Based in Argentina )</span>
+		<span class="eyebrow hero__intro" style="--intro-delay: 0.38s">( Est. 2021 )</span>
 	</div>
 </section>
 
@@ -197,24 +198,17 @@ const headline = lines.map((words, li) => {
 		color: var(--fg);
 	}
 
-	/* three columns: the middle label is centered on the page (ashcamp), but its column can never start
-	   before the vertical divider (first column ≥ the shared narrow-column width) */
+	/* two labels: location at the left edge, year at the right edge */
 	.hero__footer {
 		position: relative;
 		display: grid;
-		grid-template-columns: minmax(var(--col-narrow-w), 1fr) auto 1fr;
+		grid-template-columns: 1fr 1fr;
 		align-items: center;
 		padding: 0;
 	}
 
 	.hero__footer > * {
 		padding: 16px 20px;
-	}
-
-	/* 60px each side: centered when there is room; when the viewport shrinks it parks 60px from the
-	   vertical divider, exactly like the headline text, and both keep that distance as it shrinks */
-	.hero__footer > :nth-child(2) {
-		padding-inline: 60px;
 	}
 
 	.hero__footer > :first-child {
@@ -249,15 +243,6 @@ const headline = lines.map((words, li) => {
 
 		.hero__footer::before {
 			display: none;
-		}
-
-		/* only the two outer labels remain: ( BASED IN … ) left, ( EST … ) right */
-		.hero__footer > :nth-child(2) {
-			display: none;
-		}
-
-		.hero__footer {
-			grid-template-columns: 1fr 1fr;
 		}
 	}
 </style>
