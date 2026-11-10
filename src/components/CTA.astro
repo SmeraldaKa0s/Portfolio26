@@ -1,8 +1,7 @@
 ---
-const email = "alek.xandra.lerner@gmail.com";
-// TODO: replace with the real profile URLs
-const linkedin = "https://www.linkedin.com/in/alx-l/";
-const github = "https://github.com/";
+import { contact, cta } from "../content/site";
+
+const { email, linkedin, github } = contact;
 ---
 
 <!-- Closing screen: one full-height cell inside the dashed frame, content centered, links row pinned to the
@@ -10,14 +9,14 @@ const github = "https://github.com/";
 <section id="contact" class="frame cta">
 	<div class="cta__content">
 		<div class="cta__text">
-			<h2 class="cta__heading">¿Necesitás un partner de diseño?</h2>
+			<h2 class="cta__heading">{cta.heading}</h2>
 			<p class="cta__copy">
-				Agendá una llamada conmigo para explorar tus objetivos y ver si somos buen equipo para colaborar.
+				{cta.copy}
 			</p>
 		</div>
 
 		<a class="cta__hi" href={`mailto:${email}`}>
-			<span>Decime hola</span>
+			<span>{cta.button}</span>
 		</a>
 	</div>
 

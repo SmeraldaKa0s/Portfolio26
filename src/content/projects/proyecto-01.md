@@ -1,4 +1,6 @@
 ---
+# TODO: provisional project. When it has its real name, change `title` here and rename this file
+# (proyecto-01.md): the file name is the URL, /proyectos/proyecto-01 and /proyectos/proyecto-01.md.
 title: "Lorem Ipsum Dolor"
 category: "Lorem Ipsum"
 excerpt: "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod."

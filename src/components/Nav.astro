@@ -1,13 +1,13 @@
 ---
 import ChatButton from "./ChatButton.astro";
+import { contact } from "../content/site";
 
 const links = [
 	{ href: "/#index", label: "Index" },
 	{ href: "/#work", label: "Work" },
 	{ href: "/#info", label: "Info" },
 ];
-const email = "alek.xandra.lerner@gmail.com";
-const linkedin = "https://www.linkedin.com/in/alx-l/";
+const { email, linkedin } = contact;
 ---
 
 <!-- in-flow slot: keeps the nav's height and draws the dashed frame lines; the nav itself is a fixed,

@@ -2,9 +2,7 @@
 import { getCollection } from "astro:content";
 import Media from "./Media.astro";
 
-// temporary: only the first projects are shown, to keep the page short while working on it.
-// The camera journey in scripts/workOrbit.ts is tuned for 3: more projects need its orbit retuned.
-const VISIBLE_PROJECTS = 3;
+import { VISIBLE_PROJECTS } from "../content/site";
 
 const projects = (await getCollection("projects"))
 	.sort((a, b) => a.data.order - b.data.order)

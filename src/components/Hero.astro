@@ -1,17 +1,12 @@
 ---
 import AsciiButterfly from "./AsciiButterfly.astro";
+import { hero } from "../content/site";
 
 // Headline as lines of words; the first word of the first line is highlighted.
 // Entry effect copied from ashcamp.co: per-character "appear" (blur 10px, opacity 0, y +10px →
 // normal), 0.05s stagger between characters, lines starting at 0 / 0.25 / 0.5 / 0.75s.
-const lines = [
-	["Alexandra", "is", "a", "product", "designer"],
-	["and", "AI", "builder"],
-	["for", "startups", "&", "product", "teams,"],
-	["backed", "by", "5+", "years", "of", "experience."],
-];
-// the word the butterfly lands on
-const PERCH = "designer";
+const lines = hero.lines;
+const PERCH = hero.perch;
 const LINE_START = [0, 0.25, 0.5, 0.75];
 const CHAR_STAGGER = 0.05;
 const ariaText = lines.map((l) => l.join(" ")).join(" ");
@@ -57,8 +52,9 @@ const headline = lines.map((words, li) => {
 	</div>
 
 	<div class="hero__footer">
-		<span class="eyebrow hero__intro" style="--intro-delay: 0.3s">( Based in Argentina )</span>
-		<span class="eyebrow hero__intro" style="--intro-delay: 0.38s">( Est. 2021 )</span>
+		{hero.labels.map((label, i) => (
+			<span class="eyebrow hero__intro" style={`--intro-delay: ${0.3 + i * 0.08}s`}>{label}</span>
+		))}
 	</div>
 </section>
 

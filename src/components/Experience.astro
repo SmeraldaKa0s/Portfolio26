@@ -1,16 +1,13 @@
 ---
-const roles = [
-	{ title: "Empresa actual", text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt.", dates: "Actual" },
-	{ title: "Empresa anterior 1", text: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.", dates: "2025-26" },
-	{ title: "Empresa anterior 2", text: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.", dates: "2021-2022" },
-	{ title: "Empresa anterior 3", text: "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim.", dates: "2020-2021" },
-];
+import { experience } from "../content/site";
+
+const { roles } = experience;
 ---
 
 <section class="frame">
 	<div class="split">
 		<div class="col-narrow section-head">
-			<h2 class="section-title" data-reveal>Experiencia</h2>
+			<h2 class="section-title" data-reveal>{experience.title}</h2>
 		</div>
 
 		<div class="col-wide experience__cell">

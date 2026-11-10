@@ -8,9 +8,10 @@ import Experience from "../components/Experience.astro";
 import Press from "../components/Press.astro";
 import CTA from "../components/CTA.astro";
 import HalftoneBackground from "../components/HalftoneBackground.astro";
+import { homeMarkdownPath } from "../lib/markdown";
 ---
 
-<Layout>
+<Layout markdown={homeMarkdownPath}>
 	<div class="hero-screen">
 		<HalftoneBackground />
 		<Nav />

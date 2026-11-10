@@ -5,11 +5,14 @@ import Cursor from "../components/Cursor.astro";
 interface Props {
 	title?: string;
 	description?: string;
+	// this page's Markdown version, for AI agents (see src/lib/markdown.ts)
+	markdown?: string;
 }
 
 const {
 	title = "Alexandra Lerner – Product Designer",
 	description = "Portfolio de Alexandra Lerner, Product Designer.",
+	markdown,
 } = Astro.props;
 ---
 
@@ -22,6 +25,7 @@ const {
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
 		<meta name="description" content={description} />
+		{markdown && <link rel="alternate" type="text/markdown" href={markdown} />}
 
 		<!-- scroll reveal: hide [data-reveal] only when JS runs; if the reveal script has not
 		     started by the load event (it failed), show everything instead of leaving it invisible -->
