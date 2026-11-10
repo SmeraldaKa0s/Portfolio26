@@ -1,7 +1,7 @@
 ---
 // Mariposa ASCII blanca. Ciclo: surge de la trama de caracteres (derecha del viewport) ->
 // vuela hasta el extremo derecho del texto del hero -> aterriza (gira a vista de perfil) y se
-// posa de costado sobre "amet" moviendo las alas -> baja rodeando el texto y se queda posada sobre
+// posa de costado sobre "designer" moviendo las alas -> baja rodeando el texto y se queda posada sobre
 // la línea punteada del pie del hero. Con destellos y polvillo de hada.
 // Al scrollear deja el ciclo y baja volando hacia la primera imagen de Work, que se ve a lo lejos: entra de
 // costado por su borde derecho, pasa por detrás y no se la ve más. Cerca del final de cada proyecto reaparece abajo a la
@@ -351,18 +351,14 @@
 			return g.dn + (g.up - g.dn) * smooth((ph - g.down) / (1 - g.down));
 		}
 
-		// punto de posada: centro de la mariposa justo encima del extremo derecho del texto del hero
+		// punto de posada: centro de la mariposa justo encima de la palabra marcada del hero ("designer")
 		function perchPoint(): number[] {
-			const h1 = document.querySelector('.hero__headline');
+			const word = document.querySelector('.hero__headline [data-perch]');
 			const cb = canvas.getBoundingClientRect();
-			if (h1) {
-				const r = document.createRange();
-				r.selectNodeContents(h1);
-				const br = h1.querySelector('br');
-				if (br) r.setEndBefore(br); // solo la primera línea: termina en "amet,"
-				const b = r.getBoundingClientRect();
-				// centrada sobre "amet"; las patas (a ~0.55·S bajo el tórax) apoyan sobre la línea
-				if (b.width) return [b.right - cb.left - S * 0.5, Math.max(S * 0.9, b.top - cb.top + 2 - S * 0.55)];
+			if (word) {
+				const b = word.getBoundingClientRect();
+				// centrada sobre la palabra; las patas (a ~0.55·S bajo el tórax) apoyan sobre la línea
+				if (b.width) return [(b.left + b.right) / 2 - cb.left, Math.max(S * 0.9, b.top - cb.top + 2 - S * 0.55)];
 			}
 			return [W * 0.5, H * 0.4];
 		}
