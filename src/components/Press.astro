@@ -7,55 +7,10 @@
 //    background, plus a ring inside the media box that reveals the next slide.
 // The section has no background of its own: the halftone of the surrounding zone shows through.
 //
-// Edit the works here. `title` is a list of lines, keep each line short. `image` is optional (a path
-// under /public or a URL); when it is empty the slide is a plain grey placeholder.
-const works = [
-	{
-		type: "Investigación de campo",
-		client: "Lorem Ipsum Co.",
-		title: ["Campo", "abierto"],
-		duration: "6 semanas",
-		year: "2026",
-		roles: ["Entrevistas", "Observación", "Síntesis"],
-		image: "",
-	},
-	{
-		type: "Estudio etnográfico",
-		client: "Dolor Sit Labs",
-		title: ["Marea", "baja"],
-		duration: "3 meses",
-		year: "2025",
-		roles: ["Shadowing", "Diarios", "Mapeo"],
-		image: "",
-	},
-	{
-		type: "Test de usabilidad",
-		client: "Amet Studio",
-		title: ["Curvas de", "nivel"],
-		duration: "2 semanas",
-		year: "2024",
-		roles: ["Moderación", "Prototipos", "Reporte"],
-		image: "",
-	},
-	{
-		type: "Co-creación",
-		client: "Consectetur SA",
-		title: ["Fuego", "lento"],
-		duration: "4 semanas",
-		year: "2023",
-		roles: ["Workshops", "Facilitación"],
-		image: "",
-	},
-	{
-		type: "Auditoría de servicio",
-		client: "Adipiscing Group",
-		title: ["Grafito"],
-		duration: "5 semanas",
-		year: "2022",
-		roles: ["Blueprint", "Entrevistas", "Roadmap"],
-		image: "",
-	},
-];
+// The works are edited in src/content/site.ts.
+import { field } from "../content/site";
+
+const { works } = field;
 
 const words = (text: string) => text.split(/\s+/).filter(Boolean);
 ---
@@ -63,7 +18,7 @@ const words = (text: string) => text.split(/\s+/).filter(Boolean);
 <section class="frame field" id="campo" data-field style={`--n: ${works.length}`}>
 	<div class="split field__split">
 		<div class="col-narrow section-head">
-			<h2 class="section-title" data-reveal>Experiencia en campo</h2>
+			<h2 class="section-title" data-reveal>{field.title}</h2>
 		</div>
 
 		<div class="col-wide field__track" data-field-track>

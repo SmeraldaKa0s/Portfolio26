@@ -1,0 +1,38 @@
+{
+	"$schema": "https://openapi.vercel.sh/vercel.json",
+	"routes": [
+		{
+			"src": "/\\.md",
+			"dest": "/index.md",
+			"headers": { "Content-Type": "text/markdown; charset=utf-8" }
+		},
+		{
+			"src": "/",
+			"has": [{ "type": "header", "key": "accept", "value": ".*text/markdown.*" }],
+			"dest": "/index.md",
+			"headers": { "Content-Type": "text/markdown; charset=utf-8", "Vary": "Accept" }
+		},
+		{
+			"src": "/proyectos/([^/.]+)/?",
+			"has": [{ "type": "header", "key": "accept", "value": ".*text/markdown.*" }],
+			"dest": "/proyectos/$1.md",
+			"headers": { "Content-Type": "text/markdown; charset=utf-8", "Vary": "Accept" }
+		},
+		{
+			"src": "/.*\\.md",
+			"headers": { "Content-Type": "text/markdown; charset=utf-8" },
+			"continue": true
+		},
+		{
+			"src": "/llms\\.txt",
+			"headers": { "Content-Type": "text/plain; charset=utf-8" },
+			"continue": true
+		},
+		{
+			"src": "/(proyectos/[^/.]+/?)?",
+			"headers": { "Vary": "Accept" },
+			"continue": true
+		},
+		{ "handle": "filesystem" }
+	]
+}

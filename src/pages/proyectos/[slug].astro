@@ -4,6 +4,7 @@ import Layout from "../../layouts/Layout.astro";
 import Nav from "../../components/Nav.astro";
 import CTA from "../../components/CTA.astro";
 import Media from "../../components/Media.astro";
+import { projectMarkdownPath } from "../../lib/markdown";
 
 export async function getStaticPaths() {
 	const projects = await getCollection("projects");
@@ -17,7 +18,7 @@ const { project } = Astro.props;
 const { Content } = await render(project);
 ---
 
-<Layout title={`${project.data.title} – Alexandra Lerner`}>
+<Layout title={`${project.data.title} – Alexandra Lerner`} markdown={projectMarkdownPath(project)}>
 	<Nav />
 
 	<article class="frame project">

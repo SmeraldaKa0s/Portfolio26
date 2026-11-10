@@ -1,29 +1,15 @@
 ---
 import { Image } from "astro:assets";
 import profile from "../assets/foto-perfil.png";
+import { about } from "../content/site";
 
-const paragraphs = [
-	"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore.",
-	"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat, duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.",
-	"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem.",
-	"Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.",
-];
-
-const capabilities = [
-	"Product Design",
-	"Web Design",
-	"Prototipado con IA",
-	"Estrategia de producto",
-	"Design Systems",
-	"Proyectos 0→1",
-	"Investigación de usuarios",
-];
+const { paragraphs, capabilities } = about;
 ---
 
 <section id="info" class="frame">
 	<div class="split">
 		<div class="col-narrow section-head">
-			<h2 class="section-title" data-reveal>Info</h2>
+			<h2 class="section-title" data-reveal>{about.title}</h2>
 		</div>
 
 		<div class="col-wide about__cell">
@@ -42,7 +28,7 @@ const capabilities = [
 			<div class="about__text">
 				<div class="about__lead">
 					<h1 class="about__statement" data-reveal>
-						Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor.
+						{about.statement}
 					</h1>
 
 					<div class="about__bio">
@@ -51,7 +37,7 @@ const capabilities = [
 				</div>
 
 				<div class="about__capabilities">
-					<h6 class="about__label" data-reveal>Capacidades</h6>
+					<h6 class="about__label" data-reveal>{about.capabilitiesTitle}</h6>
 					{capabilities.map((item) => <p class="about__item" data-reveal>{item}</p>)}
 				</div>
 			</div>
