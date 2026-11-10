@@ -11,6 +11,8 @@ export const site = {
 export const contact = {
 	email: "alek.xandra.lerner@gmail.com",
 	linkedin: "https://www.linkedin.com/in/alx-l/",
+	// "Hablemos": books a 30-minute call
+	booking: "https://cal.com/alexandra-lerner-gijrbm/product-sesion-30",
 	// TODO: replace with the real GitHub profile URL
 	github: "https://github.com/",
 };

@@ -67,6 +67,7 @@ export async function homeMarkdown() {
 		"",
 		cta.copy,
 		"",
+		`- Agendar una llamada: ${contact.booking}`,
 		`- Email: ${contact.email}`,
 		`- LinkedIn: ${contact.linkedin}`,
 		...(hasGithub() ? [`- GitHub: ${contact.github}`] : []),

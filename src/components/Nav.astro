@@ -7,7 +7,7 @@ const links = [
 	{ href: "/#work", label: "Work" },
 	{ href: "/#info", label: "Info" },
 ];
-const { email, linkedin } = contact;
+const { email, linkedin, booking } = contact;
 ---
 
 <!-- in-flow slot: keeps the nav's height and draws the dashed frame lines; the nav itself is a fixed,
@@ -39,7 +39,7 @@ const { email, linkedin } = contact;
 				<span class="nav__time" data-clock-time>--:--:-- --</span>
 			</span>
 
-			<ChatButton href="#contact" label="Hablemos" ariaLabel="Hablemos: ir a contacto" />
+			<ChatButton href={booking} label="Hablemos" ariaLabel="Hablemos: agendar una llamada" />
 		</div>
 	</div>
 
@@ -60,7 +60,7 @@ const { email, linkedin } = contact;
 		<!-- --i: position in the opening stagger (big links first, then email / LinkedIn) -->
 		<div class="nav__panel-main">
 			{links.map((link, i) => <a class="nav__panel-link" href={link.href} style={`--i:${i}`}>{link.label}</a>)}
-			<a class="nav__panel-link" href="#contact" style={`--i:${links.length}`}>Hablemos</a>
+			<a class="nav__panel-link" href={booking} target="_blank" rel="noreferrer" style={`--i:${links.length}`}>Hablemos</a>
 		</div>
 
 		<div class="nav__panel-meta">
