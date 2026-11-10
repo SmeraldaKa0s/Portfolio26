@@ -8,9 +8,11 @@ interface Props {
 }
 const { href, label, ariaLabel } = Astro.props;
 const letters = [...label.toUpperCase()];
+// links to other sites open in a new tab
+const external = /^https?:/.test(href);
 ---
 
-<a class="chat" href={href} aria-label={ariaLabel ?? label}>
+<a class="chat" href={href} aria-label={ariaLabel ?? label} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined}>
 	<span class="chat__pill">
 		<span class="chat__text" aria-hidden="true">
 			{

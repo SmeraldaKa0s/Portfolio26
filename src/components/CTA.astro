@@ -1,7 +1,7 @@
 ---
 import { contact, cta } from "../content/site";
 
-const { email, linkedin, github } = contact;
+const { email, linkedin, github, booking } = contact;
 ---
 
 <!-- Closing screen: one full-height cell inside the dashed frame, content centered, links row pinned to the
@@ -15,7 +15,7 @@ const { email, linkedin, github } = contact;
 			</p>
 		</div>
 
-		<a class="cta__hi" href={`mailto:${email}`}>
+		<a class="cta__hi" href={booking} target="_blank" rel="noreferrer">
 			<span>{cta.button}</span>
 		</a>
 	</div>
