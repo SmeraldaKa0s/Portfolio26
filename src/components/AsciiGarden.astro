@@ -1,0 +1,27 @@
+---
+// The footer's ASCII garden (src/scripts/asciiGarden.js). Goes inside the CTA section: the canvas covers
+// it, behind its text, button and links, and never takes the pointer (the section listens instead).
+---
+
+<canvas class="garden" aria-hidden="true"></canvas>
+
+<script>
+	import { startGarden } from "../scripts/asciiGarden.js";
+
+	document.querySelectorAll<HTMLCanvasElement>("canvas.garden").forEach((canvas) => {
+		const section = canvas.closest("section");
+		if (section) startGarden(canvas, section);
+	});
+</script>
+
+<style>
+	/* below the section's own content: the section is a stacking context (.halftone-zone > *) */
+	.garden {
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+</style>
