@@ -1,0 +1,51 @@
+<svg width="100%" viewBox="0 0 680 320" role="img" xmlns="http://www.w3.org/2000/svg" style="font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;">
+<title>Projected metrics for multi-package Same-day initiative</title>
+<desc>Five projected MVP metrics for the multi-package Same-day initiative: contractual SLA, CX and operations load, monthly volume, monthly revenue, and monitoring tool. All figures are projections, not validated outcomes.</desc>
+
+<style>
+  .title { font-size: 16px; font-weight: 500; fill: #2c2c2a; }
+  .subtitle { font-size: 13px; fill: #5f5e5a; }
+  .card-title { font-size: 13px; font-weight: 500; }
+  .card-body { font-size: 12px; }
+  .card-value { font-size: 15px; font-weight: 500; }
+  .note { font-size: 11px; fill: #888780; font-style: italic; }
+  @media (prefers-color-scheme: dark) {
+    .title { fill: #e8e6de; }
+    .subtitle { fill: #b4b2a9; }
+    .note { fill: #888780; }
+  }
+</style>
+
+<text class="title" x="40" y="40">Projected metrics (MVP)</text>
+<text class="subtitle" x="40" y="60">Targets defined for the R1 launch</text>
+
+<rect x="40" y="90" width="195" height="70" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="card-title" x="55" y="112" fill="#085041">Contractual SLA</text>
+<text class="card-value" x="55" y="134" fill="#0F6E56">4h ASAP</text>
+<text class="card-body" x="55" y="150" fill="#0F6E56">Multi-package effectiveness</text>
+
+<rect x="245" y="90" width="195" height="70" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="card-title" x="260" y="112" fill="#085041">CX and Ops load</text>
+<text class="card-value" x="260" y="134" fill="#0F6E56">Fewer escalations</text>
+<text class="card-body" x="260" y="150" fill="#0F6E56">Clearer UI, blocked dispatches</text>
+
+<rect x="450" y="90" width="195" height="70" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text class="card-title" x="465" y="112" fill="#3C3489">Monthly volume</text>
+<text class="card-value" x="465" y="134" fill="#534AB7">500 transactions</text>
+<text class="card-body" x="465" y="150" fill="#534AB7">Per month</text>
+
+<rect x="40" y="175" width="195" height="70" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text class="card-title" x="55" y="197" fill="#3C3489">Monthly revenue</text>
+<text class="card-value" x="55" y="219" fill="#534AB7">USD 4,000</text>
+<text class="card-body" x="55" y="235" fill="#534AB7">Per month</text>
+
+<rect x="245" y="175" width="400" height="70" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text class="card-title" x="260" y="197" fill="#444441">Monitoring</text>
+<text class="card-value" x="260" y="219" fill="#2c2c2a">Power BI filter</text>
+<text class="card-body" x="260" y="235" fill="#5F5E5A">Multi-package filter added to the Same-day dashboard</text>
+
+<line x1="40" y1="265" x2="640" y2="265" stroke="#d3d1c7" stroke-width="0.5"/>
+
+<text class="note" x="40" y="288">MVP projection. Validated figures will be known after at least one month</text>
+<text class="note" x="40" y="304">of stable operation.</text>
+</svg>
