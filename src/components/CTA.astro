@@ -1,4 +1,5 @@
 ---
+import AsciiGarden from "./AsciiGarden.astro";
 import { contact, cta } from "../content/site";
 
 const { email, linkedin, github, booking } = contact;
@@ -7,6 +8,7 @@ const { email, linkedin, github, booking } = contact;
 <!-- Closing screen: one full-height cell inside the dashed frame, content centered, links row pinned to the
      bottom. The nav hides while this section is in view (see Nav.astro). -->
 <section id="contact" class="frame cta">
+	<AsciiGarden />
 	<div class="cta__content">
 		<div class="cta__text">
 			<h2 class="cta__heading">{cta.heading}</h2>

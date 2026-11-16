@@ -157,6 +157,10 @@ const { mode = "fill" } = Astro.props;
 		return { img: c, sp };
 	}
 
+	// the footer's garden (src/scripts/asciiGarden.js) says where its ground is and how tall the grass grows
+	type GardenZone = { rect: () => DOMRect; ground: number; zone: (fx: number) => number };
+	const gardenZone = () => (window as Window & { gardenZone?: GardenZone }).gardenZone;
+
 	const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 	const T0 = performance.now();
 	const now = () => (reduce ? 8 : (performance.now() - T0) / 1000 + 2);
@@ -178,6 +182,9 @@ const { mode = "fill" } = Astro.props;
 		// brighter dots for the band a shock wave passes through (only used while a wave is live)
 		const hotGain = Math.max(gain, WAVE.halftoneGain);
 		let hot = mode === 'sticky' ? buildSprite(cell, 1, hotGain) : sprite;
+		// grass: the same dots a little brighter, in blades rising from the garden's ground (sticky layer only)
+		const grassGain = 0.3;
+		let grassSprite = buildSprite(cell, 1, grassGain);
 		const pts: number[][] = [];
 		let lastMove = -99;
 
@@ -252,6 +259,21 @@ const { mode = "fill" } = Astro.props;
 				rows = Math.ceil(H / cell) + 1,
 				gt = Math.floor(t * 3),
 				off = cell / 2;
+			// the garden's ground in field coordinates; blade tops sway with the noise and the pointer trail
+			// bends them like it bends the rest of the field
+			const gz = mode === 'sticky' ? gardenZone() : undefined;
+			const gr = gz?.rect();
+			const gGround = gr && gz ? gr.top + gz.ground : 0;
+			const grass = (x: number, y: number, sx: number) => {
+				if (!gz || !gr || !gr.width || y > gGround || y < gGround - 140) return 0;
+				const zn = gz.zone((x - gr.left) / gr.width),
+					hgt = gGround - y;
+				if (zn <= 0) return 0;
+				const top = (24 + 72 * zn) * (0.5 + 0.7 * (0.5 + noise3(sx * 0.045, t * 0.35, 3.1)));
+				if (hgt >= top) return 0;
+				const blade = 0.5 + 0.9 * noise3(sx * 0.16 + Math.sin(t * 0.8 + y * 0.02) * 0.4, y * 0.02, t * 0.3);
+				return clamp(((1 - hgt / top) * 0.85 * blade + 0.12) * zn, 0, 1);
+			};
 			for (let j = 0; j < rows; j++) {
 				const yl = j * cell + off; // y local al canvas
 				const y = yl + yOff; // y en coords del campo
@@ -294,11 +316,14 @@ const { mode = "fill" } = Astro.props;
 					// lo apaga alrededor de su estela en vez de iluminarlo
 					const base = Math.max(0, bands(sstep(0, 1, 1 - n) + shift) * vignette(x, y, FW, FH) - BLACK) / (1 - BLACK);
 					let L = base * (1 - Math.min(1, m * 1.1)) * edge + Math.min(1, lift) * wLift * edge;
-					if (L <= 0.01) continue;
-					L += (hash2(i, j, gt) - 0.5) * 0.07;
+					const g = grass(x, y, sx) * edge;
+					if (L <= 0.01 && g <= 0.01) continue;
+					const useGrass = g > L;
+					L = Math.max(L, g) + (hash2(i, j, gt) - 0.5) * 0.07;
 					const k = clamp(Math.floor(L * LEVELS), 0, LEVELS - 1);
 					if (k <= 0) continue;
-					ctx.drawImage(sprite.img, k * sprite.sp, 0, sprite.sp, sprite.sp, x - xOff - cell / 2, yl - cell / 2, cell, cell);
+					const s = useGrass ? grassSprite : sprite;
+					ctx.drawImage(s.img, k * s.sp, 0, s.sp, s.sp, x - xOff - cell / 2, yl - cell / 2, cell, cell);
 					if (lift > 0.02) {
 						// fade in the brighter dot with the wave's strength: no hard edge, back to normal at 0
 						ctx.globalAlpha = Math.min(1, lift);
@@ -318,6 +343,7 @@ const { mode = "fill" } = Astro.props;
 			cv.height = Math.round(H * dpr);
 			sprite = buildSprite(cell, dpr, gain);
 			hot = mode === 'sticky' ? buildSprite(cell, dpr, hotGain) : sprite;
+			grassSprite = buildSprite(cell, dpr, grassGain);
 			draw(now()); // dibuja justo después de redimensionar: el canvas nunca queda en blanco
 		};
 		new ResizeObserver(resize).observe(cv);
