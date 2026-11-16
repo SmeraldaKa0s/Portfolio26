@@ -120,6 +120,15 @@ const { Content } = await render(project);
 		margin: 0 0 48px;
 	}
 
+	/* the diagrams were drawn for a light page (dark text, transparent background): give them a light card */
+	.project__body :global(img[src$=".svg"]) {
+		width: 100%;
+		height: auto;
+		padding: 24px;
+		border-radius: 10px;
+		background: var(--fg);
+	}
+
 	.project__body {
 		max-width: 65ch;
 		margin-top: 48px;

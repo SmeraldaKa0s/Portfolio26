@@ -1,0 +1,82 @@
+<svg width="100%" viewBox="0 0 680 460" role="img" xmlns="http://www.w3.org/2000/svg" style="font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;">
+<title>Projected metrics for configurable proof of delivery project</title>
+<desc>Chart showing projected 50% reduction in undelivered-package complaints per retailer, with Getnet going from 1 percent to 0.5 percent and Mercado Pago from 0.8 percent to 0.4 percent. Additional metrics include CX resolution time, volume coverage and monitoring tool.</desc>
+
+<style>
+  .title { font-size: 16px; font-weight: 500; fill: #2c2c2a; }
+  .subtitle { font-size: 13px; fill: #5f5e5a; }
+  .label { font-size: 13px; fill: #444441; }
+  .bar-value { font-size: 14px; font-weight: 500; }
+  .tick { font-size: 11px; fill: #888780; }
+  .retailer { font-size: 14px; font-weight: 500; fill: #2c2c2a; }
+  .delta { font-size: 12px; fill: #5f5e5a; }
+  .card-title { font-size: 13px; font-weight: 500; }
+  .card-body { font-size: 12px; }
+  .note { font-size: 11px; fill: #888780; font-style: italic; }
+  @media (prefers-color-scheme: dark) {
+    .title, .retailer { fill: #e8e6de; }
+    .subtitle, .label, .delta { fill: #b4b2a9; }
+    .tick, .note { fill: #888780; }
+  }
+</style>
+
+<text class="title" x="40" y="40">Complaints for undelivered packages</text>
+<text class="subtitle" x="40" y="60">Projected reduction per retailer after R1</text>
+
+<line x1="40" y1="230" x2="420" y2="230" stroke="#d3d1c7" stroke-width="0.5"/>
+<text class="tick" x="40" y="245">0%</text>
+
+<line x1="40" y1="180" x2="420" y2="180" stroke="#d3d1c7" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text class="tick" x="40" y="178">0.5%</text>
+
+<line x1="40" y1="130" x2="420" y2="130" stroke="#d3d1c7" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text class="tick" x="40" y="128">1.0%</text>
+
+<rect x="95" y="130" width="50" height="100" rx="4" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text class="label" x="120" y="248" text-anchor="middle">Before</text>
+<text class="bar-value" x="120" y="122" text-anchor="middle" fill="#993C1D">1.0%</text>
+
+<rect x="155" y="180" width="50" height="50" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="label" x="180" y="248" text-anchor="middle">After</text>
+<text class="bar-value" x="180" y="172" text-anchor="middle" fill="#0F6E56">0.5%</text>
+
+<text class="retailer" x="150" y="280" text-anchor="middle">Getnet</text>
+<text class="delta" x="150" y="298" text-anchor="middle">−50%</text>
+
+<rect x="275" y="150" width="50" height="80" rx="4" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text class="label" x="300" y="248" text-anchor="middle">Before</text>
+<text class="bar-value" x="300" y="142" text-anchor="middle" fill="#993C1D">0.8%</text>
+
+<rect x="335" y="190" width="50" height="40" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="label" x="360" y="248" text-anchor="middle">After</text>
+<text class="bar-value" x="360" y="182" text-anchor="middle" fill="#0F6E56">0.4%</text>
+
+<text class="retailer" x="330" y="280" text-anchor="middle">Mercado Pago</text>
+<text class="delta" x="330" y="298" text-anchor="middle">−50%</text>
+
+<line x1="470" y1="80" x2="470" y2="300" stroke="#d3d1c7" stroke-width="0.5"/>
+
+<text class="title" x="490" y="100">Additional metrics</text>
+
+<rect x="490" y="120" width="150" height="50" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text class="card-title" x="500" y="138" fill="#3C3489">CX resolution time</text>
+<text class="card-body" x="500" y="156" fill="#534AB7">Significant reduction</text>
+
+<rect x="490" y="180" width="150" height="50" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text class="card-title" x="500" y="198" fill="#3C3489">Volume coverage</text>
+<text class="card-body" x="500" y="216" fill="#534AB7">MP + Getnet majority</text>
+
+<rect x="490" y="240" width="150" height="50" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text class="card-title" x="500" y="258" fill="#3C3489">Monitoring</text>
+<text class="card-body" x="500" y="276" fill="#534AB7">Grafana dashboards</text>
+
+<line x1="40" y1="340" x2="640" y2="340" stroke="#d3d1c7" stroke-width="0.5"/>
+
+<rect x="40" y="358" width="14" height="14" rx="3" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text class="label" x="62" y="370">Baseline</text>
+<rect x="160" y="358" width="14" height="14" rx="3" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="label" x="182" y="370">Projected after R1</text>
+
+<text class="note" x="40" y="410">MVP projection. Real floor will be known after at least one month</text>
+<text class="note" x="40" y="428">of stable operation.</text>
+</svg>
