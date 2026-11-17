@@ -266,6 +266,7 @@
 		// envergadura (px) según el ancho de pantalla; se recalcula al redimensionar
 		const pickS = () => (window.innerWidth < 480 ? 44 : window.innerWidth < 768 ? 54 : 68);
 		let S = pickS();
+		const BURST = 1.2; // seconds a click's cloud of dust lasts
 		const FADE = Math.pow(0.8, ST.fadePow);
 
 		const geo = { f: prepWing('f'), h: prepWing('h'), p: prepWing('p') };
@@ -307,7 +308,7 @@
 			t: 0, x: 0, y: 0, px: 0, py: 0, vx: 0, vy: 0, hd: 0, hv: 0,
 			ph: rng(), fm: 1, flap: 1, fq: 2, vis: 1, dis: 0,
 			yoff: 0, tilt: 0, roll: 0, ps: 1, kf: 1, kh: 1,
-			size: 1, air: false, shedding: false, forming: false, gathering: false, free: false, phi: 0, bodyTilt: 0, fold: 0, legs: '', wings: [[1, 1], [-1, -1]], parked: 0, dodge: 0, push: 0, textMid: 0, airTime: 0,
+			size: 1, air: false, shedding: false, forming: false, gathering: false, free: false, phi: 0, bodyTilt: 0, fold: 0, legs: '', wings: [[1, 1], [-1, -1]], parked: 0, burst: 0, dodge: 0, push: 0, textMid: 0, airTime: 0,
 		};
 
 		function resize() {
@@ -757,10 +758,16 @@
 		}
 
 		// ============ caracteres que se desprenden ============
-		function spawnDust(x: number, y: number) {
+		function spawnDust(x: number, y: number, iri = false) {
 			if (parts.length > 900) return;
 			const set = s.dusty ? '.·*+~/\\|-:' : '.·*+';
-			parts.push({ x, y, ch: set[(rng() * set.length) | 0], kind: 'dust', slow: s.dusty, vx: (rng() - 0.5) * 12, vy: 3 + rng() * 14, age: 0, life: 1.1 + rng() * 1.6, seed: rng() * 9 });
+			// a click's dust is the same dust, a little longer-lived and painted with the page's iridescent colours
+			// the normal dust just falls (a still butterfly would be buried in her own); a click's dust is thrown
+			// out to the side she is shedding it from, slowing as it goes, so it leaves her instead of piling on her
+			const dir = Math.abs(x - s.x) < 3 ? (rng() < 0.5 ? -1 : 1) : Math.sign(x - s.x);
+			const vx = iri ? dir * (30 + rng() * 80) : (rng() - 0.5) * 12;
+			const vy = iri ? -6 + rng() * 14 : 3 + rng() * 14;
+			parts.push({ x, y, ch: set[(rng() * set.length) | 0], kind: 'dust', slow: s.dusty, iri, vx, vy, age: 0, life: (iri ? 1.6 : 1.1) + rng() * 1.6, seed: rng() * 9 });
 		}
 		function spawn(x: number, y: number, ch: string) {
 			if (parts.length > 900) return;
@@ -773,6 +780,7 @@
 			parts.push({ kind: 'gather', x: x + Math.cos(a) * r, y: y + Math.sin(a) * r, sx: x + Math.cos(a) * r, sy: y + Math.sin(a) * r, tx: x, ty: y, ch, age: 0, life: 0.4 + rng() * 0.5, seed: rng() * 9 });
 		}
 		function stepParts(dt: number) {
+			if (s.burst > 0) s.burst = Math.max(0, s.burst - dt);
 			for (let i = parts.length - 1; i >= 0; i--) {
 				const p = parts[i];
 				p.age += dt * (p.slow ? 2 : s.air && p.kind !== 'gather' ? 3 : 1); // over Work they go fast: the projects' videos need a clean screen
@@ -787,6 +795,7 @@
 					p.y = lerp(p.sy, p.ty, k);
 					continue;
 				}
+				if (p.iri) p.vx *= Math.exp(-1.5 * dt); // thrown out, then it drifts
 				p.x += (p.vx + 14 * Math.sin(p.age * 3.2 + p.seed)) * dt;
 				p.y += p.vy * dt;
 				p.vy *= Math.exp(-0.25 * dt);
@@ -852,7 +861,11 @@
 				ff[i] = stamp;
 				const tv = b * gain * s.vis * (dis > 0 ? 1 - dis : 1) * s.size * s.size;
 				if (tv >= tb[i]) { tb[i] = tv; tc[i] = code; tk[i] = k; }
-				if (b > 0.45 && dis < 0.3 && rng() < (s.dusty ? 0.009 : 0.006) && !reduce) spawnDust(near((i % cols + 0.5) * CW, X), near((((i / cols) | 0) + 0.5) * CH, Y));
+				if (b > 0.45 && dis < 0.3 && !reduce) {
+					// after a click the wings shed a cloud of it, thinning out over about a second
+					const k = s.burst > 0 ? 1 + 22 * Math.pow(s.burst / BURST, 2) : 1;
+					if (rng() < (s.dusty ? 0.009 : 0.006) * k) spawnDust(near((i % cols + 0.5) * CW, X), near((((i / cols) | 0) + 0.5) * CH, Y), s.burst > 0);
+				}
 			};
 			const orient = (a: number, side: number, k: number) => {
 				const bx = Math.cos(a) * side * k, by = -Math.sin(a) * ps;
@@ -1014,7 +1027,7 @@
 					ctx.globalAlpha = clamp(0.25 + 0.75 * e, 0, 1);
 				} else if (p.kind === 'dust') {
 					const tw = 0.5 + 0.5 * Math.sin(p.age * 14 + p.seed * 6);
-					ctx.fillStyle = pal[p.seed < 4 ? 0 : p.seed < 7 ? 4 : 5];
+					ctx.fillStyle = p.iri ? iridescent(p.seed / 9 + p.age * 0.3) : pal[p.seed < 4 ? 0 : p.seed < 7 ? 4 : 5];
 					ctx.globalAlpha = clamp((1 - e) * (0.2 + 0.8 * tw) * (p.slow ? 0.6 : 1), 0, 1);
 				} else {
 					ctx.fillStyle = pal[0];
@@ -1026,6 +1039,22 @@
 			// the image is in front of her, and of everything she leaves behind
 			if (s.behind) ctx.clearRect(s.behind[0], s.behind[1], s.behind[2], s.behind[3]);
 		}
+
+		// the pale iridescent colours of the "designer" ring: cyan → violet → pink → gold → green
+		const IRI = [[143, 227, 238], [185, 166, 245], [240, 163, 216], [239, 213, 150], [169, 236, 185]];
+		function iridescent(t: number) {
+			t = ((t % 1) + 1) % 1;
+			const x = t * IRI.length, i = Math.floor(x), f = x - i, a = IRI[i % IRI.length], b = IRI[(i + 1) % IRI.length];
+			return `rgb(${Math.round(a[0] + (b[0] - a[0]) * f)},${Math.round(a[1] + (b[1] - a[1]) * f)},${Math.round(a[2] + (b[2] - a[2]) * f)})`;
+		}
+
+		// click her and she sheds her dust: the pointer is checked against where she is (the canvas ignores the mouse)
+		addEventListener('pointerdown', (e) => {
+			if (reduce || s.vis < 0.3 || (e.target instanceof Element && e.target.closest('a, button, input, textarea'))) return;
+			const r = canvas.getBoundingClientRect();
+			const dx = e.clientX - r.left - s.x, dy = e.clientY - r.top - (s.y + s.yoff);
+			if (dx * dx + dy * dy < Math.pow(S * s.size * 0.9 + 12, 2)) s.burst = BURST;
+		});
 
 		let last = -1;
 		function frame(now: number) {
