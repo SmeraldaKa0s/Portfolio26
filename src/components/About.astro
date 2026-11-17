@@ -111,7 +111,16 @@ const { paragraphs, capabilities } = about;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
+	}
+
+	/* statement ↔ bio: 24px */
+	.about__lead {
 		gap: 24px;
+	}
+
+	/* label ↔ items, and item ↔ item: 10px */
+	.about__capabilities {
+		gap: 10px;
 	}
 
 	/* h1 preset: sans 40px (28px below 1200), 1.2em, white, 640px max */
@@ -143,7 +152,7 @@ const { paragraphs, capabilities } = about;
 	}
 
 	.about__bio p {
-		margin: 0 0 1.2em;
+		margin: 0 0 20px; /* paragraph spacing is a fixed 20px, not tied to the font size */
 	}
 
 	.about__bio p:last-child {
