@@ -52,9 +52,13 @@ const headline = lines.map((words, li) => {
 	</div>
 
 	<div class="hero__footer">
-		{hero.labels.map((label, i) => (
-			<span class="eyebrow hero__intro" style={`--intro-delay: ${0.3 + i * 0.08}s`}>{label}</span>
-		))}
+		<span class="eyebrow hero__intro" style="--intro-delay: 0.3s">{hero.labels[0]}</span>
+		<!-- sound: the first press turns it on ("Escuchar"); the wave keeps moving while it plays and goes flat when muted (src/scripts/sound.ts) -->
+		<button class="eyebrow hero__intro hero__sound" type="button" style="--intro-delay: 0.38s" aria-pressed="false" aria-label="Escuchar" data-tip="Escuchar">
+			<svg width="24" height="24" viewBox="0 0 10 10" aria-hidden="true">
+				<polyline class="sound__wave" points="1,5 2.14,4.08 3.29,3.55 4.43,3.82 5.57,4.8 6.71,5.9 7.86,6.45 9,6.08"></polyline>
+			</svg>
+		</button>
 	</div>
 </section>
 
@@ -83,6 +87,10 @@ const headline = lines.map((words, li) => {
 </script>
 
 <script>
+	import { startSound } from "../scripts/sound";
+
+	startSound(document.querySelector<HTMLButtonElement>(".hero__sound"));
+
 	// The butterfly announces that she has touched down on "designer": one pale ring of iridescent colour
 	// opens from where she is and spreads over "product designer", once. A copy of those two words is painted
 	// with a conic gradient and masked to the ring; it plays for ~2.8 s (companion page, "Onda suave" at 1.45x).
@@ -256,6 +264,87 @@ const headline = lines.map((words, li) => {
 			filter: none;
 			transform: none;
 		}
+	}
+
+	/* the sound button: the wave alone, white, thin stroke; a tooltip above it says what a press will do */
+	.hero__sound {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: none;
+		cursor: pointer;
+	}
+
+	.hero__sound svg {
+		display: block;
+	}
+
+	.hero__sound polyline {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 0.75;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.hero__sound {
+		position: relative;
+	}
+
+	/* tooltip: the same as the "Ver como agente IA" button's (AgentView.astro): raised surface, 1px border,
+	   4px radius, mono 10px uppercase, rises 4px and fades in after a short pause. Above the icon here,
+	   because the icon sits at the bottom edge of the hero. */
+	.hero__sound::after {
+		content: attr(data-tip);
+		position: absolute;
+		bottom: calc(100% - 4px); /* 12px above the icon: the button has 16px of padding */
+		right: 20px; /* right-aligned to the icon so it stays inside the frame */
+		padding: 7px 10px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		background: var(--bg-raised);
+		color: var(--fg);
+		font-family: var(--font-mono);
+		font-size: 10px;
+		line-height: 1em;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		translate: 0 4px;
+		transition:
+			opacity 0.2s ease,
+			translate 0.3s cubic-bezier(0, -0.12, 0, 0.98);
+	}
+
+	@media (hover: hover) {
+		.hero__sound:hover::after {
+			opacity: 1;
+			translate: 0 0;
+			transition-delay: 0.25s;
+		}
+	}
+
+	.hero__sound:focus-visible::after {
+		opacity: 1;
+		translate: 0 0;
+		transition-delay: 0.25s;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hero__sound::after {
+			transition: none;
+		}
+	}
+
+	.hero__sound:focus-visible {
+		outline: 1px solid var(--fg);
+		outline-offset: 4px;
+		border-radius: 4px;
 	}
 
 	/* white, like ashcamp's footer labels */

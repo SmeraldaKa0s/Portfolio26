@@ -924,6 +924,10 @@ export function startGarden(canvas, section) {
 			plant.wobV += (-18 * plant.wob - 2.6 * plant.wobV) * dt;
 			plant.wob += plant.wobV * dt;
 			// her colors come in fast when she lands and fade slowly after she leaves
+			if (plant.iriRelease && clock >= plant.iriRelease) {
+				plant.iriRelease = 0;
+				if (!flock.some((b) => b.target?.[0] === plant && b.state === "perch")) plant.iriT = 0; // a butterfly that landed meanwhile keeps it
+			}
 			plant.iri += (plant.iriT - plant.iri) * Math.min(1, dt * (plant.iriT > plant.iri ? 2.5 : 0.35));
 			for (const lf of plant.leaves) {
 				lf.v += (-34 * lf.a - 3 * lf.v - plant.bendV * lf.gain * 1.4) * dt;
@@ -1370,6 +1374,8 @@ export function startGarden(canvas, section) {
 			if (bf.t >= 1) {
 				bf.state = "perch";
 				bf.stay = 3 + Math.random() * 5;
+				// the sound listens to this: a note for each plant she lands on, panned to where it is
+				dispatchEvent(new CustomEvent("garden:land", { detail: { x01: tx / canvas.getBoundingClientRect().width } }));
 				nudge(plant, Math.sign(tx - bf.from[0]) || 1, 0.6);
 				plant.iriT = 1;
 			}
@@ -1425,6 +1431,12 @@ export function startGarden(canvas, section) {
 			});
 	}
 
+	// the sound listens to this: a note for the part touched (0 bloom, 1 stem, 2 leaf), by where the plant is
+	function ring(hit, x, strength) {
+		const w = canvas.getBoundingClientRect().width || 1;
+		dispatchEvent(new CustomEvent("garden:touch", { detail: { x01: Math.min(1, Math.max(0, x / w)), part: hit.part, strength } }));
+	}
+
 	function pointer(e) {
 		const r = canvas.getBoundingClientRect();
 		return [e.clientX - r.left, e.clientY - r.top];
@@ -1437,6 +1449,10 @@ export function startGarden(canvas, section) {
 		const hit = pick(x, y);
 		if (!hit) return;
 		hover = { ...hit, x, y, until: now + 1600 };
+		if (now > (hit.plant.ringAt || 0)) {
+			hit.plant.ringAt = now + 650; // a brushed plant rings at most about once every 0.65 s
+			ring(hit, x, 0.25);
+		}
 		if (!reduce && now > hit.plant.cool) poke(hit, x, y, 0.25, now);
 		kick();
 	});
@@ -1448,6 +1464,16 @@ export function startGarden(canvas, section) {
 		const hit = pick(x, y);
 		if (!hit) return;
 		hover = { ...hit, x, y, until: now + 2600 };
+		ring(hit, x, 1);
+		// clicking a flower lights it with the butterfly's iridescence, once: it comes in, then fades on its own.
+		// Not again until it has faded, and not on a flower the butterfly is sitting on.
+		if (hit.part === 0 && !reduce) {
+			const p = hit.plant;
+			if (p.iri < 0.05 && !p.iriT && !p.iriRelease) {
+				p.iriT = 1;
+				p.iriRelease = clock + 0.7;
+			}
+		}
 		if (!reduce) poke(hit, x, y, 1, now);
 		kick();
 	});
