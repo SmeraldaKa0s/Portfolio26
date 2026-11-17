@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-import profile from "../assets/foto-perfil.png";
+import profile from "../assets/foto-arqueria.jpg";
 import { about } from "../content/site";
 
 const { paragraphs, capabilities } = about;
@@ -14,15 +14,17 @@ const { paragraphs, capabilities } = about;
 
 		<div class="col-wide about__cell">
 			<!-- same size as the images in Work -->
-			<div class="about__image" data-reveal>
+			<div class="about__image" data-reveal data-photo-trail>
 				<Image
 					src={profile}
 					alt="Retrato de Alexandra Lerner"
-					widths={[640, 960, 1280]}
+					widths={[640, 960, 1280, 1920]}
 					sizes="(min-width: 1200px) 60vw, 100vw"
 					loading="eager"
 					draggable="false"
 				/>
+				<!-- iridescent cursor trail (src/scripts/photoTrail.ts); the img shows until it draws -->
+				<canvas aria-hidden="true"></canvas>
 			</div>
 
 			<div class="about__text">
@@ -45,6 +47,12 @@ const { paragraphs, capabilities } = about;
 	</div>
 </section>
 
+<script>
+	import { startPhotoTrail } from "../scripts/photoTrail";
+
+	document.querySelectorAll<HTMLElement>("[data-photo-trail]").forEach(startPhotoTrail);
+</script>
+
 <style>
 	/* media-side cell: 60px padding (40px tablet, 40/20 mobile), content stacked with 60px between blocks */
 	.about__cell {
@@ -55,8 +63,9 @@ const { paragraphs, capabilities } = about;
 		padding: 60px;
 	}
 
-	/* the photo is already 8:5 (1586×992), so it fills the same box as the Work images with no crop */
+	/* same 8:5 box as the Work images; the photo is portrait (3:4), so it's cropped to that box */
 	.about__image {
+		position: relative;
 		width: 100%;
 		aspect-ratio: 8 / 5;
 		overflow: hidden;
@@ -74,8 +83,21 @@ const { paragraphs, capabilities } = about;
 		-webkit-user-select: none;
 		-webkit-touch-callout: none;
 		object-fit: cover;
-		object-position: 50% 50%;
+		object-position: 50% 55.9%;
 		border-radius: 10px;
+	}
+
+	.about__image canvas {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+		opacity: 0;
+	}
+
+	.about__image:global(.is-gl) canvas {
+		opacity: 1;
 	}
 
 	.about__text {
