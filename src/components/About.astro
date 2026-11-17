@@ -9,7 +9,7 @@ const { paragraphs, capabilities } = about;
 <section id="info" class="frame">
 	<div class="split">
 		<div class="col-narrow section-head">
-			<h2 class="section-title" data-reveal>{about.title}</h2>
+			<h2 class="section-title" data-scroll-reveal>{about.title}</h2>
 		</div>
 
 		<div class="col-wide about__cell">
@@ -29,18 +29,19 @@ const { paragraphs, capabilities } = about;
 
 			<div class="about__text">
 				<div class="about__lead">
-					<h1 class="about__statement" data-reveal>
+					<h1 class="about__statement" data-scroll-reveal>
 						{about.statement}
 					</h1>
 
-					<div class="about__bio">
-						{paragraphs.map((text) => <p data-reveal>{text}</p>)}
+					<!-- the paragraphs reveal together, as one block -->
+					<div class="about__bio" data-scroll-reveal>
+						{paragraphs.map((text) => <p>{text}</p>)}
 					</div>
 				</div>
 
 				<div class="about__capabilities">
-					<h6 class="about__label" data-reveal>{about.capabilitiesTitle}</h6>
-					{capabilities.map((item) => <p class="about__item" data-reveal>{item}</p>)}
+					<h6 class="about__label" data-scroll-reveal>{about.capabilitiesTitle}</h6>
+					{capabilities.map((item) => <p class="about__item" data-scroll-reveal>{item}</p>)}
 				</div>
 			</div>
 		</div>
