@@ -82,6 +82,60 @@ const headline = lines.map((words, li) => {
 	})();
 </script>
 
+<script>
+	// The butterfly announces that she has touched down on "designer": one pale ring of iridescent colour
+	// opens from where she is and spreads over "product designer", once. A copy of those two words is painted
+	// with a conic gradient and masked to the ring; it plays for ~2.8 s (companion page, "Onda suave" at 1.45x).
+	const WAVE = { duration: 2.76, band: 46, bandGrow: 26, extra: 70, opacity: 0.8, designSize: 22 };
+
+	const easeInOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+
+	function playWave() {
+		if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+		const h1 = document.querySelector<HTMLElement>(".hero__headline");
+		const perch = h1?.querySelector<HTMLElement>(".hero__word[data-perch]");
+		const prev = perch?.previousElementSibling as HTMLElement | null; // the word before it: "product"
+		if (!h1 || !perch || !prev || !prev.classList.contains("hero__word")) return;
+
+		const hr = h1.getBoundingClientRect();
+		const pr = prev.getBoundingClientRect();
+		const wr = perch.getBoundingClientRect();
+		const left = pr.left - hr.left;
+		const width = wr.right - pr.left;
+		const ox = wr.left - pr.left + wr.width / 2; // where she is, inside the two words
+		const reach = Math.max(ox, width - ox);
+		const k = parseFloat(getComputedStyle(h1).fontSize) / WAVE.designSize; // distances were designed at 22px
+
+		let wave = h1.querySelector<HTMLElement>(".hero__wave");
+		if (!wave) {
+			wave = document.createElement("span");
+			wave.className = "hero__wave";
+			wave.setAttribute("aria-hidden", "true");
+			h1.appendChild(wave);
+		}
+		wave.textContent = `${prev.textContent} ${perch.textContent}`.replace(/\s+/g, " ").trim();
+		wave.style.left = `${left}px`;
+		wave.style.top = `${pr.top - hr.top}px`;
+		wave.style.backgroundImage = `conic-gradient(from 20deg at ${ox}px 50%, #8fe3ee, #b9a6f5, #f0a3d8, #efd596, #a9ecb9, #8fe3ee)`;
+
+		const t0 = performance.now();
+		const tick = (now: number) => {
+			const t = Math.min(1, (now - t0) / (WAVE.duration * 1000));
+			const e = easeInOut(t);
+			const r = e * (reach + WAVE.extra * k);
+			const band = (WAVE.band + WAVE.bandGrow * e) * k;
+			const mask = `radial-gradient(circle at ${ox}px 50%, transparent ${Math.max(0, r - band)}px, #000 ${r}px, transparent ${r + band}px)`;
+			wave!.style.webkitMaskImage = mask;
+			wave!.style.maskImage = mask;
+			wave!.style.opacity = t < 1 ? String(WAVE.opacity * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.04)), 0.7)) : "0";
+			if (t < 1) requestAnimationFrame(tick);
+		};
+		requestAnimationFrame(tick);
+	}
+
+	window.addEventListener("butterfly:perch", playWave);
+</script>
+
 <style>
 	.hero {
 		display: flex;
@@ -124,6 +178,21 @@ const headline = lines.map((words, li) => {
 	.hero__word--strong {
 		font-weight: 400;
 		color: var(--fg);
+	}
+
+	/* the copy of "product designer" that carries the ring of colour (see the script above) */
+	.hero__headline {
+		position: relative;
+	}
+
+	.hero__headline :global(.hero__wave) {
+		position: absolute;
+		white-space: nowrap;
+		pointer-events: none;
+		color: transparent;
+		-webkit-background-clip: text;
+		background-clip: text;
+		opacity: 0;
 	}
 
 	/* per-character entry (spring ~0.3s, no bounce). Held in its start state while the hero is "armed"

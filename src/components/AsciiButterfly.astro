@@ -689,6 +689,7 @@
 				const nx = NEXT[s.phase];
 				s.phase = nx;
 				s.pt = 0;
+				if (nx === 'perch') window.dispatchEvent(new CustomEvent('butterfly:perch')); // she has touched down on the word
 				if (nx === 'fly') {
 					s.around = false;
 					s.perch = perchPoint();
