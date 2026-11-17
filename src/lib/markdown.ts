@@ -3,7 +3,7 @@
 // vercel.json serves them at the page's URL + .md, and at the page's own URL when a request asks for
 // text/markdown in its Accept header.
 import { getCollection, type CollectionEntry } from "astro:content";
-import { about, contact, cta, experience, field, hero, site, VISIBLE_PROJECTS } from "../content/site";
+import { about, contact, cta, experience, hero, site, VISIBLE_PROJECTS } from "../content/site";
 
 type Project = CollectionEntry<"projects">;
 
@@ -51,16 +51,7 @@ export async function homeMarkdown() {
 		`## ${experience.title}`,
 		"",
 		...experience.roles.flatMap((role) => [`### ${role.title} (${role.dates})`, "", role.text, ""]),
-		`## ${field.title}`,
-		"",
-		...field.works.flatMap((work) => [
-			`### ${work.title.join(" ")}`,
-			"",
-			`${work.type} · ${work.client} · ${work.duration} · ${work.year}`,
-			"",
-			`Roles: ${work.roles.join(", ")}`,
-			"",
-		]),
+		// "Experiencia en campo" is hidden for now (see index.astro): its section is left out of the Markdown too
 		"## Contacto",
 		"",
 		cta.heading,

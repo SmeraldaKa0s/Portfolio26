@@ -5,7 +5,6 @@ import Hero from "../components/Hero.astro";
 import Work from "../components/Work.astro";
 import About from "../components/About.astro";
 import Experience from "../components/Experience.astro";
-import Press from "../components/Press.astro";
 import CTA from "../components/CTA.astro";
 import HalftoneBackground from "../components/HalftoneBackground.astro";
 import { homeMarkdownPath } from "../lib/markdown";
@@ -22,7 +21,7 @@ import { homeMarkdownPath } from "../lib/markdown";
 	<div class="halftone-zone">
 		<HalftoneBackground mode="sticky" />
 		<Experience />
-		<Press />
+		{/* "Experiencia en campo" is hidden until its content is ready: import Press from "../components/Press.astro" and put <Press /> back here */}
 		<CTA />
 	</div>
 </Layout>
