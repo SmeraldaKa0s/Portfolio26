@@ -7,17 +7,17 @@ const { roles } = experience;
 <section class="frame">
 	<div class="split">
 		<div class="col-narrow section-head">
-			<h2 class="section-title" data-reveal>{experience.title}</h2>
+			<h2 class="section-title" data-scroll-reveal>{experience.title}</h2>
 		</div>
 
 		<div class="col-wide experience__cell">
 			{roles.map((item) => (
 				<div class="experience__row">
 					<div class="experience__main">
-						<p class="experience__title" data-reveal>{item.title}</p>
-						<p class="experience__text" data-reveal>{item.text}</p>
+						<p class="experience__title" data-scroll-reveal>{item.title}</p>
+						<p class="experience__text" data-scroll-reveal>{item.text}</p>
 					</div>
-					<p class="experience__dates" data-reveal>{item.dates}</p>
+					<p class="experience__dates" data-scroll-reveal>{item.dates}</p>
 				</div>
 			))}
 		</div>
@@ -33,7 +33,8 @@ const { roles } = experience;
 		padding: 60px;
 	}
 
-	/* each row: 20px / 0 padding, solid 1px #222 line underneath */
+	/* each row: 20px / 0 padding, solid 1px #222 line underneath. The row and the text column clip,
+	   so the scroll reveal slides the text up from under their edges */
 	.experience__row {
 		display: flex;
 		justify-content: space-between;
@@ -41,9 +42,11 @@ const { roles } = experience;
 		width: 100%;
 		padding: 20px 0;
 		border-bottom: 1px solid #222;
+		overflow: hidden;
 	}
 
 	.experience__main {
+		overflow: hidden;
 		display: flex;
 		flex-direction: column;
 		gap: 8px;

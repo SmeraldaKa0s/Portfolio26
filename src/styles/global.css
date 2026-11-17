@@ -291,6 +291,20 @@ a {
 	}
 }
 
+/* Scroll-linked reveal (src/scripts/scrollReveal.ts): JS writes opacity/transform every frame from the
+   scroll position; this is only the state before it runs. */
+.reveal-on [data-scroll-reveal] {
+	opacity: 0;
+	transform: perspective(1200px) translateY(80px);
+	will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.reveal-on [data-scroll-reveal] {
+		transform: none;
+	}
+}
+
 /* Stacked hover-swap text: markup is <span class="swap"><span>Label</span><span aria-hidden="true">Label</span></span> */
 .swap {
 	position: relative;
