@@ -67,6 +67,7 @@ export function startGarden(canvas, section) {
 	let rand = Math.random;
 	let hover = null;
 	let clearBoxes = [];
+	let textAvoid = []; // where the butterfly may not fly: over the words
 	let nextShut = 10;
 
 	function rng(seed) {
@@ -606,6 +607,15 @@ export function startGarden(canvas, section) {
 			const b = el.getBoundingClientRect();
 			return { l: b.left - cr.left - 18, r: b.right - cr.left + 18, b: b.bottom - cr.top + 18 };
 		}));
+		// the words themselves (not their full-width boxes), grown by half her size, so her wings never
+		// cover the heading, the copy or the links
+		const words = section.querySelectorAll(".cta__heading, .cta__copy, .cta__links a, .cta__links button");
+		textAvoid = [...words].map((el) => {
+			const range = document.createRange();
+			range.selectNodeContents(el);
+			const b = range.getBoundingClientRect();
+			return { l: b.left - cr.left - 38, r: b.right - cr.left + 38, t: b.top - cr.top - 32, b: b.bottom - cr.top + 28 };
+		});
 		const narrow = W < 640;
 		const n = Math.round((prop.n ?? 30) * (narrow ? 0.35 : 1));
 		// spots along the width, more of them where the silhouette is taller
@@ -879,20 +889,21 @@ export function startGarden(canvas, section) {
 				if (p.age >= fullAge(p)) p.state = "alive";
 			}
 			if (p.shutT && (p.shutHold -= dt) <= 0) p.shutT = 0;
-			// about 3 s to close, a little longer to open
-			p.shut = clamp(p.shut + (p.shutT ? dt / 3 : -dt / 3.6));
+			// about a second to close, a little longer to open
+			p.shut = clamp(p.shut + (p.shutT ? dt / 1.1 : -dt / 1.4));
 			if (p.shutT || p.shut > 0) shut++;
 		}
 		nextShut -= dt;
 		if (nextShut <= 0 && !shut) {
 			// three at once, each staying shut its own while
-			const open = plants.filter((p) => p.state === "alive" && !p.shutT && p.shut === 0 && p !== hover?.plant && p !== bf?.target?.[0]);
+			const open = plants.filter((p) => p.state === "alive" && !p.shutT && p.shut === 0 && p !== hover?.plant && !flock.some((b) => b.target?.[0] === p));
 			for (let c = 0; c < 3 && open.length; c++) {
 				const p = open.splice(Math.floor(rand() * open.length), 1)[0];
 				p.shutT = 1;
-				p.shutHold = 3 + 4 + rand() * 4; // closing, then 4-8 s shut
+				p.shutHold = 1.1 + 2.5 + rand() * 2.5; // closing, then 2.5-5 s shut
+				nudge(p, rand() < 0.5 ? -1 : 1, 0.3); // the stem gives a little as it closes
 			}
-			nextShut = 6 + rand() * 6;
+			nextShut = 4 + rand() * 5;
 		}
 	}
 
@@ -969,10 +980,10 @@ export function startGarden(canvas, section) {
 					// the stem writes its own progress next to it while it grows
 					if (!plant.quiet && plant.age < GROW * STEM_END + 1.6) {
 						const fade = clamp((GROW * STEM_END + 1.6 - plant.age) / 1.2);
-						for (let t = 0.08; t <= s + 1e-6; t += 0.08) {
+						for (let t = 0.25; t <= s + 1e-6; t += 0.25) {
 							bez(st, base, t, tmp);
 							project(tmp[0], tmp[1], tmp[2]);
-							labels.push({ x: out[0] + 9, y: out[1], text: t.toFixed(2), a: fade * (0.3 + 0.7 * (t / Math.max(s, 0.08))) });
+							labels.push({ x: out[0] + 9, y: out[1], text: t.toFixed(2), a: fade * (0.3 + 0.7 * (t / Math.max(s, 0.25))) });
 						}
 					}
 				}
@@ -980,7 +991,7 @@ export function startGarden(canvas, section) {
 				const b = clamp((g - STEM_END + 0.06) / (1 - STEM_END + 0.06));
 				if (b > 0) {
 					const sh = plant.shut * plant.shut * (3 - 2 * plant.shut);
-					drawBloom(plant, st, b * (1 - 0.85 * sh));
+					drawBloom(plant, st, b * (1 - 0.95 * sh));
 					project(...st.headNow);
 					const r = st.size * k * out[2] * 0.7;
 					for (const [ox, oy] of [[0, 0], [-r, 0], [r, 0], [0, -r]]) plant.hit.push(out[0] + ox, out[1] + oy, 0, st.headNow[0], st.headNow[1]);
@@ -1122,28 +1133,38 @@ export function startGarden(canvas, section) {
 		ctx.font = LABEL_FONT;
 		ctx.textBaseline = "middle";
 		const [lr, lg, lb] = pal.label;
+		// a label that would land on one already drawn is skipped, so neighbors' counts don't pile up
+		const placed = [];
 		for (const l of labels) {
 			if (l.x > W - PAD - 20 || l.y > floorY) continue;
+			if (placed.some((q) => Math.abs(q[0] - l.x) < 30 && Math.abs(q[1] - l.y) < 12)) continue;
+			placed.push([l.x, l.y]);
 			ctx.fillStyle = `rgba(${lr},${lg},${lb},${l.a * 0.8})`;
 			ctx.fillText(l.text, l.x, l.y);
 		}
-		drawButterfly();
+		for (const b of flock) {
+			bf = b;
+			drawButterfly();
+		}
 	}
 
 	// ---------- the butterfly: the site's, in miniature (same wing outlines, glyphs and palette),
 	// going from flower to flower. Landing and taking off nudge the plant. ----------
 
-	const BF_FONT = "bold 7px ui-monospace, Menlo, Consolas, monospace";
-	ctx.font = BF_FONT;
-	const BCW = ctx.measureText("M").width || 4.2, BCH = 7.6;
+	// two of them: the hero's size and a smaller one that flaps faster and flies a little quicker
+	const SIZES = [7, 4.5].map((px, i) => {
+		const font = `bold ${px}px ui-monospace, Menlo, Consolas, monospace`;
+		ctx.font = font;
+		return { font, cw: ctx.measureText("M").width || px * 0.6, ch: px * 1.09, span: (64 * px) / 7, flap: i ? 9 : 7, speed: i ? 135 : 110 };
+	});
 	const WING = {
 		f: { pts: [[0.04, 0.17], [0.36, 0.46], [0.74, 0.7], [1.04, 0.82], [1.14, 0.78], [1.06, 0.62], [0.84, 0.4], [0.56, 0.18], [0.28, 0.05], [0.1, 0.03]],
 			root: [0.06, 0.08], veins: [6, 18, 30, 41, 52, 63] },
 		h: { pts: [[0.05, 0.06], [0.36, 0.08], [0.58, 0], [0.68, -0.14], [0.66, -0.32], [0.56, -0.5], [0.4, -0.62], [0.24, -0.6], [0.1, -0.46], [0.03, -0.16]],
 			root: [0.06, 0.02], veins: [-4, -22, -40, -57, -72, -86] },
 	};
-	const BF_SPAN = 64;
-	let bf = null;
+	const flock = [];
+	let bf = null; // the one being moved or drawn
 
 	function inPoly(pts, x, y) {
 		let c = false;
@@ -1191,7 +1212,8 @@ export function startGarden(canvas, section) {
 
 	function drawButterfly() {
 		if (!bf) return;
-		ctx.font = BF_FONT;
+		const { font, cw: BCW, ch: BCH, span: BF_SPAN } = bf.size;
+		ctx.font = font;
 		ctx.textBaseline = "middle";
 		ctx.textAlign = "center";
 		for (const p of bf.trail) {
@@ -1232,23 +1254,50 @@ export function startGarden(canvas, section) {
 	// where she sits: on the bloom's upper edge, her body resting on it
 	function seat([plant, st]) {
 		project(...st.headNow);
-		return [out[0], out[1] - st.size * k * out[2] * 0.75 - BF_SPAN * 0.18];
+		return [out[0], out[1] - st.size * k * out[2] * 0.75 - bf.size.span * 0.18];
 	}
 
 	const openBlooms = (except) =>
 		plants.flatMap((p) => (p.state === "alive" && p.growth >= 1 && !p.shutT && p.shut === 0 ? p.stems.filter((st) => st !== except).map((st) => [p, st]) : []));
 
+	const inText = (x, y) => textAvoid.some((b) => x > b.l && x < b.r && y > b.t && y < b.b);
+
+	// a flight path to (tx, ty) that never crosses the words: over the garden or, if that's blocked, under
+	// it. [lift, lean] for the curve's middle point, or null if there's none.
+	function route(tx, ty) {
+		for (let i = 0; i < 16; i++) {
+			const lift = i % 2 ? Math.min(floorY - 30, Math.max(bf.y, ty) + 10 + Math.random() * 40) : Math.min(bf.y, ty) - (40 + Math.random() * 60);
+			const lean = (Math.random() - 0.5) * 120, cx = (bf.x + tx) / 2 + lean;
+			let ok = true;
+			for (let k2 = 0; k2 <= 32 && ok; k2++) {
+				const e = k2 / 32, a = (1 - e) * (1 - e), b = 2 * (1 - e) * e, c = e * e;
+				if (inText(a * bf.x + b * cx + c * tx, a * bf.y + b * lift + c * ty)) ok = false;
+			}
+			if (ok) return [lift, lean];
+		}
+		return null;
+	}
+
 	// a flower she hasn't been to lately, mostly one of the nearer ones, so she wanders the whole garden
-	// without crossing it on every flight
+	// without crossing it on every flight; only where she can sit and fly to without covering any words.
+	// [bloom, route] or null.
 	function nextBloom(except) {
-		let list = openBlooms(except).map((b) => [b, Math.hypot(seat(b)[0] - bf.x, seat(b)[1] - bf.y)]).sort((a, b) => a[1] - b[1]);
+		let list = openBlooms(except)
+			.filter((b) => !inText(...seat(b)) && !flock.some((o) => o !== bf && o.target?.[1] === b[1]))
+			.map((b) => [b, Math.hypot(seat(b)[0] - bf.x, seat(b)[1] - bf.y)])
+			.sort((a, b) => a[1] - b[1]);
 		const fresh = list.filter(([b]) => !bf.seen.includes(b[1]));
 		if (fresh.length) list = fresh;
 		if (!list.length) return null;
-		const pick = list[Math.floor(Math.random() ** 1.6 * Math.min(8, list.length))][0];
-		bf.seen.push(pick[1]);
-		if (bf.seen.length > Math.max(3, openBlooms().length - 3)) bf.seen.shift();
-		return pick;
+		const first = Math.floor(Math.random() ** 1.6 * Math.min(8, list.length));
+		for (const [b] of [list[first], ...list.filter((_, i) => i !== first)]) {
+			const path = route(...seat(b));
+			if (!path) continue;
+			bf.seen.push(b[1]);
+			if (bf.seen.length > Math.max(3, openBlooms().length - 3)) bf.seen.shift();
+			return [b, path];
+		}
+		return null;
 	}
 
 	function nudge(plant, dir, s) {
@@ -1256,26 +1305,50 @@ export function startGarden(canvas, section) {
 		plant.wobV += dir * 2 * s;
 	}
 
-	function flyTo(target) {
+	function flyTo([target, [lift, lean]]) {
 		const [tx, ty] = seat(target);
 		bf.state = "fly";
 		bf.target = target;
 		bf.from = [bf.x, bf.y];
 		bf.t = 0;
-		bf.dur = clamp(Math.hypot(tx - bf.x, ty - bf.y) / 110, 1.8, 6);
-		bf.lift = Math.min(bf.y, ty) - (40 + Math.random() * 60);
-		bf.lean = (Math.random() - 0.5) * 120;
+		bf.dur = clamp(Math.hypot(tx - bf.x, ty - bf.y) / bf.size.speed, 1.6, 6);
+		bf.lift = lift;
+		bf.lean = lean;
+	}
+
+	// they come in as soon as a few flowers are open, each straight to a flower near one of the edges,
+	// entering from that side; the small one a little later
+	function updateButterflies(dt, time) {
+		if (startAt === null) return;
+		const since = (performance.now() - startAt) / 1000;
+		if (flock.length < SIZES.length && since > (flock.length ? flock[0].born + 1.5 : 0) && openBlooms().length >= 4) {
+			bf = { x: 0, y: 0, kf: 1, phase: 0, trail: [], state: "fly", seen: [], size: SIZES[flock.length], born: since };
+			const near = openBlooms()
+				.filter((b) => !inText(...seat(b)) && !flock.some((o) => o.target?.[1] === b[1]))
+				.map((b) => [b, Math.min(seat(b)[0], W - seat(b)[0])])
+				.sort((a, b) => a[1] - b[1])
+				.slice(0, 6);
+			if (near.length) {
+				const b = near[Math.floor(Math.random() * near.length)][0];
+				const [tx, ty] = seat(b);
+				bf.x = tx < W / 2 ? -20 : W + 20;
+				bf.y = ty - 30;
+				const path = route(tx, ty);
+				if (path) {
+					bf.seen.push(b[1]);
+					flyTo([b, path]);
+					bf.dur = Math.min(bf.dur, 1.8);
+					flock.push(bf);
+				}
+			}
+		}
+		for (const b of flock) {
+			bf = b;
+			updateButterfly(dt, time);
+		}
 	}
 
 	function updateButterfly(dt, time) {
-		if (startAt === null) return;
-		if (!bf) {
-			if ((performance.now() - startAt) / 1000 < GROW + 2) return;
-			bf = { x: -30, y: H * 0.4, kf: 1, phase: 0, trail: [], state: "fly", seen: [] };
-			const first = nextBloom();
-			if (!first) return (bf = null);
-			flyTo(first);
-		}
 		for (let i = bf.trail.length - 1; i >= 0; i--) if ((bf.trail[i].life += dt) > 1.2) bf.trail.splice(i, 1);
 		const [plant] = bf.target;
 		const there = plants.includes(plant) && plant.state === "alive" && !plant.shutT;
@@ -1291,7 +1364,7 @@ export function startGarden(canvas, section) {
 			const cx = (bf.from[0] + tx) / 2 + bf.lean, cyy = bf.lift;
 			bf.x = (1 - e) * (1 - e) * bf.from[0] + 2 * (1 - e) * e * cx + e * e * tx + Math.sin(time * 5) * 3 * (1 - e);
 			bf.y = (1 - e) * (1 - e) * bf.from[1] + 2 * (1 - e) * e * cyy + e * e * ty + Math.sin(time * 7) * 4 * (1 - e);
-			bf.phase += dt * TAU * 7;
+			bf.phase += dt * TAU * bf.size.flap;
 			bf.kf = 0.2 + 0.8 * Math.abs(Math.cos(bf.phase));
 			if (Math.random() < dt * 14) bf.trail.push({ x: bf.x, y: bf.y + 4, life: 0, ch: Math.random() < 0.6 ? "." : "~" });
 			if (bf.t >= 1) {
@@ -1389,7 +1462,7 @@ export function startGarden(canvas, section) {
 		const grown = startAt === null ? 0 : (now - startAt) / 1000;
 		clock = now / 1000;
 		simulate(grown, dt);
-		updateButterfly(dt, now / 1000);
+		updateButterflies(dt, now / 1000);
 		render(now / 1000, now);
 		if (visible) raf = requestAnimationFrame(frame);
 	}
@@ -1400,15 +1473,20 @@ export function startGarden(canvas, section) {
 			p.state = "alive";
 		}
 		simulate(99, 0);
-		// still: the butterfly rests on one of the brighter flowers
+		// still: each butterfly rests on one of the brighter flowers
 		for (const p of plants) p.growth = 1;
-		const spot = openBlooms().find(([p]) => p.featured) ?? openBlooms()[0];
-		if (spot) {
-			const [x, y] = seat(spot);
-			bf = { x, y, kf: 0.6, trail: [], state: "perch", target: spot, stay: Infinity, seen: [] };
+		flock.length = 0;
+		for (const size of SIZES) {
+			bf = { x: 0, y: 0, kf: 0.6, trail: [], state: "perch", stay: Infinity, seen: [], size };
+			const free = openBlooms().filter((b) => !inText(...seat(b)) && !flock.some((o) => o.target[0] === b[0]));
+			const spot = free.find(([p]) => p.featured) ?? free[0];
+			if (!spot) break;
+			[bf.x, bf.y] = seat(spot);
+			bf.target = spot;
+			flock.push(bf);
 			spot[0].iri = spot[0].iriT = 1;
-			simulate(99, 0);
 		}
+		simulate(99, 0);
 		render(0, performance.now());
 	}
 
