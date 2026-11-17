@@ -32,32 +32,54 @@ export const hero = {
 
 export const about = {
 	title: "Info",
-	statement: "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor.",
+	statement: "Turning how a business really operates into products people actually use.",
 	paragraphs: [
-		"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore.",
-		"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat, duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.",
-		"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem.",
-		"Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.",
+		"I’m a Product Designer and AI Builder, crafting digital products for startups and product teams.",
+		"Over the past 5 years, I’ve helped companies in logistics, fintech and retail make sense of complex operations: the workarounds, spreadsheets and daily friction that never show up in a brief. I find what’s really slowing teams down and turn it into tools they actually adopt.",
+		"I work best close to founders and product leads, where decisions are made and shipped fast. With AI built into my process, I can go from a conversation with a client to a working product in production, without losing the details that make people trust it.",
+		"Good taste without accountability is just decoration. Good taste with accountability is leadership.",
+		"Soon I’ll also be a registered Industrial Property Agent, so the products and brands I help build can be protected too.",
 	],
 	capabilitiesTitle: "Capacidades",
 	capabilities: [
-		"Product Design",
-		"Web Design",
-		"Prototipado con IA",
-		"Estrategia de producto",
+		"Design to Code",
+		"AI Prototyping",
+		"Field Research",
+		"Operational & Data-rich UI",
 		"Design Systems",
-		"Proyectos 0→1",
-		"Investigación de usuarios",
+		"0 → 1 Products",
+		"Product Strategy",
 	],
 };
 
 export const experience = {
 	title: "Experiencia",
 	roles: [
-		{ title: "Empresa actual", text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt.", dates: "Actual" },
-		{ title: "Empresa anterior 1", text: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.", dates: "2025-26" },
-		{ title: "Empresa anterior 2", text: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.", dates: "2021-2022" },
-		{ title: "Empresa anterior 3", text: "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim.", dates: "2020-2021" },
+		{
+			title: "Product Designer & AI Builder @ Side project",
+			text: "Designing and building a platform that brings scattered information from Argentine universities into one place, helping people compare degrees and see where each path leads.",
+			dates: "Current",
+		},
+		{
+			title: "Product Designer @ Pickit",
+			text: "Designing data-rich admins, rider apps and AI-powered interfaces for a last-mile logistics company across 4 Latin American markets, from field research to production.",
+			dates: "Current",
+		},
+		{
+			title: "UX/UI Designer @ PhinxLab",
+			text: "Built token-based design systems and a Storybook library for multiple clients at a digital consultancy, designing apps and websites for fintech and healthcare, as well as an online multiplayer card game.",
+			dates: "2024–25",
+		},
+		{
+			title: "UX Engineer & Frontend Developer @ ATAWAY",
+			text: "Bridged design and code at a software consultancy, taking client products from research and design to frontend development, QA and documentation, including an e-learning platform for Cencosud.",
+			dates: "2022–23",
+		},
+		{
+			title: "UX Researcher @ UNTREF",
+			text: "Conducted field and market research for technology innovation projects and contributed to patent applications.",
+			dates: "2021–23",
+		},
 	],
 };
 
