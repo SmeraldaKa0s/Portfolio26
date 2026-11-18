@@ -1,5 +1,5 @@
 // Ambient sound: three layers that always play and cross-fade (2.2 s) with the section in view, notes when the
-// footer's plants are touched or a butterfly lands, and a soft arpeggio when the hero's butterfly lands.
+// footer's plants are touched or a butterfly lands, and one soft note ("Gota") when the hero's butterfly lands.
 // Everything is synthesized with the Web Audio API (no audio files).
 // Browsers only let audio start after a real gesture, so it begins with the first click, tap or key anywhere
 // on the page (the wave button's tooltip says "Escuchar" until then). The wave keeps moving while it plays;
@@ -173,9 +173,31 @@ function pluck(h01: number, pan: number, o: { vol?: number; ratio?: number; deca
 	mod.stop(t + decay + 0.05);
 }
 
-// a soft rising arpeggio when the hero's butterfly lands
+// a plain sine note with a soft attack and a long tail; it can start a little above its pitch and settle
+function tone(freq: number, o: { vol: number; decay: number; attack?: number; glide?: number; at?: number }) {
+	if (!ctx || muted) return;
+	const t = ctx.currentTime + (o.at ?? 0);
+	const osc = ctx.createOscillator();
+	const amp = ctx.createGain();
+	osc.type = "sine";
+	if (o.glide) {
+		osc.frequency.setValueAtTime(freq * o.glide, t);
+		osc.frequency.exponentialRampToValueAtTime(freq, t + 0.09);
+	} else {
+		osc.frequency.value = freq;
+	}
+	amp.gain.setValueAtTime(0.0001, t);
+	amp.gain.linearRampToValueAtTime(o.vol, t + (o.attack ?? 0.012));
+	amp.gain.exponentialRampToValueAtTime(0.0001, t + o.decay);
+	osc.connect(amp).connect(bus);
+	osc.start(t);
+	osc.stop(t + o.decay + 0.05);
+}
+
+// "Gota": when the hero's butterfly lands, one soft note like a drop of water, with a faint octave above it
 function chime() {
-	[0.35, 0.5, 0.7, 0.9].forEach((h, k) => pluck(h, -0.4 + k * 0.25, { vol: 0.06, decay: 1.5, at: k * 0.11 }));
+	tone(mtof(76), { vol: 0.05, attack: 0.015, decay: 2.2, glide: 1.035 });
+	tone(mtof(88), { vol: 0.01, decay: 0.9, at: 0.01 });
 }
 
 // touching the footer's garden: the part decides the voice (bloom bright, stem low and round, leaf in between)
